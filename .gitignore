@@ -1,0 +1,57 @@
+v0-design
+.idea/
+.vscode/
+*.log
+.env.dev
+.DS_Store
+*.env
+.claude/settings.local.json
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.pyright/
+
+# Private/local project documentation and agent working artifacts.
+# Root docs/ stays local; api/docs/ is the tracked product contract exception.
+docs/
+!api/docs/
+!api/docs/**
+.docs/
+.issues/
+.tasks/
+.task/
+task/
+tasks/
+
+# Private/local AI agent configuration. Do not commit these directories.
+.agents/
+.cursorignore
+.claude
+.codex
+.mcp.json
+.worktrees/
+
+# All Markdown is private/local by default, including AGENTS.md and CLAUDE.md.
+# Repository README files remain trackable.
+*.md
+!README.md
+
+# Shared project documentation and repository-wide agent guidance.
+AGENTS.md
+CLAUDE.md
+!docs/
+!docs/**
+.agents/**
+
+# Agent brainstorming and design-spec working artifacts stay local.
+docs/superpowers/
+docs/superpowers/**
+.docs/superpowers/
+.docs/superpowers/**
+
+# Local frontend environment overrides stay local.
+frontend/.env.local
+
+#ignore fork
+fork/
