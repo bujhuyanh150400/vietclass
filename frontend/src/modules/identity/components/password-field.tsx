@@ -1,10 +1,10 @@
 import { Eye, EyeOff } from "lucide-react";
 import { useId, useState, type ComponentProps } from "react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+
+import { LOGIN_INPUT_CLASS, LoginFieldShell } from "./login-field-shell";
 
 /**
  * Renders the password input together with a keyboard-reachable reveal toggle.
@@ -20,37 +20,30 @@ export function PasswordField({
   const [isVisible, setIsVisible] = useState(false);
   const fallbackId = useId();
   const inputId = props.id ?? fallbackId;
-  const errorId = `${inputId}-error`;
 
   return (
-    <div className="grid gap-2">
-      <Label htmlFor={inputId}>{label}</Label>
-      <div className="relative">
-        <Input
-          {...props}
-          id={inputId}
-          type={isVisible ? "text" : "password"}
-          aria-invalid={error === undefined ? undefined : true}
-          aria-describedby={error === undefined ? undefined : errorId}
-          className={cn("pr-10", className)}
-        />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => setIsVisible((visible) => !visible)}
-          aria-label={isVisible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-          aria-pressed={isVisible}
-          className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-        >
-          {isVisible ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
-        </Button>
-      </div>
-      {error === undefined ? null : (
-        <p id={errorId} className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
-    </div>
+    <LoginFieldShell inputId={inputId} label={label} error={error}>
+      <Input
+        {...props}
+        id={inputId}
+        type={isVisible ? "text" : "password"}
+        aria-invalid={error === undefined ? undefined : true}
+        aria-describedby={error === undefined ? undefined : `${inputId}-error`}
+        className={cn(LOGIN_INPUT_CLASS, "pr-1", className)}
+      />
+      <button
+        type="button"
+        onClick={() => setIsVisible((visible) => !visible)}
+        aria-label={isVisible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+        aria-pressed={isVisible}
+        className="mr-1.5 grid size-9 shrink-0 place-content-center rounded-[2px] text-vc-text-muted transition-colors hover:bg-vc-line/10 hover:text-vc-text focus-visible:text-vc-text focus-visible:outline-[2px] focus-visible:-outline-offset-2 focus-visible:outline-vc-line"
+      >
+        {isVisible ? (
+          <EyeOff aria-hidden="true" className="size-4.5" />
+        ) : (
+          <Eye aria-hidden="true" className="size-4.5" />
+        )}
+      </button>
+    </LoginFieldShell>
   );
 }

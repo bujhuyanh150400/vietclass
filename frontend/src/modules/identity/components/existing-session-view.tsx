@@ -1,9 +1,6 @@
 import { Loader2 } from "lucide-react";
 import { type ReactNode } from "react";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-
 import type { ExistingSessionViewModel } from "../hooks/use-existing-session";
 
 /**
@@ -22,7 +19,7 @@ export function ExistingSessionView({
       <div
         aria-live="polite"
         role="status"
-        className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground"
+        className="flex items-center gap-2.5 py-10 text-[0.9rem] text-vc-text-muted"
       >
         <Loader2 aria-hidden="true" className="size-4 animate-spin" />
         Đang kiểm tra phiên đăng nhập...
@@ -32,19 +29,29 @@ export function ExistingSessionView({
 
   if (viewModel.kind === "service-failure") {
     return (
-      <div className="grid gap-4">
-        <Alert variant="destructive">
-          <AlertTitle>Không kiểm tra được phiên đăng nhập</AlertTitle>
-          <AlertDescription>{viewModel.message}</AlertDescription>
-        </Alert>
-        <Button
+      <div className="grid gap-5">
+        <div
+          role="alert"
+          className="rounded-[3px] border-2 border-vc-ember bg-vc-surface-raised px-4 py-3.5 shadow-[3px_3px_0_0_var(--vc-ember)]"
+        >
+          <p className="text-[0.9rem] font-bold text-vc-ember">
+            Không kiểm tra được phiên đăng nhập
+          </p>
+          <p className="mt-1 text-[0.875rem] leading-relaxed text-vc-text-muted">
+            {viewModel.message}
+          </p>
+        </div>
+        <button
           type="button"
-          variant="outline"
           onClick={viewModel.onRetry}
           disabled={viewModel.isRetrying}
+          className="vc-key inline-flex h-12 w-full items-center justify-center gap-2.5 bg-vc-surface-raised text-[0.9rem] font-bold text-vc-text hover:bg-vc-line/8"
         >
+          {viewModel.isRetrying ? (
+            <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+          ) : null}
           Thử lại
-        </Button>
+        </button>
       </div>
     );
   }
