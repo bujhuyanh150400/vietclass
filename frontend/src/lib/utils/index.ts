@@ -8,3 +8,6 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export { mapApiErrorToForm } from "./map-api-error-to-form";
+export type { ApiFormErrorResult } from "./map-api-error-to-form";

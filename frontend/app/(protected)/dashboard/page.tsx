@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { DashboardScreen } from "@/modules/dashboard";
+import { DashboardView } from "@/modules/dashboard";
 
 export const metadata: Metadata = {
   title: "Tổng quan",
@@ -11,5 +11,5 @@ export const metadata: Metadata = {
  * protected layout, so this file only composes the module screen.
  */
 export default function DashboardPage() {
-  return <DashboardScreen />;
+  return <DashboardView />;
 }

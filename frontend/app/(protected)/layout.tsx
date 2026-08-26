@@ -7,7 +7,10 @@ import type { NavigationItem } from "@/components/layouts/app-sidebar";
 import { AppShellSkeleton } from "@/components/shared/app-shell-skeleton";
 import { AuthServiceUnavailable } from "@/components/shared/auth-service-unavailable";
 import { isApiClientError } from "@/lib/api/api-client-error";
-import { CurrentUserMenu, type CurrentUser } from "@/modules/identity";
+import {
+  CurrentUserMenuContainer,
+  type CurrentUser,
+} from "@/modules/identity";
 import { SESSION_COOKIE_NAME, fetchCurrentUser } from "@/modules/identity/server";
 
 /** The only destination the protected area currently offers. */
@@ -85,7 +88,7 @@ async function AuthenticatedShell({ children }: { children: ReactNode }) {
   return (
     <ProtectedShell
       navigation={NAVIGATION}
-      accountMenu={<CurrentUserMenu user={outcome.user} />}
+      accountMenu={<CurrentUserMenuContainer user={outcome.user} />}
     >
       {children}
     </ProtectedShell>

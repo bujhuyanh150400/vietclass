@@ -82,7 +82,7 @@ for the Laravel API, and they are distinct from Laravel's own
 | Path                       | Holds                                                                             |
 | -------------------------- | --------------------------------------------------------------------------------- |
 | `app/`                     | Routing, layouts, metadata, Next.js request primitives, thin BFF Route Handlers.   |
-| `src/modules/<module>/`    | Domain behavior for one feature: types, schemas, api, hooks, components, screens.  |
+| `src/modules/<module>/`    | Domain behavior for one feature: types, schemas, api, hooks, containers, and presentational components. |
 | `src/components/ui/`       | shadcn/ui primitives.                                                             |
 | `src/components/layouts/`  | Application frame: sidebar, header, protected shell.                              |
 | `src/components/shared/`   | Cross-feature components that no single module owns.                              |
@@ -99,12 +99,12 @@ with a `no-restricted-imports` pattern, so a deep path such as
 
 | Entrypoint                       | Safe for                                     |
 | -------------------------------- | -------------------------------------------- |
-| `@/modules/<module>`             | Client and server code: types, pure utilities, hooks, components, screens. |
+| `@/modules/<module>`             | Client and server code: types, pure utilities, hooks, containers, and presentational components. |
 | `@/modules/<module>/server`      | Server code only. Marked `server-only`; holds token-bearing functions and cookie policy. |
 
 Shared layouts must not import a feature module. `ProtectedShell` takes the
 account menu as a `ReactNode` slot so the protected layout, not the shell,
-supplies Identity's `CurrentUserMenu`.
+supplies Identity's `CurrentUserMenuContainer`.
 
 ### Client and server components
 

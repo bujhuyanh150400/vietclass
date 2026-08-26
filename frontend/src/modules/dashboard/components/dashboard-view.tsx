@@ -6,11 +6,10 @@ import {
 } from "@/components/ui/card";
 
 /**
- * Renders the dashboard landing content. It reports only what the application
- * can actually confirm today — that the session and shell are working — and adds
- * no figures or activity the backend does not provide.
+ * Renders the static dashboard landing content without introducing a container
+ * for a page that currently has no business state to coordinate.
  */
-export function DashboardScreen() {
+export function DashboardView() {
   return (
     <div className="grid gap-6">
       <div className="grid gap-1">

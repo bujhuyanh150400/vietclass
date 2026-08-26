@@ -11,5 +11,5 @@ export type { LoginFormInput, LoginFormValues } from "./schemas/login-schema";
 export { getRoleLabel } from "./utils/get-role-label";
 export { DEFAULT_RETURN_TO, sanitizeReturnTo } from "./utils/sanitize-return-to";
 
-export { CurrentUserMenu } from "./components/current-user-menu";
-export { LoginScreen } from "./screens/login-screen";
+export { CurrentUserMenuContainer } from "./containers/current-user-menu-container";
+export { LoginContainer } from "./containers/login-container";

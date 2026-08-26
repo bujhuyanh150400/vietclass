@@ -1,15 +1,13 @@
 import { GraduationCap } from "lucide-react";
+import { type ReactNode } from "react";
 
-import { LoginBrandPanel } from "../components/login-brand-panel";
-import { ExistingSessionGate } from "../components/existing-session-gate";
-import { LoginForm } from "../components/login-form";
+import { LoginBrandPanel } from "./login-brand-panel";
 
 /**
- * Composes the sign-in page: an academic brand column beside a single form
- * column on large screens, collapsing to the form alone on small screens. When
- * the server saw a session cookie, session recovery runs before the form shows.
+ * Renders the sign-in page layout and leaves form/session behavior to the slot
+ * supplied by its container.
  */
-export function LoginScreen({ hasSessionCookie }: { hasSessionCookie: boolean }) {
+export function LoginView({ children }: { children: ReactNode }) {
   return (
     <div className="grid min-h-svh grow lg:grid-cols-2">
       <LoginBrandPanel />
@@ -34,15 +32,7 @@ export function LoginScreen({ hasSessionCookie }: { hasSessionCookie: boolean })
             </p>
           </div>
 
-          <div className="mt-8">
-            {hasSessionCookie ? (
-              <ExistingSessionGate>
-                <LoginForm />
-              </ExistingSessionGate>
-            ) : (
-              <LoginForm />
-            )}
-          </div>
+          <div className="mt-8">{children}</div>
         </div>
       </main>
     </div>

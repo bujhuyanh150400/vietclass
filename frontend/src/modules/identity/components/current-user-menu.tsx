@@ -1,5 +1,3 @@
-"use client";
-
 import { Loader2, LogOut } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -13,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { useLogout } from "../hooks/use-logout";
 import type { CurrentUser } from "../types/auth";
 import { getRoleLabel } from "../utils/get-role-label";
 
@@ -30,15 +27,21 @@ function getAvatarInitial(username: string): string {
 
   return (initial ?? "?").toUpperCase();
 }
-
 /**
- * Renders the account menu in the topbar. It shows only the authenticated
- * username and role label — never token or expiry data — and offers the single
- * logout action, which cannot be submitted twice at once.
+ * Renders the account menu from user data and callback state supplied by its
+ * container; logout mutation and navigation stay outside this component.
  */
-export function CurrentUserMenu({ user }: { user: CurrentUser }) {
-  const logout = useLogout();
-
+export function CurrentUserMenu({
+  user,
+  isLoggingOut,
+  hasLogoutError,
+  onLogout,
+}: {
+  user: CurrentUser;
+  isLoggingOut: boolean;
+  hasLogoutError: boolean;
+  onLogout: () => void;
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -66,14 +69,14 @@ export function CurrentUserMenu({ user }: { user: CurrentUser }) {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          disabled={logout.isPending}
+          disabled={isLoggingOut}
           onSelect={(event) => {
             // Keep the menu open so a failed attempt can be retried in place.
             event.preventDefault();
-            logout.mutate();
+            onLogout();
           }}
         >
-          {logout.isPending ? (
+          {isLoggingOut ? (
             <Loader2 aria-hidden="true" className="animate-spin" />
           ) : (
             <LogOut aria-hidden="true" />
@@ -81,7 +84,7 @@ export function CurrentUserMenu({ user }: { user: CurrentUser }) {
           Đăng xuất
         </DropdownMenuItem>
 
-        {logout.isError ? (
+        {hasLogoutError ? (
           <p role="alert" className="px-2 py-1.5 text-xs text-destructive">
             {LOGOUT_RETRY_MESSAGE}
           </p>

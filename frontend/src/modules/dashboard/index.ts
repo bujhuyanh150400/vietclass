@@ -1,2 +1,2 @@
 export { DashboardSkeleton } from "./components/dashboard-skeleton";
-export { DashboardScreen } from "./screens/dashboard-screen";
+export { DashboardView } from "./components/dashboard-view";
