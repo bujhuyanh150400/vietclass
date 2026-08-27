@@ -3,12 +3,25 @@
 namespace App\Modules\Identity\Repositories;
 
 use App\Core\Data\ListQuery;
+use App\Core\Repositories\BaseRepository;
 use App\Modules\Identity\Models\Student;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
-final class StudentRepository
+final class StudentRepository extends BaseRepository
 {
+    /** This repository is backed by the Student model. */
+    protected function modelClass(): ?string
+    {
+        return Student::class;
+    }
+
+    /** This repository does not query a DB table directly. */
+    protected function table(): ?string
+    {
+        return null;
+    }
+
     /**
      * Return one page of student profiles with the login account each one belongs to.
      *
@@ -16,7 +29,7 @@ final class StudentRepository
      */
     public function paginateList(ListQuery $query): LengthAwarePaginator
     {
-        return Student::query()
+        return $this->modelQuery()
             ->with('user:id,username,is_active')
             ->when(
                 $query->hasSearch(),
@@ -56,7 +69,7 @@ final class StudentRepository
      */
     public function findById(int $studentId): ?Student
     {
-        return Student::query()
+        return $this->modelQuery()
             ->with('user:id,username,is_active')
             ->find($studentId);
     }
@@ -68,7 +81,7 @@ final class StudentRepository
      */
     public function create(array $attributes): Student
     {
-        return Student::query()->create($attributes);
+        return $this->modelQuery()->create($attributes);
     }
 
     /**

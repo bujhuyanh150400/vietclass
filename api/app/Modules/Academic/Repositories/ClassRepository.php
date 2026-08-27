@@ -3,6 +3,7 @@
 namespace App\Modules\Academic\Repositories;
 
 use App\Core\Data\ListQuery;
+use App\Core\Repositories\BaseRepository;
 use App\Modules\Academic\Enums\ClassStatus;
 use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Academic\Models\SchoolClass;
@@ -11,8 +12,20 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
-final class ClassRepository
+final class ClassRepository extends BaseRepository
 {
+    /** This repository is backed by the SchoolClass model. */
+    protected function modelClass(): ?string
+    {
+        return SchoolClass::class;
+    }
+
+    /** This repository does not query a DB table directly. */
+    protected function table(): ?string
+    {
+        return null;
+    }
+
     /**
      * Return one page of classes with the subject, teacher, and current headcount each
      * one needs to be understood without a second request.
@@ -21,7 +34,7 @@ final class ClassRepository
      */
     public function paginateList(ListQuery $query): LengthAwarePaginator
     {
-        return $this->withListRelations(SchoolClass::query())
+        return $this->withListRelations($this->modelQuery())
             ->when(
                 $query->hasSearch(),
                 fn (Builder $builder): Builder => $builder->where(
@@ -58,7 +71,7 @@ final class ClassRepository
      */
     public function options(ListQuery $query, ?int $excludeId = null, ?int $subjectId = null): Collection
     {
-        return SchoolClass::query()
+        return $this->modelQuery()
             ->where('status', ClassStatus::Active)
             ->when($excludeId !== null, fn (Builder $builder): Builder => $builder->whereKeyNot($excludeId))
             ->when($subjectId !== null, fn (Builder $builder): Builder => $builder->where('subject_id', $subjectId))
@@ -80,7 +93,7 @@ final class ClassRepository
      */
     public function findById(int $classId): ?SchoolClass
     {
-        return $this->withListRelations(SchoolClass::query())->find($classId);
+        return $this->withListRelations($this->modelQuery())->find($classId);
     }
 
     /**
@@ -90,7 +103,7 @@ final class ClassRepository
      */
     public function create(array $attributes): SchoolClass
     {
-        return SchoolClass::query()->create($attributes);
+        return $this->modelQuery()->create($attributes);
     }
 
     /**

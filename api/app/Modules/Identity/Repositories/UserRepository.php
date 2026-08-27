@@ -2,17 +2,30 @@
 
 namespace App\Modules\Identity\Repositories;
 
+use App\Core\Repositories\BaseRepository;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\User;
 
-final class UserRepository
+final class UserRepository extends BaseRepository
 {
+    /** This repository is backed by the User model. */
+    protected function modelClass(): ?string
+    {
+        return User::class;
+    }
+
+    /** This repository does not query a DB table directly. */
+    protected function table(): ?string
+    {
+        return null;
+    }
+
     /**
      * Find an active user by its unique login name.
      */
     public function findActiveByUsername(string $username): ?User
     {
-        return User::query()
+        return $this->modelQuery()
             ->where('username', $username)
             ->where('is_active', true)
             ->first();
@@ -25,7 +38,7 @@ final class UserRepository
      */
     public function createAccount(string $username, string $password, UserRole $role): User
     {
-        return User::query()->create([
+        return $this->modelQuery()->create([
             'username' => $username,
             'password' => $password,
             'role' => $role,

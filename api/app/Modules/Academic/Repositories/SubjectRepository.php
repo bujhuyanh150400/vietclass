@@ -3,14 +3,27 @@
 namespace App\Modules\Academic\Repositories;
 
 use App\Core\Data\ListQuery;
+use App\Core\Repositories\BaseRepository;
 use App\Modules\Academic\Enums\ClassStatus;
 use App\Modules\Academic\Models\Subject;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
-final class SubjectRepository
+final class SubjectRepository extends BaseRepository
 {
+    /** This repository is backed by the Subject model. */
+    protected function modelClass(): ?string
+    {
+        return Subject::class;
+    }
+
+    /** This repository does not query a DB table directly. */
+    protected function table(): ?string
+    {
+        return null;
+    }
+
     /**
      * Return one page of subjects, each carrying the number of running classes that
      * use it, because that count is what blocks locking or removing the subject.
@@ -19,7 +32,7 @@ final class SubjectRepository
      */
     public function paginateList(ListQuery $query): LengthAwarePaginator
     {
-        return Subject::query()
+        return $this->modelQuery()
             ->when(
                 $query->hasSearch(),
                 fn (Builder $builder): Builder => $builder->where('name', 'ilike', $query->searchLike()),
@@ -43,7 +56,7 @@ final class SubjectRepository
      */
     public function options(ListQuery $query): Collection
     {
-        return Subject::query()
+        return $this->modelQuery()
             ->where('is_active', true)
             ->when(
                 $query->hasSearch(),
@@ -59,7 +72,7 @@ final class SubjectRepository
      */
     public function findById(int $subjectId): ?Subject
     {
-        return Subject::query()
+        return $this->modelQuery()
             ->withCount([
                 'classes as active_classes_count' => fn (Builder $builder): Builder => $builder
                     ->where('status', ClassStatus::Active),
@@ -74,7 +87,7 @@ final class SubjectRepository
      */
     public function create(array $attributes): Subject
     {
-        return Subject::query()->create($attributes);
+        return $this->modelQuery()->create($attributes);
     }
 
     /**

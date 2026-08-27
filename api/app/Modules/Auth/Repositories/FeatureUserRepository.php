@@ -2,10 +2,22 @@
 
 namespace App\Modules\Auth\Repositories;
 
-use Illuminate\Support\Facades\DB;
+use App\Core\Repositories\BaseRepository;
 
-final class FeatureUserRepository
+final class FeatureUserRepository extends BaseRepository
 {
+    /** This repository does not query through an Eloquent model. */
+    protected function modelClass(): ?string
+    {
+        return null;
+    }
+
+    /** This repository is backed by the feature_user pivot table, which has no dedicated model. */
+    protected function table(): ?string
+    {
+        return 'feature_user';
+    }
+
     /**
      * Return one user's permission overrides keyed by feature code, where `true`
      * grants a permission the role does not carry and `false` withdraws one it does.
@@ -14,7 +26,7 @@ final class FeatureUserRepository
      */
     public function overridesFor(int $userId): array
     {
-        return DB::table('feature_user')
+        return $this->tableQuery()
             ->join('features', 'features.id', '=', 'feature_user.feature_id')
             ->where('feature_user.user_id', $userId)
             ->pluck('feature_user.granted', 'features.code')

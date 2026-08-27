@@ -3,14 +3,27 @@
 namespace App\Modules\Identity\Repositories;
 
 use App\Core\Data\ListQuery;
+use App\Core\Repositories\BaseRepository;
 use App\Modules\Identity\Enums\EmployeeStatus;
 use App\Modules\Identity\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
-final class TeacherRepository
+final class TeacherRepository extends BaseRepository
 {
+    /** This repository is backed by the Teacher model. */
+    protected function modelClass(): ?string
+    {
+        return Teacher::class;
+    }
+
+    /** This repository does not query a DB table directly. */
+    protected function table(): ?string
+    {
+        return null;
+    }
+
     /**
      * Return one page of teacher profiles with the login account each one belongs to.
      *
@@ -18,7 +31,7 @@ final class TeacherRepository
      */
     public function paginateList(ListQuery $query): LengthAwarePaginator
     {
-        return Teacher::query()
+        return $this->modelQuery()
             ->with('user:id,username,is_active')
             ->when(
                 $query->hasSearch(),
@@ -56,7 +69,7 @@ final class TeacherRepository
      */
     public function options(ListQuery $query): Collection
     {
-        return Teacher::query()
+        return $this->modelQuery()
             ->where('status', EmployeeStatus::Active)
             ->whereHas('user', fn (Builder $user): Builder => $user->where('is_active', true))
             ->when(
@@ -73,7 +86,7 @@ final class TeacherRepository
      */
     public function findById(int $teacherId): ?Teacher
     {
-        return Teacher::query()
+        return $this->modelQuery()
             ->with('user:id,username,is_active')
             ->find($teacherId);
     }
@@ -85,7 +98,7 @@ final class TeacherRepository
      */
     public function create(array $attributes): Teacher
     {
-        return Teacher::query()->create($attributes);
+        return $this->modelQuery()->create($attributes);
     }
 
     /**

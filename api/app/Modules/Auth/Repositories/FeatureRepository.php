@@ -2,12 +2,25 @@
 
 namespace App\Modules\Auth\Repositories;
 
+use App\Core\Repositories\BaseRepository;
 use App\Modules\Auth\Contracts\FeatureEnum;
 use App\Modules\Auth\Models\Feature;
 use Illuminate\Contracts\Database\Query\Builder;
 
-final class FeatureRepository
+final class FeatureRepository extends BaseRepository
 {
+    /** This repository is backed by the Feature model. */
+    protected function modelClass(): ?string
+    {
+        return Feature::class;
+    }
+
+    /** This repository does not query a DB table directly. */
+    protected function table(): ?string
+    {
+        return null;
+    }
+
     /**
      * Insert or refresh the catalogue row for every declared permission, so an admin
      * interface can list permissions and per-user overrides have a row to point at.
@@ -18,7 +31,7 @@ final class FeatureRepository
     public function upsertMany(array $features): int
     {
         foreach ($features as $feature) {
-            Feature::query()->updateOrCreate(
+            $this->modelQuery()->updateOrCreate(
                 ['code' => $feature->value],
                 [
                     'name' => $feature->label(),
@@ -40,7 +53,7 @@ final class FeatureRepository
      */
     public function orphanCodes(array $declaredCodes): array
     {
-        return Feature::query()
+        return $this->modelQuery()
             ->when(
                 $declaredCodes !== [],
                 static fn (Builder $query): Builder => $query->whereNotIn('code', $declaredCodes),

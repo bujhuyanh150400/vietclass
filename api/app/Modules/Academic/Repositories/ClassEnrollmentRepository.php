@@ -3,13 +3,26 @@
 namespace App\Modules\Academic\Repositories;
 
 use App\Core\Data\ListQuery;
+use App\Core\Repositories\BaseRepository;
 use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Identity\Models\Student;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
-final class ClassEnrollmentRepository
+final class ClassEnrollmentRepository extends BaseRepository
 {
+    /** This repository is backed by the ClassEnrollment model. */
+    protected function modelClass(): ?string
+    {
+        return ClassEnrollment::class;
+    }
+
+    /** This repository does not query a DB table directly. */
+    protected function table(): ?string
+    {
+        return null;
+    }
+
     /**
      * Return one page of a class roster, newest membership first, including periods a
      * student has already left so the history stays visible.
@@ -18,7 +31,7 @@ final class ClassEnrollmentRepository
      */
     public function paginateForClass(int $classId, ListQuery $query): LengthAwarePaginator
     {
-        return ClassEnrollment::query()
+        return $this->modelQuery()
             ->with('student:id,full_name,phone,grade_level')
             ->where('class_id', $classId)
             ->when(
@@ -50,7 +63,7 @@ final class ClassEnrollmentRepository
      */
     public function paginateAvailableForClass(int $classId, ListQuery $query): LengthAwarePaginator
     {
-        $activeStudentIds = ClassEnrollment::query()
+        $activeStudentIds = $this->modelQuery()
             ->where('class_id', $classId)
             ->active()
             ->pluck('student_id');
@@ -76,7 +89,7 @@ final class ClassEnrollmentRepository
      */
     public function findById(int $enrollmentId): ?ClassEnrollment
     {
-        return ClassEnrollment::query()
+        return $this->modelQuery()
             ->with(['schoolClass', 'student:id,full_name'])
             ->find($enrollmentId);
     }
@@ -87,7 +100,7 @@ final class ClassEnrollmentRepository
      */
     public function findActive(int $classId, int $studentId): ?ClassEnrollment
     {
-        return ClassEnrollment::query()
+        return $this->modelQuery()
             ->where('class_id', $classId)
             ->where('student_id', $studentId)
             ->active()
@@ -100,7 +113,7 @@ final class ClassEnrollmentRepository
      */
     public function hasOtherActive(int $classId, int $studentId, int $exceptEnrollmentId): bool
     {
-        return ClassEnrollment::query()
+        return $this->modelQuery()
             ->where('class_id', $classId)
             ->where('student_id', $studentId)
             ->whereKeyNot($exceptEnrollmentId)
@@ -115,7 +128,7 @@ final class ClassEnrollmentRepository
      */
     public function create(array $attributes): ClassEnrollment
     {
-        return ClassEnrollment::query()->create($attributes);
+        return $this->modelQuery()->create($attributes);
     }
 
     /**
