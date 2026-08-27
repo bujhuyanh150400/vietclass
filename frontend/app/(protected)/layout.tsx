@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { Suspense, type ReactNode } from "react";
 
 import { ProtectedShell } from "@/components/layouts/protected-shell";
-import type { NavigationItem } from "@/components/layouts/app-sidebar";
 import { AppShellSkeleton } from "@/components/shared/app-shell-skeleton";
 import { AuthServiceUnavailable } from "@/components/shared/auth-service-unavailable";
 import { isApiClientError } from "@/lib/api/api-client-error";
@@ -12,11 +11,6 @@ import {
   type CurrentUser,
 } from "@/modules/identity";
 import { SESSION_COOKIE_NAME, fetchCurrentUser } from "@/modules/identity/server";
-
-/** The only destination the protected area currently offers. */
-const NAVIGATION: NavigationItem[] = [
-  { href: "/dashboard", label: "Tổng quan", icon: "dashboard", current: true },
-];
 
 /** Either a verified identity or a transient failure to reach the auth service. */
 type SessionOutcome =
@@ -94,7 +88,6 @@ async function AuthenticatedShell({ children }: { children: ReactNode }) {
 
   return (
     <ProtectedShell
-      navigation={NAVIGATION}
       accountMenu={<CurrentUserMenuContainer user={outcome.user} />}
       defaultSidebarOpen={defaultSidebarOpen}
     >

@@ -1,9 +1,9 @@
 <?php
 
 use App\Core\Data\ActionResult;
-use App\Modules\Identity\Actions\GetCurrentUserAction;
-use App\Modules\Identity\Actions\LogoutAction;
-use App\Modules\Identity\Enums\IdentityError;
+use App\Modules\Auth\Actions\GetCurrentUserAction;
+use App\Modules\Auth\Actions\LogoutAction;
+use App\Modules\Auth\Enums\AuthError;
 use App\Modules\Identity\Models\User;
 
 test('current user action returns an unauthenticated failure result without a user', function (): void {
@@ -12,7 +12,7 @@ test('current user action returns an unauthenticated failure result without a us
     expect($result)
         ->toBeInstanceOf(ActionResult::class)
         ->and($result->isSuccess())->toBeFalse()
-        ->and($result->getError())->toBe(IdentityError::Unauthenticated)
+        ->and($result->getError())->toBe(AuthError::Unauthenticated)
         ->and($result->getMessage())->toBe('Chưa xác thực.');
 });
 
@@ -33,6 +33,6 @@ test('logout action returns an unauthenticated failure result without a user', f
     expect($result)
         ->toBeInstanceOf(ActionResult::class)
         ->and($result->isSuccess())->toBeFalse()
-        ->and($result->getError())->toBe(IdentityError::Unauthenticated)
+        ->and($result->getError())->toBe(AuthError::Unauthenticated)
         ->and($result->getMessage())->toBe('Chưa xác thực.');
 });

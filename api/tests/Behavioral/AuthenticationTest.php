@@ -2,9 +2,9 @@
 
 use App\Core\Data\ActionResult;
 use App\Core\Exceptions\ActionError;
-use App\Modules\Identity\Actions\LoginAction;
-use App\Modules\Identity\Actions\LogoutAction;
-use App\Modules\Identity\Enums\IdentityError;
+use App\Modules\Auth\Actions\LoginAction;
+use App\Modules\Auth\Actions\LogoutAction;
+use App\Modules\Auth\Enums\AuthError;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\User;
 use Carbon\Carbon;
@@ -19,7 +19,7 @@ test('login action returns a business failure result for invalid credentials', f
     expect($result)
         ->toBeInstanceOf(ActionResult::class)
         ->and($result->isSuccess())->toBeFalse()
-        ->and($result->getError())->toBe(IdentityError::InvalidCredentials)
+        ->and($result->getError())->toBe(AuthError::InvalidCredentials)
         ->and($result->getMessage())->toBe('Thông tin đăng nhập không chính xác.');
 });
 
@@ -31,7 +31,7 @@ test('login action converts a known action error into a failure result', functio
 
     Hash::shouldReceive('check')->once()->andThrow(new ActionError(
         message: 'Thông tin đăng nhập không chính xác.',
-        code: IdentityError::InvalidCredentials,
+        code: AuthError::InvalidCredentials,
     ));
 
     $result = app(LoginAction::class)->handle([
@@ -40,7 +40,7 @@ test('login action converts a known action error into a failure result', functio
     ]);
 
     expect($result->isSuccess())->toBeFalse()
-        ->and($result->getError())->toBe(IdentityError::InvalidCredentials)
+        ->and($result->getError())->toBe(AuthError::InvalidCredentials)
         ->and($result->getMessage())->toBe('Thông tin đăng nhập không chính xác.');
 });
 

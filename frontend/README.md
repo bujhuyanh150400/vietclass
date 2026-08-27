@@ -60,9 +60,15 @@ cd api && php artisan db:seed --class=IdentitySeeder
 | `/`                   | Page          | Redirects to `/dashboard`.                                              |
 | `/login`              | Page          | Sign-in screen; recovers an existing session before showing the form.    |
 | `/dashboard`          | Page          | Protected landing screen inside the application shell.                   |
+| `/dashboard/academic/subjects`         | Page | Subject list, with create and edit at `/new` and `/[subjectId]`. |
+| `/dashboard/academic/teachers`         | Page | Teacher list, with create and edit at `/new` and `/[teacherId]`. |
+| `/dashboard/academic/classes`          | Page | Class list, with create at `/new`.                              |
+| `/dashboard/academic/classes/[classId]` | Page | One class with its roster; edit at `/edit`.                    |
+| `/dashboard/academic/students`         | Page | Student list, with create and edit at `/new` and `/[studentId]`. |
 | `/api/auth/login`     | Route Handler | `POST` credentials, sets the session cookie, returns the current user.   |
 | `/api/auth/session`   | Route Handler | `GET` the current user for the session cookie; `401` clears the cookie.  |
 | `/api/auth/logout`    | Route Handler | `POST` to revoke the Laravel token and clear the cookie; returns `204`.  |
+| `/api/academic/*`     | Route Handler | Forwards allowlisted academic paths to Laravel with the bearer token.   |
 
 `proxy.ts` guards `/dashboard` and its descendants. It only checks whether the
 session cookie is present and redirects to `/login` with a `returnTo` value; it
@@ -77,6 +83,13 @@ same-origin endpoints that hold the token in the `HttpOnly`, host-only
 for the Laravel API, and they are distinct from Laravel's own
 `/api/v1/auth/*` endpoints.
 
+`/api/academic/[...path]` forwards the academic screens' requests for the same
+reason: the token has to be attached on the server. It is not a general proxy
+either — every path it accepts is listed in an allowlist inside the route, and
+anything else answers `404` without a request ever being made. It forwards
+Laravel's status and body unchanged, so response validation lives in the module's
+client API layer rather than in the route.
+
 ## Directory boundaries
 
 | Path                       | Holds                                                                             |
@@ -85,7 +98,7 @@ for the Laravel API, and they are distinct from Laravel's own
 | `src/modules/<module>/`    | Domain behavior for one feature: types, schemas, api, hooks, containers, and presentational components. |
 | `src/components/ui/`       | shadcn/ui primitives.                                                             |
 | `src/components/layouts/`  | Application frame: sidebar, header, protected shell.                              |
-| `src/components/shared/`   | Cross-feature components that no single module owns.                              |
+| `src/components/shared/`   | Cross-feature components that no single module owns, including the `data-table/` list primitives every management screen builds on. |
 | `src/lib/`                 | Reusable logic with no React dependency, such as the HTTP and error primitives.    |
 | `src/hooks/`               | Application-generic React hooks.                                                  |
 

@@ -1,14 +1,14 @@
 <?php
 
 use App\Core\Contracts\ErrorDeclarationEnum;
-use App\Modules\Identity\Enums\IdentityError;
+use App\Modules\Auth\Enums\AuthError;
 
-test('identity errors expose stable string declaration codes', function (): void {
-    expect(IdentityError::InvalidCredentials->value)->toBe('IDENTITY-001');
+test('auth errors expose stable string declaration codes', function (): void {
+    expect(AuthError::InvalidCredentials->value)->toBe('AUTH-001');
 });
 
-test('identity errors expose their HTTP status through the shared declaration contract', function (): void {
-    expect(IdentityError::InvalidCredentials)
+test('auth errors expose their HTTP status through the shared declaration contract', function (): void {
+    expect(AuthError::InvalidCredentials)
         ->toBeInstanceOf(ErrorDeclarationEnum::class)
-        ->and(IdentityError::InvalidCredentials->httpStatus())->toBe(401);
+        ->and(AuthError::InvalidCredentials->httpStatus())->toBe(401);
 });

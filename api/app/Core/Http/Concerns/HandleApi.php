@@ -5,7 +5,11 @@ namespace App\Core\Http\Concerns;
 use App\Core\Contracts\ErrorDeclarationEnum;
 use App\Core\Data\ActionResult;
 use App\Core\Http\ApiResponseFactory;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 use LogicException;
 
@@ -22,6 +26,29 @@ trait HandleApi
             data: $data,
             status: $status,
             meta: $meta,
+        );
+    }
+
+    /**
+     * Returns one page of a list using the shared API envelope, where `meta` carries
+     * the paging state every list endpoint reports the same way.
+     *
+     * @param  LengthAwarePaginator<int, Model>  $paginator
+     * @param  class-string<JsonResource>  $resourceClass
+     */
+    protected function paginated(
+        Request $request,
+        LengthAwarePaginator $paginator,
+        string $resourceClass,
+    ): JsonResponse {
+        return $this->success(
+            data: $resourceClass::collection($paginator->items())->resolve($request),
+            meta: [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+            ],
         );
     }
 

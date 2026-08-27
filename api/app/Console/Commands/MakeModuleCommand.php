@@ -131,9 +131,7 @@ final class MakeModuleCommand extends Command
             /**
              * Register module container bindings.
              */
-            public function register(): void
-            {
-            }
+            public function register(): void {}
 
             /**
              * Load the module's HTTP and console entry points.
@@ -169,6 +167,7 @@ final class MakeModuleCommand extends Command
                 }
             }
         }
+
         PHP;
 
         return str_replace('{{ moduleName }}', $moduleName, $stub);

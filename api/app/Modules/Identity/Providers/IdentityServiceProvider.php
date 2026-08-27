@@ -2,40 +2,28 @@
 
 namespace App\Modules\Identity\Providers;
 
-use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\RateLimiter;
+use App\Modules\Auth\Support\FeatureRegistry;
+use App\Modules\Identity\Enums\IdentityFeature;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
 
 final class IdentityServiceProvider extends ServiceProvider
 {
     /**
-     * Register module container bindings.
+     * Register module container bindings and declare the permissions this module owns.
      */
-    public function register(): void {}
+    public function register(): void
+    {
+        $this->app->make(FeatureRegistry::class)->register(IdentityFeature::class);
+    }
 
     /**
      * Load the module's HTTP and console entry points.
      */
     public function boot(): void
     {
-        $this->configureLoginRateLimiter();
         $this->loadApiRoutes();
         $this->loadConsoleRoutes();
-    }
-
-    /**
-     * Limit login attempts per username and client address.
-     */
-    private function configureLoginRateLimiter(): void
-    {
-        RateLimiter::for('identity-login', function (Request $request): Limit {
-            return Limit::perMinute(5)->by(
-                Str::lower((string) $request->input('username')).'|'.$request->ip(),
-            );
-        });
     }
 
     /**

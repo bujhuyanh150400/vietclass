@@ -3,7 +3,7 @@
 use App\Core\Data\ActionResult;
 use App\Core\Http\ApiResponseFactory;
 use App\Core\Http\Concerns\HandleApi;
-use App\Modules\Identity\Enums\IdentityError;
+use App\Modules\Auth\Enums\AuthError;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
@@ -47,7 +47,7 @@ beforeEach(function (): void {
             public function respond(): JsonResponse
             {
                 return $this->actionFailure(ActionResult::error(
-                    error: IdentityError::InvalidCredentials,
+                    error: AuthError::InvalidCredentials,
                     message: 'Thông tin đăng nhập không chính xác.',
                 ));
             }

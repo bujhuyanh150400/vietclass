@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { AppHeader } from "@/components/layouts/app-header";
-import { AppSidebar, type NavigationItem } from "@/components/layouts/app-sidebar";
+import { AppSidebar } from "@/components/layouts/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 /**
@@ -12,24 +12,19 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
  * feature-module imports.
  */
 export function ProtectedShell({
-  navigation,
   accountMenu,
   defaultSidebarOpen,
   children,
 }: {
-  navigation: NavigationItem[];
   accountMenu: ReactNode;
   defaultSidebarOpen: boolean;
   children: ReactNode;
 }) {
-  const currentTitle =
-    navigation.find((item) => item.current)?.label ?? "VietClasses";
-
   return (
     <SidebarProvider defaultOpen={defaultSidebarOpen}>
-      <AppSidebar navigation={navigation} accountMenu={accountMenu} />
+      <AppSidebar accountMenu={accountMenu} />
       <SidebarInset>
-        <AppHeader title={currentTitle} />
+        <AppHeader />
         <main className="grow px-4 py-6 sm:px-6 sm:py-8">{children}</main>
       </SidebarInset>
     </SidebarProvider>

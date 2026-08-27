@@ -47,12 +47,39 @@ export async function serverRequest<T>(
   path: string,
   init: ServerRequestInit = {},
 ): Promise<T> {
+  const response = await sendServerRequest(path, init);
+
+  return parseApiResponse<T>({ status: response.status, data: response.data });
+}
+
+/**
+ * Calls the Laravel API and returns its status and body without interpreting the
+ * envelope, so a forwarding route can hand the answer back to the browser exactly
+ * as the API gave it. Only a request that never produced a response is turned into
+ * an error here.
+ */
+export async function serverRequestRaw(
+  path: string,
+  init: ServerRequestInit = {},
+): Promise<{ status: number; body: unknown }> {
+  const response = await sendServerRequest(path, init);
+
+  return { status: response.status, body: response.data };
+}
+
+/**
+ * Performs the request itself. Axios bypasses Next's fetch cache entirely, so every
+ * call is already uncached, and the call is abandoned after the fixed timeout, so a
+ * slow or unreachable API becomes a service failure instead of a hang.
+ */
+async function sendServerRequest(
+  path: string,
+  init: ServerRequestInit,
+): Promise<AxiosResponse<unknown>> {
   const baseURL = resolveBaseUrl();
 
-  let response: AxiosResponse<unknown>;
-
   try {
-    response = await axios.request<unknown>({
+    return await axios.request<unknown>({
       baseURL,
       url: path,
       method: init.method ?? "GET",
@@ -65,6 +92,4 @@ export async function serverRequest<T>(
     // Network failures and timeouts must not surface the URL, headers, or body.
     throw ApiClientError.serviceUnavailable();
   }
-
-  return parseApiResponse<T>({ status: response.status, data: response.data });
 }

@@ -1,5 +1,5 @@
 import { ApiClientError, REQUEST_FAILURE_MESSAGE } from "./api-client-error";
-import { isApiSuccess, isJsonObject } from "./contracts";
+import { isApiSuccess, isJsonObject, isPageMeta, type Page } from "./contracts";
 
 /** The status and already-parsed body of one axios response. */
 export type RawApiResult = { status: number; data: unknown };
@@ -47,4 +47,30 @@ export function parseApiResponse<T>(result: RawApiResult): T {
   }
 
   return result.data.data;
+}
+
+/**
+ * Unwraps a paginated response into its rows and paging state. It exists beside
+ * `parseApiResponse` rather than replacing it because that function deliberately
+ * discards `meta`, and the authentication calls built on it must keep doing so.
+ *
+ * A body whose rows are not an array, or whose paging state is incomplete, is a
+ * response no pager can render, so it is reported as an upstream failure.
+ */
+export function parseApiListResponse<T>(result: RawApiResult): Page<T> {
+  if (result.status < 200 || result.status >= 300) {
+    throw toClientError(result.status, result.data);
+  }
+
+  if (!isApiSuccess<T[]>(result.data) || !Array.isArray(result.data.data)) {
+    throw ApiClientError.upstreamFailure();
+  }
+
+  const meta = isJsonObject(result.data) ? result.data.meta : undefined;
+
+  if (!isPageMeta(meta)) {
+    throw ApiClientError.upstreamFailure();
+  }
+
+  return { data: result.data.data, meta };
 }
