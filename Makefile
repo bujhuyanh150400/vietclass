@@ -35,11 +35,19 @@ setup-app-dev: dev-init ## Bootstrap the API and frontend applications for devel
 dev: ## Start infrastructure, Laravel API, and Next.js frontend.
 	@$(COMPOSE) up -d
 	@set -Eeuo pipefail; \
+		. .env.dev; \
 		api_pid=; \
 		frontend_pid=; \
 		trap 'if [[ -n "$$api_pid" ]]; then kill "$$api_pid" 2>/dev/null || true; fi; if [[ -n "$$frontend_pid" ]]; then kill "$$frontend_pid" 2>/dev/null || true; fi' EXIT; \
 		trap 'if [[ -n "$$api_pid" ]]; then kill "$$api_pid" 2>/dev/null || true; fi; if [[ -n "$$frontend_pid" ]]; then kill "$$frontend_pid" 2>/dev/null || true; fi; exit 0' INT TERM; \
-		(cd api && php artisan serve) & api_pid=$$!; \
+		(cd api && \
+			DB_CONNECTION=pgsql \
+			DB_HOST=127.0.0.1 \
+			DB_PORT="$$POSTGRES_PORT" \
+			DB_DATABASE="$$POSTGRES_DB" \
+			DB_USERNAME="$$POSTGRES_USER" \
+			DB_PASSWORD="$$POSTGRES_PASSWORD" \
+			php artisan serve) & api_pid=$$!; \
 		(cd frontend && npm run dev) & frontend_pid=$$!; \
 		if ((BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 3))); then \
 			wait -n "$$api_pid" "$$frontend_pid"; \
