@@ -1,0 +1,172 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Login screen
+   The sign-in page is built from the two materials the mascot artwork already
+   shows: a dark wooden desk and a sheet of "vở ô ly", the squared exercise book
+   Vietnamese pupils write in. Every rule below serves one of those two
+   surfaces, or the hard-edged sprite logic the pixel-art mascot is drawn with.
+
+   These rules live with the identity module rather than in the global sheet
+   because nothing outside the sign-in screen uses them. They reach the bundle
+   through the `@import` in src/styles.css, which is what keeps them inside
+   Tailwind's `components` layer so utilities still win over them.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@layer components {
+  /* The desk: ink ground lit by a warm lamp from above and grounded in wood. */
+  .vc-desk {
+    background-color: var(--vc-ink);
+    background-image:
+      radial-gradient(115% 80% at 50% -12%, rgb(253 113 16 / 0.32), transparent 60%),
+      radial-gradient(95% 55% at 50% 106%, rgb(120 49 10 / 0.6), transparent 72%);
+  }
+
+  /* Squared exercise-book paper: 22px cells with a heavier rule every fifth. */
+  .vc-paper {
+    background-color: var(--vc-surface);
+    background-image:
+      linear-gradient(to right, var(--vc-grid-major) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--vc-grid-major) 1px, transparent 1px),
+      linear-gradient(to right, var(--vc-grid-minor) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--vc-grid-minor) 1px, transparent 1px);
+    background-size: 110px 110px, 110px 110px, 22px 22px, 22px 22px;
+    background-position: 0 0;
+  }
+
+  /* Punched binding holes along the paper's inner edge, so the two columns read
+     as one notebook lying open on the desk rather than two stacked panels. */
+  @media (width >= 64rem) {
+    /* The page is bound, not butted against the desk: a spine shadow along the
+       inner edge, then the punched holes sitting in the margin beside it. */
+    .vc-binding::before {
+      content: "";
+      position: absolute;
+      inset-block: 0;
+      inset-inline-start: 0;
+      width: 40px;
+      pointer-events: none;
+      background-image:
+        radial-gradient(
+          circle 6px at 20px 55px,
+          var(--vc-hole) 96%,
+          transparent 100%
+        ),
+        linear-gradient(
+          to right,
+          color-mix(in srgb, var(--vc-hole) 55%, transparent),
+          transparent
+        );
+      background-size: 40px 110px, 16px 100%;
+      background-repeat: repeat-y, no-repeat;
+    }
+  }
+
+  /* Sprite block: hard 2px outline and a solid, never-blurred offset shadow. */
+  .vc-field {
+    display: flex;
+    align-items: center;
+    border: 2px solid var(--vc-line);
+    border-radius: 3px;
+    background-color: var(--vc-surface-raised);
+    box-shadow: 3px 3px 0 0 color-mix(in srgb, var(--vc-line) 26%, transparent);
+    transition: box-shadow 120ms steps(2, end);
+  }
+
+  .vc-field:focus-within {
+    box-shadow: 3px 3px 0 0 var(--vc-orange);
+    outline: 3px solid var(--vc-line);
+    outline-offset: 2px;
+  }
+
+  .vc-field[data-invalid="true"] {
+    border-color: var(--vc-ember);
+    box-shadow: 3px 3px 0 0 color-mix(in srgb, var(--vc-ember) 40%, transparent);
+  }
+
+  .vc-field[data-invalid="true"]:focus-within {
+    box-shadow: 3px 3px 0 0 var(--vc-ember);
+    outline-color: var(--vc-ember);
+  }
+
+  /* The submit control behaves like a physical key: it travels into its own
+     shadow on press, in discrete steps rather than a smooth ease. */
+  .vc-key {
+    border: 2px solid var(--vc-line);
+    border-radius: 3px;
+    box-shadow: 5px 5px 0 0 var(--vc-line);
+    transition:
+      transform 90ms steps(2, end),
+      box-shadow 90ms steps(2, end),
+      background-color 140ms ease;
+  }
+
+  .vc-key:hover:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 3px 3px 0 0 var(--vc-line);
+  }
+
+  .vc-key:active:not(:disabled),
+  .vc-key:disabled {
+    transform: translate(5px, 5px);
+    box-shadow: 0 0 0 0 var(--vc-line);
+  }
+
+  .vc-key:focus-visible {
+    outline: 3px solid var(--vc-line);
+    outline-offset: 4px;
+  }
+
+  /* Pixel art must be sampled, not smoothed, at every scale. */
+  .vc-pixels {
+    image-rendering: pixelated;
+  }
+}
+
+@keyframes vc-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The mascot arrives in four discrete jumps — motion at the artwork's own
+   resolution instead of a smooth slide. */
+@keyframes vc-hop {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@layer components {
+  .vc-rise {
+    animation: vc-rise 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .vc-hop {
+    animation: vc-hop 560ms steps(4, end) 120ms both;
+  }
+
+  /* One step per element in the sign-in column's entrance sequence. */
+  .vc-delay-1 { animation-delay: 60ms; }
+  .vc-delay-2 { animation-delay: 140ms; }
+  .vc-delay-3 { animation-delay: 220ms; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc-rise,
+  .vc-hop {
+    animation: none;
+  }
+
+  .vc-key {
+    transition: background-color 140ms ease;
+  }
+}

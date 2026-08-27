@@ -1,8 +1,15 @@
 import Image from "next/image";
 import { type ReactNode } from "react";
 
+// Imported from inside the module rather than from the global stylesheet, so
+// Next only serves these rules on the routes that render this view. The rules
+// sit in `@layer components`, and cascade layers are document-global, so they
+// still sort beneath every Tailwind utility no matter when the sheet loads.
+import "../styles/login.css";
+
+import { BrandMark } from "@/components/shared/brand-mark";
+
 import { LoginBrandPanel } from "./login-brand-panel";
-import { LoginWordmark } from "./login-wordmark";
 
 /**
  * Renders the sign-in page layout — a desk column and a squared-paper column
@@ -17,7 +24,7 @@ export function LoginView({ children }: { children: ReactNode }) {
       {/* Compact desk band for small screens, where the two columns collapse to
           one and the mascot has no room to stand beside the form. */}
       <div className="vc-desk relative flex items-end justify-between gap-4 overflow-hidden px-6 pt-5 sm:px-10 lg:hidden">
-        <LoginWordmark tone="desk" className="pb-6" />
+        <BrandMark tone="desk" className="pb-6" />
         <Image
           src="/images/character-panel-login.webp"
           alt=""

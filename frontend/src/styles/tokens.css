@@ -1,0 +1,64 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Design tokens
+   The raw values every other stylesheet and utility resolves against. Nothing
+   here selects or styles anything — it only declares what the colors are.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  color-scheme: light;
+  --radius: 0.625rem;
+
+  /* Brand palette sampled from the pixel-art mascot in
+     public/images/character-panel-login.webp — the plumage orange (#fd7110) is
+     the dominant color in that artwork and anchors the whole system. */
+  --vc-orange: #fd7110;
+  --vc-orange-deep: #d8500a;
+  --vc-gold: #fd9e01;
+  --vc-ink: #1b1614;
+  --vc-paper: #fdf5e8;
+  --vc-wood: #78310a;
+  --vc-ember: #d62b0c;
+
+  /* Login-surface roles, named separately from --vc-paper so the paper
+     column can be retargeted without touching every consumer. */
+  --vc-surface: var(--vc-paper);
+  --vc-surface-raised: #fffdf7;
+  --vc-line: var(--vc-ink);
+  --vc-text: var(--vc-ink);
+  --vc-text-muted: #7a5a45;
+  --vc-grid-minor: rgb(120 49 10 / 0.07);
+  --vc-grid-major: rgb(120 49 10 / 0.13);
+  --vc-hole: var(--vc-ink);
+
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --primary: var(--vc-orange);
+  --primary-foreground: var(--vc-ink);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: var(--vc-ember);
+  --destructive-foreground: #fffdf7;
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: var(--vc-orange-deep);
+
+  /* The app shell reuses the login screen's paper material: the sidebar is a
+     warm sheet, and the inset content pane is the white page resting on it.
+     A neutral grey sidebar would read cold beside the brand orange. */
+  --sidebar: #f8f1e6;
+  --sidebar-foreground: var(--vc-ink);
+  --sidebar-primary: var(--vc-orange);
+  --sidebar-primary-foreground: var(--vc-ink);
+  --sidebar-accent: #f0e4d2;
+  --sidebar-accent-foreground: var(--vc-ink);
+  --sidebar-border: #e7d9c5;
+  --sidebar-ring: var(--vc-orange-deep);
+}

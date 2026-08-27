@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { LoginWordmark } from "./login-wordmark";
+import { BrandMark } from "@/components/shared/brand-mark";
 
 /**
  * Renders the desk column beside the login form on large screens: the wordmark,
@@ -12,7 +12,7 @@ export function LoginBrandPanel() {
   return (
     <aside className="vc-desk relative hidden overflow-hidden text-vc-paper lg:flex lg:flex-col lg:px-14 lg:py-12">
       <div className="vc-rise relative z-10">
-        <LoginWordmark tone="desk" />
+        <BrandMark tone="desk" />
       </div>
 
       {/* The mascot sits on the desk rather than floating in the panel: it is

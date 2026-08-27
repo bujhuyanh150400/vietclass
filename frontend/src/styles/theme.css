@@ -1,0 +1,62 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Theme
+   Maps the tokens in tokens.css onto Tailwind's generated utilities, and
+   declares the variants the codebase is allowed to use. Adding a token becomes
+   a utility only once it is registered here.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* The app is light-only: no theme toggle, and dark mode is intentionally not
+   offered. The `dark` variant is bound to a `.dark` ancestor class that is
+   never applied anywhere, so it stays inert rather than following the OS
+   preference — any `dark:` utility left over in shadcn/ui primitives is a
+   no-op instead of a second theme to maintain. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-vc-orange: var(--vc-orange);
+  --color-vc-orange-deep: var(--vc-orange-deep);
+  --color-vc-gold: var(--vc-gold);
+  --color-vc-ink: var(--vc-ink);
+  --color-vc-paper: var(--vc-paper);
+  --color-vc-wood: var(--vc-wood);
+  --color-vc-ember: var(--vc-ember);
+  --color-vc-surface: var(--vc-surface);
+  --color-vc-surface-raised: var(--vc-surface-raised);
+  --color-vc-line: var(--vc-line);
+  --color-vc-text: var(--vc-text);
+  --color-vc-text-muted: var(--vc-text-muted);
+  --font-sans: var(--font-be-vietnam-pro);
+  --font-mono: var(--font-geist-mono);
+  --font-pixel: var(--font-silkscreen);
+}

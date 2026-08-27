@@ -1,0 +1,15 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Base
+   Element-level defaults that apply before any component or utility. Anything
+   scoped to a feature belongs in that feature's own stylesheet instead.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

@@ -1,7 +1,23 @@
-import Link from "next/link";
-import { GraduationCap, LayoutDashboard } from "lucide-react";
+"use client";
 
-import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { LayoutDashboard } from "lucide-react";
+import { type ReactNode } from "react";
+
+import { BrandIcon } from "@/components/shared/brand-mark";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  useSidebar,
+} from "@/components/ui/sidebar";
 
 /** Icons a navigation item may request, kept closed so no arbitrary icon leaks in. */
 const NAVIGATION_ICONS = {
@@ -17,55 +33,83 @@ export type NavigationItem = {
 };
 
 /**
- * Renders the application wordmark and navigation list. It is shared by the
- * fixed desktop sidebar and the mobile drawer, so both always offer the same
- * destinations and mark the active one for assistive technology.
+ * Renders the application sidebar: the brand mark, the destinations this build
+ * actually ships, and the account menu handed in as a slot. Only routable
+ * pages are listed — the classroom features still to come are previewed on the
+ * dashboard, where each one can be described, rather than as dead rows here
+ * that look like broken navigation.
+ *
+ * Both the fixed desktop rail and the mobile drawer come from the shared
+ * `Sidebar` primitive, so this component only supplies content.
  */
 export function AppSidebar({
   navigation,
-  onNavigate,
+  accountMenu,
 }: {
   navigation: NavigationItem[];
-  onNavigate?: () => void;
+  accountMenu: ReactNode;
 }) {
+  const { setOpenMobile } = useSidebar();
+
+  /** Closes the mobile drawer after navigating so the destination is visible. */
+  function closeOnMobile() {
+    setOpenMobile(false);
+  }
+
   return (
-    <div className="flex h-full flex-col gap-6 p-4">
-      <Link
-        href="/dashboard"
-        onClick={onNavigate}
-        className="flex items-center gap-3 rounded-md px-2 py-1 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-      >
-        <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <GraduationCap aria-hidden="true" className="size-5" />
-        </span>
-        <span className="text-base font-semibold tracking-tight">
-          VietClasses
-        </span>
-      </Link>
-
-      <nav aria-label="Điều hướng chính" className="grid gap-1">
-        {navigation.map((item) => {
-          const Icon = NAVIGATION_ICONS[item.icon];
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onNavigate}
-              aria-current={item.current ? "page" : undefined}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                item.current
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-              )}
+    <Sidebar collapsible="icon" variant="inset">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              size="lg"
+              className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <Icon aria-hidden="true" className="size-4" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-    </div>
+              <Link href="/dashboard" onClick={closeOnMobile}>
+                <BrandIcon className="size-6" />
+                <span className="font-pixel text-xs tracking-[0.08em]">
+                  VIETCLASSES
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigation.map((item) => {
+                const Icon = NAVIGATION_ICONS[item.icon];
+
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    {/* The current page is marked in the brand orange rather
+                        than the default neutral fill, so "you are here" reads
+                        at a glance on the warm sidebar sheet. */}
+                    <SidebarMenuButton
+                      asChild
+                      isActive={item.current}
+                      tooltip={item.label}
+                      className="data-[active=true]:bg-vc-orange/15 data-[active=true]:text-vc-wood data-[active=true]:[&>svg]:text-vc-orange-deep"
+                    >
+                      <Link href={item.href} onClick={closeOnMobile}>
+                        <Icon aria-hidden="true" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter>{accountMenu}</SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
   );
 }

@@ -67,8 +67,12 @@ async function resolveSession(token: string): Promise<SessionOutcome> {
  * Renders the authenticated shell around the active protected route, redirecting
  * to `/login` when no session cookie was sent at all.
  */
+/** The sidebar persists its open/collapsed state here between visits. */
+const SIDEBAR_STATE_COOKIE = "sidebar_state";
+
 async function AuthenticatedShell({ children }: { children: ReactNode }) {
-  const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
   if (token === undefined || token === "") {
     redirect(loginUrl());
@@ -85,10 +89,14 @@ async function AuthenticatedShell({ children }: { children: ReactNode }) {
     );
   }
 
+  const defaultSidebarOpen =
+    cookieStore.get(SIDEBAR_STATE_COOKIE)?.value !== "false";
+
   return (
     <ProtectedShell
       navigation={NAVIGATION}
       accountMenu={<CurrentUserMenuContainer user={outcome.user} />}
+      defaultSidebarOpen={defaultSidebarOpen}
     >
       {children}
     </ProtectedShell>
