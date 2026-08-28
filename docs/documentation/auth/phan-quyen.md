@@ -65,7 +65,7 @@ Lệnh in số quyền đã đồng bộ. Nếu cơ sở dữ liệu còn quyề
 
 ## Giới hạn hiện tại
 
-- Đợt này chỉ vai trò Quản trị viên có quyền học vụ. Giáo viên, Nhân viên và Học viên không có quyền nào.
+- Đợt này chỉ vai trò Quản trị viên có quyền học vụ. Giáo viên, Học viên và Phụ huynh không có quyền nào.
 - Không có endpoint hay màn hình để xem và sửa phân quyền. Cấp riêng phải thao tác trực tiếp trong cơ sở dữ liệu.
 - API chưa trả danh sách quyền hiệu lực của người dùng. Frontend vì thế ẩn hiện menu Học vụ theo **vai trò** (chỉ Quản trị viên), không theo quyền thật. Ranh giới thật vẫn là `403` từ API; phần ẩn hiện chỉ là mỹ quan. Hệ quả: nếu cấp riêng một quyền Học vụ cho tài khoản không phải Quản trị viên, người đó gọi được API nhưng không thấy menu. Cần bổ sung danh sách quyền vào `GET /auth/me` trước khi dùng phân quyền riêng trên thực tế.
 - Chưa có phân quyền theo từng bản ghi. Ai có quyền xem lớp thì xem được mọi lớp.
