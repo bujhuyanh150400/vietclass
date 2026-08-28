@@ -7,6 +7,7 @@ import { Controller } from "react-hook-form";
 import { PageHeader } from "@/components/shared/data-table";
 import { Input } from "@/components/ui/input";
 
+import { DateField } from "../components/date-field";
 import { Field, fieldAria } from "../components/field";
 import { FormShell } from "../components/form-shell";
 import { SelectField } from "../components/select-field";
@@ -37,7 +38,7 @@ const FIELDS = [
 ] as const;
 
 /** Where the form returns to once it is done. */
-const LIST_HREF = "/dashboard/academic/classes";
+const LIST_HREF = "/academic/classes";
 
 const GRADE_CHOICES = GRADE_LEVELS.map((grade) => ({
   value: grade,
@@ -235,33 +236,37 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
           />
         </Field>
 
-        <Field
+        <Controller
+          control={form.control}
           name="start_at"
-          label="Ngày khai giảng"
-          required={!isEditing}
-          hint={isEditing ? "Không đổi được sau khi tạo." : undefined}
-          error={errors.start_at?.message}
-        >
-          <Input
-            {...form.register("start_at")}
-            {...fieldAria("start_at", errors.start_at?.message)}
-            type="date"
-            disabled={isEditing}
-          />
-        </Field>
+          render={({ field }) => (
+            <DateField
+              name="start_at"
+              label="Ngày khai giảng"
+              required={!isEditing}
+              hint={isEditing ? "Không đổi được sau khi tạo." : undefined}
+              value={field.value ?? ""}
+              onChange={field.onChange}
+              error={errors.start_at?.message}
+              disabled={isEditing}
+            />
+          )}
+        />
 
-        <Field
+        <Controller
+          control={form.control}
           name="end_at"
-          label="Ngày kết thúc"
-          hint="Không bắt buộc."
-          error={errors.end_at?.message}
-        >
-          <Input
-            {...form.register("end_at")}
-            {...fieldAria("end_at", errors.end_at?.message, "Không bắt buộc.")}
-            type="date"
-          />
-        </Field>
+          render={({ field }) => (
+            <DateField
+              name="end_at"
+              label="Ngày kết thúc"
+              hint="Không bắt buộc."
+              value={field.value ?? ""}
+              onChange={field.onChange}
+              error={errors.end_at?.message}
+            />
+          )}
+        />
       </FormShell>
     </div>
   );

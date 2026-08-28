@@ -1,6 +1,9 @@
 /** Destination used whenever a requested return path is absent or not allowed. */
 export const DEFAULT_RETURN_TO = "/dashboard";
 
+/** Additional protected route that is safe to restore after sign-in. */
+const ACADEMIC_RETURN_TO = "/academic";
+
 /** Fixed local base used only to parse a candidate path; it is never navigated to. */
 const LOCAL_BASE = "http://localhost";
 
@@ -9,9 +12,10 @@ const UNSAFE_CHARACTERS = /[\u0000-\u001f\u007f\\]/;
 
 /**
  * Reduces an untrusted `returnTo` value to a safe in-app destination. Only a
- * single-slash-rooted path inside `/dashboard` is accepted, with its query and
- * hash preserved; absolute URLs, protocol-relative paths, backslash and control
- * character tricks, and every other application path fall back to `/dashboard`.
+ * single-slash-rooted path inside the dashboard or academic area is accepted,
+ * with its query and hash preserved; absolute URLs, protocol-relative paths,
+ * backslash and control character tricks, and every other application path fall
+ * back to the dashboard.
  */
 export function sanitizeReturnTo(value: string | null | undefined): string {
   if (typeof value !== "string") {
@@ -42,7 +46,13 @@ export function sanitizeReturnTo(value: string | null | undefined): string {
 
   const { pathname, search, hash } = parsed;
 
-  if (pathname !== DEFAULT_RETURN_TO && !pathname.startsWith(`${DEFAULT_RETURN_TO}/`)) {
+  const isProtectedPath =
+    pathname === DEFAULT_RETURN_TO ||
+    pathname.startsWith(`${DEFAULT_RETURN_TO}/`) ||
+    pathname === ACADEMIC_RETURN_TO ||
+    pathname.startsWith(`${ACADEMIC_RETURN_TO}/`);
+
+  if (!isProtectedPath) {
     return DEFAULT_RETURN_TO;
   }
 

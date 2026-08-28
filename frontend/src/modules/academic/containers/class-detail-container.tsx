@@ -68,7 +68,7 @@ function ClassDetail({ schoolClass }: { schoolClass: SchoolClass }) {
   return (
     <div className="grid gap-6">
       <Button variant="ghost" size="sm" className="justify-self-start" asChild>
-        <Link href="/dashboard/academic/classes">
+        <Link href="/academic/classes">
           <ArrowLeft aria-hidden="true" />
           Danh sách lớp học
         </Link>

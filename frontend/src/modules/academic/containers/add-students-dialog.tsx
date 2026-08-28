@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
+import { DateField } from "../components/date-field";
 import { Field } from "../components/field";
 import { useAvailableStudents, useEnrolStudents } from "../hooks/use-enrollments";
 import { GRADE_LEVEL_LABELS } from "../utils/labels";
@@ -132,19 +133,14 @@ export function AddStudentsDialog({
               />
             </Field>
 
-            <Field
+            <DateField
               name="enrolled-at"
               label="Ngày vào lớp"
               required
               hint="Không được trước ngày khai giảng."
-            >
-              <Input
-                id="enrolled-at"
-                type="date"
-                value={enrolledAt}
-                onChange={(event) => setEnrolledAt(event.target.value)}
-              />
-            </Field>
+              value={enrolledAt}
+              onChange={setEnrolledAt}
+            />
           </div>
 
           <div className="max-h-72 overflow-y-auto rounded-lg border">

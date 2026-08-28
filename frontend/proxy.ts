@@ -3,10 +3,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/modules/identity/server";
 
 /**
- * Guards `/dashboard` optimistically. Only the presence of the session cookie is
- * checked — no upstream call and no role parsing happen here — and the requested
- * path is carried to `/login` as `returnTo` so the protected layout can perform
- * the authoritative token verification.
+ * Guards the dashboard and academic paths optimistically. Only the presence of
+ * the session cookie is checked — no upstream call and no role parsing happen
+ * here — and the requested path is carried to login as returnTo so the protected
+ * layout can perform the authoritative token verification.
  */
 export function proxy(request: NextRequest) {
   if (request.cookies.has(SESSION_COOKIE_NAME)) {
@@ -23,5 +23,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: "/dashboard/:path*",
+  matcher: ["/dashboard/:path*", "/academic/:path*"],
 };

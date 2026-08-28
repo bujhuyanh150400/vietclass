@@ -1,12 +1,12 @@
 # Quản lý môn học
 
-Last Verified: 2026-08-27
+Last Verified: 2026-08-28
 
 ## Tổng quan
 
 Môn học là danh mục nền của học vụ. Mỗi lớp học thuộc đúng một môn, nên môn học phải tồn tại trước khi tạo được lớp.
 
-Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/dashboard/academic/subjects` (mục **Môn học** trong nhóm Học vụ ở thanh bên).
+Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/academic/subjects` (mục **Môn học** trong nhóm Học vụ ở thanh bên).
 
 ## Người dùng và điều kiện
 

@@ -60,17 +60,17 @@ cd api && php artisan db:seed --class=IdentitySeeder
 | `/`                   | Page          | Redirects to `/dashboard`.                                              |
 | `/login`              | Page          | Sign-in screen; recovers an existing session before showing the form.    |
 | `/dashboard`          | Page          | Protected landing screen inside the application shell.                   |
-| `/dashboard/academic/subjects`         | Page | Subject list, with create and edit at `/new` and `/[subjectId]`. |
-| `/dashboard/academic/teachers`         | Page | Teacher list, with create and edit at `/new` and `/[teacherId]`. |
-| `/dashboard/academic/classes`          | Page | Class list, with create at `/new`.                              |
-| `/dashboard/academic/classes/[classId]` | Page | One class with its roster; edit at `/edit`.                    |
-| `/dashboard/academic/students`         | Page | Student list, with create and edit at `/new` and `/[studentId]`. |
+| `/academic/subjects`                   | Page | Subject list, with create and edit at `/new` and `/[subjectId]`. |
+| `/academic/teachers`                   | Page | Teacher list, with create and edit at `/new` and `/[teacherId]`. |
+| `/academic/classes`                    | Page | Class list, with create at `/new`.                              |
+| `/academic/classes/[classId]`          | Page | One class with its roster; edit at `/edit`.                    |
+| `/academic/students`                   | Page | Student list, with create and edit at `/new` and `/[studentId]`. |
 | `/api/auth/login`     | Route Handler | `POST` credentials, sets the session cookie, returns the current user.   |
 | `/api/auth/session`   | Route Handler | `GET` the current user for the session cookie; `401` clears the cookie.  |
 | `/api/auth/logout`    | Route Handler | `POST` to revoke the Laravel token and clear the cookie; returns `204`.  |
 | `/api/academic/*`     | Route Handler | Forwards allowlisted academic paths to Laravel with the bearer token.   |
 
-`proxy.ts` guards `/dashboard` and its descendants. It only checks whether the
+`proxy.ts` guards `/dashboard`, `/academic`, and their descendants. It only checks whether the
 session cookie is present and redirects to `/login` with a `returnTo` value; it
 makes no network call. The protected layout performs the authoritative check by
 verifying the token against Laravel.

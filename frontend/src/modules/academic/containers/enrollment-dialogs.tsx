@@ -13,9 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+import { DateField } from "../components/date-field";
 import { Field, fieldAria } from "../components/field";
 import { SelectField } from "../components/select-field";
 import { useClassOptions } from "../hooks/use-classes";
@@ -87,31 +87,35 @@ export function EditEnrollmentDialog({
       onSubmit={onSubmit}
       onClose={onClose}
     >
-      <Field
+      <Controller
+        control={form.control}
         name="enrolled_at"
-        label="Ngày vào lớp"
-        required
-        error={errors.enrolled_at?.message}
-      >
-        <Input
-          {...form.register("enrolled_at")}
-          {...fieldAria("enrolled_at", errors.enrolled_at?.message)}
-          type="date"
-        />
-      </Field>
+        render={({ field }) => (
+          <DateField
+            name="enrolled_at"
+            label="Ngày vào lớp"
+            required
+            value={field.value}
+            onChange={field.onChange}
+            error={errors.enrolled_at?.message}
+          />
+        )}
+      />
 
-      <Field
+      <Controller
+        control={form.control}
         name="left_at"
-        label="Ngày rời lớp"
-        hint="Để trống nghĩa là vẫn đang học."
-        error={errors.left_at?.message}
-      >
-        <Input
-          {...form.register("left_at")}
-          {...fieldAria("left_at", errors.left_at?.message, "Để trống nghĩa là vẫn đang học.")}
-          type="date"
-        />
-      </Field>
+        render={({ field }) => (
+          <DateField
+            name="left_at"
+            label="Ngày rời lớp"
+            hint="Để trống nghĩa là vẫn đang học."
+            value={field.value ?? ""}
+            onChange={field.onChange}
+            error={errors.left_at?.message}
+          />
+        )}
+      />
 
       <Field name="note" label="Ghi chú" error={errors.note?.message}>
         <Textarea
@@ -191,13 +195,20 @@ export function TransferEnrollmentDialog({
         )}
       />
 
-      <Field name="left_at" label="Ngày chuyển" required error={errors.left_at?.message}>
-        <Input
-          {...form.register("left_at")}
-          {...fieldAria("left_at", errors.left_at?.message)}
-          type="date"
-        />
-      </Field>
+      <Controller
+        control={form.control}
+        name="left_at"
+        render={({ field }) => (
+          <DateField
+            name="left_at"
+            label="Ngày chuyển"
+            required
+            value={field.value}
+            onChange={field.onChange}
+            error={errors.left_at?.message}
+          />
+        )}
+      />
 
       <Field name="note" label="Ghi chú cho lớp mới" error={errors.note?.message}>
         <Textarea
@@ -249,13 +260,20 @@ export function LeaveClassDialog({
       onSubmit={onSubmit}
       onClose={onClose}
     >
-      <Field name="left_at" label="Ngày nghỉ" required error={errors.left_at?.message}>
-        <Input
-          {...form.register("left_at")}
-          {...fieldAria("left_at", errors.left_at?.message)}
-          type="date"
-        />
-      </Field>
+      <Controller
+        control={form.control}
+        name="left_at"
+        render={({ field }) => (
+          <DateField
+            name="left_at"
+            label="Ngày nghỉ"
+            required
+            value={field.value}
+            onChange={field.onChange}
+            error={errors.left_at?.message}
+          />
+        )}
+      />
 
       <Field name="reason" label="Lý do nghỉ" required error={errors.reason?.message}>
         <Textarea

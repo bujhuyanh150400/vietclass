@@ -42,10 +42,10 @@ export const NAVIGATION: NavigationGroup[] = [
   {
     label: "Học vụ",
     items: [
-      { href: "/dashboard/academic/subjects", label: "Môn học", icon: "subjects" },
-      { href: "/dashboard/academic/teachers", label: "Giáo viên", icon: "teachers" },
-      { href: "/dashboard/academic/classes", label: "Lớp học", icon: "classes" },
-      { href: "/dashboard/academic/students", label: "Học sinh", icon: "students" },
+      { href: "/academic/subjects", label: "Môn học", icon: "subjects" },
+      { href: "/academic/teachers", label: "Giáo viên", icon: "teachers" },
+      { href: "/academic/classes", label: "Lớp học", icon: "classes" },
+      { href: "/academic/students", label: "Học sinh", icon: "students" },
     ],
   },
 ];
@@ -54,8 +54,8 @@ export const NAVIGATION: NavigationGroup[] = [
  * Reports whether a navigation item is the one the given path is inside.
  *
  * A descendant route counts as being on its parent item — a class detail page is
- * still "Lớp học" — except for `/dashboard`, which every academic path descends
- * from and which would otherwise always look current.
+ * still "Lớp học" — except for `/dashboard`, which would otherwise look current
+ * for every dashboard descendant.
  */
 export function isCurrentPath(item: NavigationItem, pathname: string): boolean {
   if (item.href === "/dashboard") {

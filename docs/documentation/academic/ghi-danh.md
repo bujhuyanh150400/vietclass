@@ -1,12 +1,12 @@
 # Ghi danh vào lớp
 
-Last Verified: 2026-08-27
+Last Verified: 2026-08-28
 
 ## Tổng quan
 
 Ghi danh nối một học sinh với một lớp trong một khoảng thời gian. Một học sinh có thể có **nhiều** bản ghi ghi danh trong cùng một lớp: rời lớp rồi quay lại tạo bản ghi mới và giữ nguyên giai đoạn đã học trước đó.
 
-Chức năng dùng được cả qua API lẫn màn hình quản trị: mở một lớp tại `/dashboard/academic/classes/{id}` để thấy danh sách học sinh và mọi thao tác ghi danh.
+Chức năng dùng được cả qua API lẫn màn hình quản trị: mở một lớp tại `/academic/classes/{id}` để thấy danh sách học sinh và mọi thao tác ghi danh.
 
 ## Người dùng và điều kiện
 

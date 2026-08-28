@@ -23,7 +23,7 @@ import type { Subject } from "../types/academic";
 const FIELDS = ["name", "description"] as const;
 
 /** Where the form returns to once it is done. */
-const LIST_HREF = "/dashboard/academic/subjects";
+const LIST_HREF = "/academic/subjects";
 
 /**
  * Coordinates creating and editing a subject.

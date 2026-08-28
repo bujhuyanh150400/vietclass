@@ -1,6 +1,6 @@
 # Xác thực bearer token
 
-Last Verified: 2026-08-27
+Last Verified: 2026-08-28
 
 ## Tổng quan
 
@@ -30,9 +30,10 @@ Bổ sung cho luồng trình duyệt:
 
 - Token của phiên trình duyệt chỉ nằm trong cookie `vietclass_session` với `HttpOnly`, `SameSite=Lax`, `Path=/`, không có `Domain`, và `Secure` khi chạy production. Thời điểm hết hạn của cookie đúng bằng `expires_at` mà Laravel trả về, nên tùy chọn ghi nhớ quyết định luôn tuổi thọ của cookie.
 - Token không xuất hiện trong phản hồi JSON của frontend, trong cache truy vấn, trong `localStorage`, `sessionStorage`, hay trong log.
-- `/dashboard` và các đường dẫn con được bảo vệ hai lớp: lớp ngoài chỉ kiểm tra sự hiện diện của cookie và chuyển hướng về `/login`, lớp trong xác minh token với Laravel trước khi hiển thị nội dung.
-- Sau khi đăng nhập, người dùng chỉ được đưa về đường dẫn nằm trong `/dashboard`. Mọi giá trị `returnTo` khác — URL tuyệt đối, URL bắt đầu bằng `//`, đường dẫn chứa dấu gạch chéo ngược, hoặc đường dẫn ngoài `/dashboard` — đều quay về `/dashboard`.
+- `/dashboard`, `/academic`, và các đường dẫn con được bảo vệ hai lớp: lớp ngoài chỉ kiểm tra sự hiện diện của cookie và chuyển hướng về `/login`, lớp trong xác minh token với Laravel trước khi hiển thị nội dung.
+- Sau khi đăng nhập, người dùng chỉ được đưa về đường dẫn nằm trong `/dashboard` hoặc `/academic`. Mọi giá trị `returnTo` khác — URL tuyệt đối, URL bắt đầu bằng `//`, đường dẫn chứa dấu gạch chéo ngược, hoặc đường dẫn ngoài hai khu vực này — đều quay về `/dashboard`.
 - Đang có phiên hợp lệ mà mở `/login` thì được chuyển thẳng tới đích hợp lệ; không hiển thị lại biểu mẫu.
+- URL không tồn tại hiển thị trang `404` tiếng Việt cùng nút trở về trang chủ hoặc, trong khu vực đã đăng nhập, trang tổng quan. Lỗi render không mong đợi hiển thị nút `Thử lại` thay vì chi tiết lỗi kỹ thuật.
 
 ## Hướng dẫn thao tác
 
@@ -46,7 +47,7 @@ Bổ sung cho luồng trình duyệt:
 ### Dùng trên trình duyệt
 
 1. Mở `/login` và nhập tên đăng nhập cùng mật khẩu. Có thể bật `Ghi nhớ đăng nhập` để phiên sống lâu hơn.
-2. Nhấn `Đăng nhập`. Thành công sẽ chuyển tới `/dashboard`, hoặc trở lại đúng trang trong `/dashboard` mà trước đó đã yêu cầu.
+2. Nhấn `Đăng nhập`. Thành công sẽ chuyển tới `/dashboard`, hoặc trở lại đúng trang trong khu vực `/dashboard` hay `/academic` mà trước đó đã yêu cầu.
 3. Tên đăng nhập và nhãn vai trò hiển thị trong menu tài khoản ở thanh trên. Nhãn vai trò: `0` Quản trị viên, `1` Giáo viên, `2` Nhân viên, `3` Học viên.
 4. Chọn `Đăng xuất` trong menu tài khoản để kết thúc phiên.
 
@@ -58,7 +59,7 @@ Các endpoint cùng nguồn mà trình duyệt gọi là `POST /api/auth/login`,
 - `GET /api/v1/auth/me` trả thông tin người dùng hiện tại trong envelope `data`.
 - `DELETE /api/v1/auth/logout` trả `204 No Content`; token đã dùng không thể tiếp tục xác thực.
 - Đăng nhập thành công trên trình duyệt trả về chỉ `{ "data": { id, username, role, is_active } }` kèm cookie phiên; không có token trong phần thân phản hồi.
-- Tải lại `/dashboard` vẫn giữ phiên. `document.cookie` không đọc được `vietclass_session`.
+- Tải lại `/dashboard` hoặc một trang `/academic/...` vẫn giữ phiên. `document.cookie` không đọc được `vietclass_session`.
 - Đăng xuất trên trình duyệt thu hồi đúng một token ở Laravel, xóa cookie, đưa về `/login`, và `/dashboard` lại được bảo vệ.
 
 ## Lỗi và trường hợp ngoại lệ
@@ -86,7 +87,7 @@ Lỗi nghiệp vụ của thao tác đăng nhập được throw dưới dạng 
 | --- | --- | --- | --- |
 | API cần `auth:sanctum` | Tiên quyết | Token xác định người dùng của request. | Không có bearer token hợp lệ thì không truy cập được endpoint cần xác thực. |
 | [Phân quyền theo chức năng](phan-quyen.md) | Hạ nguồn | Phân quyền chỉ chạy sau khi request đã xác định được người dùng. | Đăng nhập được không có nghĩa là gọi được mọi endpoint; xem tài liệu phân quyền để biết ai được làm gì. |
-| Màn hình `/dashboard` | Phụ thuộc | Chỉ phiên đã xác minh mới vào được khu vực đã đăng nhập. | Chưa đăng nhập thì bị đưa về `/login`; đăng nhập xong thì trở lại đúng trang đã yêu cầu. |
+| Khu vực `/dashboard` và `/academic` | Phụ thuộc | Chỉ phiên đã xác minh mới vào được khu vực đã đăng nhập. | Chưa đăng nhập thì bị đưa về `/login`; đăng nhập xong thì trở lại đúng trang đã yêu cầu. |
 
 ## Giới hạn hiện tại
 

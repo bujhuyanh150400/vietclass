@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/shared/data-table";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+import { DateField } from "../components/date-field";
 import { Field, fieldAria } from "../components/field";
 import { FormShell } from "../components/form-shell";
 import { SelectField } from "../components/select-field";
@@ -41,7 +42,7 @@ const FIELDS = [
 ] as const;
 
 /** Where the form returns to once it is done. */
-const LIST_HREF = "/dashboard/academic/teachers";
+const LIST_HREF = "/academic/teachers";
 
 /** The two employment states, as choices for the select. */
 const STATUS_CHOICES = [
@@ -165,13 +166,20 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
           />
         </Field>
 
-        <Field name="joined_at" label="Ngày vào làm" required error={errors.joined_at?.message}>
-          <Input
-            {...form.register("joined_at")}
-            {...fieldAria("joined_at", errors.joined_at?.message)}
-            type="date"
-          />
-        </Field>
+        <Controller
+          control={form.control}
+          name="joined_at"
+          render={({ field }) => (
+            <DateField
+              name="joined_at"
+              label="Ngày vào làm"
+              required
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.joined_at?.message}
+            />
+          )}
+        />
 
         <Controller
           control={form.control}

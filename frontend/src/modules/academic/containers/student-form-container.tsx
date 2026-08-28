@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/shared/data-table";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+import { DateField } from "../components/date-field";
 import { Field, fieldAria } from "../components/field";
 import { FormShell } from "../components/form-shell";
 import { SelectField } from "../components/select-field";
@@ -40,7 +41,7 @@ const FIELDS = [
 ] as const;
 
 /** Where the form returns to once it is done. */
-const LIST_HREF = "/dashboard/academic/students";
+const LIST_HREF = "/academic/students";
 
 const GENDER_CHOICES = [
   { value: 0, label: GENDER_LABELS[0] },
@@ -166,13 +167,20 @@ export function StudentFormContainer({ student }: { student?: Student }) {
           />
         </Field>
 
-        <Field name="dob" label="Ngày sinh" hint="Không bắt buộc." error={errors.dob?.message}>
-          <Input
-            {...form.register("dob")}
-            {...fieldAria("dob", errors.dob?.message, "Không bắt buộc.")}
-            type="date"
-          />
-        </Field>
+        <Controller
+          control={form.control}
+          name="dob"
+          render={({ field }) => (
+            <DateField
+              name="dob"
+              label="Ngày sinh"
+              hint="Không bắt buộc."
+              value={field.value ?? ""}
+              onChange={field.onChange}
+              error={errors.dob?.message}
+            />
+          )}
+        />
 
         <Controller
           control={form.control}

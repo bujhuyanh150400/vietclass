@@ -119,7 +119,7 @@ export function TeachersView({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/dashboard/academic/teachers/${teacher.id}`}>Sửa hồ sơ</Link>
+              <Link href={`/academic/teachers/${teacher.id}`}>Sửa hồ sơ</Link>
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => onChangePassword(teacher)}>
               Đổi mật khẩu
@@ -140,7 +140,7 @@ export function TeachersView({
         description="Hồ sơ giáo viên và tài khoản đăng nhập đi kèm."
         action={
           <Button asChild>
-            <Link href="/dashboard/academic/teachers/new">
+            <Link href="/academic/teachers/new">
               <Plus aria-hidden="true" />
               Thêm giáo viên
             </Link>

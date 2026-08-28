@@ -129,12 +129,12 @@ export function ClassesView({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/dashboard/academic/classes/${schoolClass.id}`}>
+              <Link href={`/academic/classes/${schoolClass.id}`}>
                 Xem lớp và học sinh
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/dashboard/academic/classes/${schoolClass.id}/edit`}>Sửa lớp</Link>
+              <Link href={`/academic/classes/${schoolClass.id}/edit`}>Sửa lớp</Link>
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => onChangeStatus(schoolClass)}>
               {schoolClass.status === 0 ? "Kết thúc lớp" : "Mở lại lớp"}
@@ -152,7 +152,7 @@ export function ClassesView({
         description="Lớp gắn một môn học với một giáo viên phụ trách."
         action={
           <Button asChild>
-            <Link href="/dashboard/academic/classes/new">
+            <Link href="/academic/classes/new">
               <Plus aria-hidden="true" />
               Thêm lớp học
             </Link>

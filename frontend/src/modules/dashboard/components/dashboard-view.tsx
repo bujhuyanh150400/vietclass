@@ -42,25 +42,25 @@ const SHIPPED_FEATURES: ShippedFeature[] = [
   {
     label: "Môn học",
     description: "Danh mục môn học dùng để mở lớp.",
-    href: "/dashboard/academic/subjects",
+    href: "/academic/subjects",
     icon: BookOpen,
   },
   {
     label: "Giáo viên",
     description: "Hồ sơ giáo viên và tài khoản đăng nhập.",
-    href: "/dashboard/academic/teachers",
+    href: "/academic/teachers",
     icon: GraduationCap,
   },
   {
     label: "Lớp học",
     description: "Lớp học, sĩ số và danh sách học sinh trong lớp.",
-    href: "/dashboard/academic/classes",
+    href: "/academic/classes",
     icon: School,
   },
   {
     label: "Học sinh",
     description: "Hồ sơ học sinh, phụ huynh và trạng thái học tập.",
-    href: "/dashboard/academic/students",
+    href: "/academic/students",
     icon: Users,
   },
 ];

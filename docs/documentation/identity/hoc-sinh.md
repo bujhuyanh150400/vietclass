@@ -1,12 +1,12 @@
 # Quản lý học sinh
 
-Last Verified: 2026-08-27
+Last Verified: 2026-08-28
 
 ## Tổng quan
 
 Hồ sơ học sinh và tài khoản đăng nhập của học sinh được quản lý cùng nhau: tạo hồ sơ là tạo luôn tài khoản. Hồ sơ học sinh phải tồn tại trước khi ghi danh vào lớp.
 
-Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/dashboard/academic/students` (mục **Học sinh** trong nhóm Học vụ ở thanh bên).
+Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/academic/students` (mục **Học sinh** trong nhóm Học vụ ở thanh bên).
 
 ## Người dùng và điều kiện
 

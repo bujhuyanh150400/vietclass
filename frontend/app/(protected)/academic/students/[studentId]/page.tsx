@@ -15,7 +15,7 @@ export const metadata: Metadata = {
  */
 export default async function EditStudentPage({
   params,
-}: PageProps<"/dashboard/academic/students/[studentId]">) {
+}: PageProps<"/academic/students/[studentId]">) {
   const { studentId } = await params;
   const id = Number(studentId);
 

@@ -48,7 +48,7 @@ export function ClassSummary({ schoolClass }: { schoolClass: SchoolClass }) {
           </div>
 
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/dashboard/academic/classes/${schoolClass.id}/edit`}>
+            <Link href={`/academic/classes/${schoolClass.id}/edit`}>
               <Pencil aria-hidden="true" />
               Sửa lớp
             </Link>

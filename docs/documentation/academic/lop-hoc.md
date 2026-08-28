@@ -1,12 +1,12 @@
 # Quản lý lớp học
 
-Last Verified: 2026-08-27
+Last Verified: 2026-08-28
 
 ## Tổng quan
 
 Lớp học gắn một môn học với một giáo viên phụ trách, và là nơi học sinh được ghi danh vào. Lớp phụ thuộc cả môn học lẫn hồ sơ giáo viên, nên hai thứ đó phải có trước.
 
-Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/dashboard/academic/classes` (mục **Lớp học** trong nhóm Học vụ ở thanh bên).
+Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/academic/classes` (mục **Lớp học** trong nhóm Học vụ ở thanh bên).
 
 ## Người dùng và điều kiện
 

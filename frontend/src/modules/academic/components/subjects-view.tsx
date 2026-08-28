@@ -97,7 +97,7 @@ export function SubjectsView({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/dashboard/academic/subjects/${subject.id}`}>Sửa</Link>
+              <Link href={`/academic/subjects/${subject.id}`}>Sửa</Link>
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => onToggleActive(subject)}>
               {subject.is_active ? "Khóa môn học" : "Mở môn học"}
@@ -119,7 +119,7 @@ export function SubjectsView({
         description="Danh mục môn học dùng để mở lớp."
         action={
           <Button asChild>
-            <Link href="/dashboard/academic/subjects/new">
+            <Link href="/academic/subjects/new">
               <Plus aria-hidden="true" />
               Thêm môn học
             </Link>

@@ -1,21 +1,21 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { ClassEditContainer } from "@/modules/academic";
+import { ClassDetailContainer } from "@/modules/academic";
 
 export const metadata: Metadata = {
-  title: "Sửa lớp học",
+  title: "Chi tiết lớp học",
 };
 
 /**
- * Renders the screen for editing one class.
+ * Renders one class with its roster.
  *
  * A path segment that is not a number never reaches the API: it cannot identify a
  * record, so it is a wrong URL rather than a missing class.
  */
-export default async function EditClassPage({
+export default async function ClassDetailPage({
   params,
-}: PageProps<"/dashboard/academic/classes/[classId]/edit">) {
+}: PageProps<"/academic/classes/[classId]">) {
   const { classId } = await params;
   const id = Number(classId);
 
@@ -23,5 +23,5 @@ export default async function EditClassPage({
     notFound();
   }
 
-  return <ClassEditContainer classId={id} />;
+  return <ClassDetailContainer classId={id} />;
 }
