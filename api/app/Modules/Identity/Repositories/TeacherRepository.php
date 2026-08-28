@@ -5,12 +5,11 @@ namespace App\Modules\Identity\Repositories;
 use App\Core\Data\ListQuery;
 use App\Core\Repositories\BaseRepository;
 use App\Modules\Identity\Enums\TeacherStatus;
+use App\Modules\Identity\Models\Profile;
 use App\Modules\Identity\Models\TeacherProfile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Query\Expression;
-use Illuminate\Support\Facades\DB;
 
 final class TeacherRepository extends BaseRepository
 {
@@ -87,7 +86,9 @@ final class TeacherRepository extends BaseRepository
                     fn (Builder $profile): Builder => $profile->where('full_name', 'ilike', $query->searchLike()),
                 ),
             )
-            ->orderBy($this->fullNameOrderColumn())
+            ->orderBy(
+                Profile::query()->select('full_name')->whereColumn('profiles.id', 'teacher_profiles.profile_id'),
+            )
             ->limit($query->perPage)
             ->get();
     }
@@ -140,27 +141,15 @@ final class TeacherRepository extends BaseRepository
     private function applySort(Builder $builder, ListQuery $query): Builder
     {
         if ($query->sort === 'full_name') {
-            return $builder->orderBy($this->fullNameOrderColumn(), $query->direction);
+            return $builder->orderBy(
+                Profile::query()->select('full_name')->whereColumn('profiles.id', 'teacher_profiles.profile_id'),
+                $query->direction,
+            );
         }
 
         return $builder->orderBy(
             $query->sort === 'id' ? 'profile_id' : $query->sort,
             $query->direction,
-        );
-    }
-
-    /**
-     * Build the correlated-subquery expression that reaches the name held on the
-     * shared profile row, explicitly collated for Vietnamese order.
-     *
-     * The database's default collation sorts diacritics by raw code point rather than
-     * alphabet position, which would otherwise place "Ẩn Danh" after "Trần Bích"
-     * instead of before it.
-     */
-    private function fullNameOrderColumn(): Expression
-    {
-        return DB::raw(
-            '(select "full_name" from "profiles" where "profiles"."id" = "teacher_profiles"."profile_id") collate "vi-VN-x-icu"',
         );
     }
 }

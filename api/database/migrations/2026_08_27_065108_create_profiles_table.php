@@ -17,7 +17,9 @@ return new class extends Migration
             // NULL khi người này chưa có tài khoản đăng nhập. Phụ huynh nhập từ form
             // học sinh bắt đầu ở trạng thái đó; cấp tài khoản sau chỉ là một lần UPDATE.
             $table->foreignId('user_id')->nullable()->unique()->constrained();
-            $table->string('full_name', 255);
+            // Collation tiếng Việt ngay trên cột: mọi truy vấn sắp xếp theo tên đều đúng
+            // thứ tự chữ cái tiếng Việt mà không cần lặp lại COLLATE ở từng câu truy vấn.
+            $table->string('full_name', 255)->collation('vi-VN-x-icu');
             // Không UNIQUE: giáo viên được phép dùng chính số của mình làm số phụ huynh
             // cho con. Index vẫn cần cho tìm kiếm và cho bước dò trùng phụ huynh.
             $table->string('phone', 20)->nullable()->index();
