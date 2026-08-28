@@ -10,7 +10,7 @@ import { z } from "zod";
  */
 
 /** Integer enums the API reports as numbers. */
-const employeeStatus = z.union([z.literal(0), z.literal(1)]);
+const teacherStatus = z.union([z.literal(0), z.literal(1)]);
 const studentStatus = z.union([z.literal(0), z.literal(1), z.literal(2)]);
 const classStatus = z.union([z.literal(0), z.literal(1)]);
 const gender = z.union([z.literal(0), z.literal(1), z.literal(2)]);
@@ -52,11 +52,11 @@ export const teacherSchema = z.object({
   id: z.number().int(),
   user_id: z.number().nullable(),
   full_name: z.string(),
-  phone: z.string(),
+  phone: z.string().nullable(),
   email: z.string().nullable(),
-  gender: z.number(),
+  gender,
   address: z.string().nullable(),
-  status: employeeStatus,
+  status: teacherStatus,
   color_identification: z.string().nullable(),
   joined_at: z.string().nullable(),
   username: z.string().optional(),
@@ -91,7 +91,7 @@ export const schoolClassListSchema = z.array(schoolClassSchema);
 /** A student profile with the state of its login account. */
 export const studentSchema = z.object({
   id: z.number().int(),
-  user_id: z.number().int(),
+  user_id: z.number().nullable(),
   full_name: z.string(),
   phone: z.string().nullable(),
   dob: z.string().nullable(),
