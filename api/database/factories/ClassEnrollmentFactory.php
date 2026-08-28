@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Academic\Models\SchoolClass;
-use App\Modules\Identity\Models\Student;
+use App\Modules\Identity\Models\StudentProfile;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -24,8 +24,7 @@ class ClassEnrollmentFactory extends Factory
     {
         return [
             'class_id' => SchoolClass::factory(),
-            'student_id' => Student::factory(),
-            'fee_per_session' => null,
+            'student_id' => StudentProfile::factory(),
             'enrolled_at' => now()->subWeek()->toDateString(),
             'left_at' => null,
             'note' => null,

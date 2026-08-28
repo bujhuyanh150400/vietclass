@@ -16,12 +16,8 @@ return new class extends Migration
             $table->string('code', 50)->unique();
             $table->string('name', 50);
             $table->foreignId('subject_id')->index()->constrained();
-            $table->foreignId('teacher_id')->index()->constrained();
+            $table->foreignId('teacher_id')->index()->constrained('teacher_profiles', 'profile_id');
             $table->smallInteger('grade_level')->index();
-            // Money columns exist for the future finance module. Nothing writes a
-            // value other than the default in this release.
-            $table->decimal('base_fee_per_session', 12, 0)->default(0);
-            $table->decimal('teacher_salary_per_session', 12, 0)->default(0);
             // The fork stored this as a tinyint, capping every class at 255 students
             // for no stated reason.
             $table->unsignedSmallInteger('max_students')->default(0);

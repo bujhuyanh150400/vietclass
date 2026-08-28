@@ -4,34 +4,32 @@ namespace Database\Factories;
 
 use App\Modules\Identity\Enums\TeacherStatus;
 use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\Teacher;
-use App\Modules\Identity\Models\User;
+use App\Modules\Identity\Models\Profile;
+use App\Modules\Identity\Models\TeacherProfile;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Teacher>
+ * @extends Factory<TeacherProfile>
  */
-class TeacherFactory extends Factory
+class TeacherProfileFactory extends Factory
 {
-    /** @var class-string<Teacher> */
-    protected $model = Teacher::class;
+    /** @var class-string<TeacherProfile> */
+    protected $model = TeacherProfile::class;
 
     /**
-     * Define the model's default state.
+     * Define the model's default state, including the profile and account beneath it.
      *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
         return [
-            'user_id' => User::factory()->state(['role' => UserRole::Teacher]),
-            'full_name' => fake()->name(),
-            'phone' => '0'.fake()->unique()->numerify('#########'),
-            'email' => fake()->unique()->safeEmail(),
-            'address' => fake()->optional()->address(),
+            'profile_id' => Profile::factory()
+                ->forRole(UserRole::Teacher)
+                ->state(fn (): array => ['email' => fake()->unique()->safeEmail()]),
             'status' => TeacherStatus::Active,
-            'color' => fake()->hexColor(),
             'joined_at' => fake()->dateTimeBetween('-3 years')->format('Y-m-d'),
+            'color_identification' => fake()->hexColor(),
         ];
     }
 
