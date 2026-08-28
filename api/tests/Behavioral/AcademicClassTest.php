@@ -10,7 +10,7 @@ use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Identity\Enums\GradeLevel;
 use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\Teacher;
+use App\Modules\Identity\Models\TeacherProfile;
 use App\Modules\Identity\Models\User;
 
 beforeEach(function (): void {
@@ -24,7 +24,7 @@ function classPayload(array $overrides = []): array
         'code' => 'TOAN-9A',
         'name' => 'Toán 9A',
         'subject_id' => Subject::factory()->create()->id,
-        'teacher_id' => Teacher::factory()->create()->id,
+        'teacher_id' => TeacherProfile::factory()->create()->profile_id,
         'grade_level' => GradeLevel::Grade9->value,
         'max_students' => 20,
         'start_at' => now()->toDateString(),
@@ -51,9 +51,9 @@ test('a class cannot be opened against a locked subject', function () {
 });
 
 test('a class cannot be opened under a teacher who has left', function () {
-    $teacher = Teacher::factory()->inactive()->create();
+    $teacher = TeacherProfile::factory()->inactive()->create();
 
-    $this->postJson('/api/v1/classes', classPayload(['teacher_id' => $teacher->id]))
+    $this->postJson('/api/v1/classes', classPayload(['teacher_id' => $teacher->profile_id]))
         ->assertStatus(422)
         ->assertJsonPath('message', 'Giáo viên này không còn làm việc, không thể phụ trách lớp.');
 });
@@ -128,10 +128,10 @@ test('capacity may be set to exactly the current headcount', function () {
 
 test('a class cannot be handed to a teacher who has left', function () {
     $class = SchoolClass::factory()->create();
-    $gone = Teacher::factory()->inactive()->create();
+    $gone = TeacherProfile::factory()->inactive()->create();
 
     $result = app(UpdateClassAction::class)->handle($class->id, [
-        'teacher_id' => $gone->id,
+        'teacher_id' => $gone->profile_id,
         'max_students' => 20,
     ]);
 
@@ -208,7 +208,7 @@ test('the class list reports its subject, teacher, and headcount', function () {
         ->assertOk()
         ->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.subject_name', $class->subject->name)
-        ->assertJsonPath('data.0.teacher_name', $class->teacher->full_name)
+        ->assertJsonPath('data.0.teacher_name', $class->teacher->profile->full_name)
         ->assertJsonPath('data.0.active_students_count', 2);
 });
 

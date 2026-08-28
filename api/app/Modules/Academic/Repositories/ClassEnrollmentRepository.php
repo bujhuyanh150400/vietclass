@@ -5,7 +5,8 @@ namespace App\Modules\Academic\Repositories;
 use App\Core\Data\ListQuery;
 use App\Core\Repositories\BaseRepository;
 use App\Modules\Academic\Models\ClassEnrollment;
-use App\Modules\Identity\Models\Student;
+use App\Modules\Identity\Models\Profile;
+use App\Modules\Identity\Models\StudentProfile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -32,7 +33,7 @@ final class ClassEnrollmentRepository extends BaseRepository
     public function paginateForClass(int $classId, ListQuery $query): LengthAwarePaginator
     {
         return $this->modelQuery()
-            ->with('student:id,full_name,phone,grade_level')
+            ->with(['student:profile_id,grade_level', 'student.profile:id,full_name,phone'])
             ->where('class_id', $classId)
             ->when(
                 $query->hasFilter('active_only') && (bool) $query->filter('active_only'),
@@ -41,8 +42,8 @@ final class ClassEnrollmentRepository extends BaseRepository
             ->when(
                 $query->hasSearch(),
                 fn (Builder $builder): Builder => $builder->whereHas(
-                    'student',
-                    fn (Builder $student): Builder => $student->where('full_name', 'ilike', $query->searchLike()),
+                    'student.profile',
+                    fn (Builder $profile): Builder => $profile->where('full_name', 'ilike', $query->searchLike()),
                 ),
             )
             ->orderBy($query->sort, $query->direction)
@@ -56,10 +57,10 @@ final class ClassEnrollmentRepository extends BaseRepository
      * Students who left the class previously are included, because re-enrolling is
      * allowed and keeps the earlier period as history. The exclusion is expressed as a
      * subquery over enrolments rather than a relation on the student model, because
-     * `Student` is owned by the Identity module and must not reference this module's
-     * `ClassEnrollment` back.
+     * `StudentProfile` is owned by the Identity module and must not reference this
+     * module's `ClassEnrollment` back.
      *
-     * @return LengthAwarePaginator<int, Student>
+     * @return LengthAwarePaginator<int, StudentProfile>
      */
     public function paginateAvailableForClass(int $classId, ListQuery $query): LengthAwarePaginator
     {
@@ -68,19 +69,24 @@ final class ClassEnrollmentRepository extends BaseRepository
             ->active()
             ->pluck('student_id');
 
-        return Student::query()
-            ->with('user:id,username,is_active')
-            ->whereHas('user', fn (Builder $user): Builder => $user->where('is_active', true))
-            ->whereNotIn('id', $activeStudentIds)
+        return StudentProfile::query()
+            ->with(['profile.user:id,username,is_active', 'primaryGuardian.guardian'])
+            ->whereHas('profile.user', fn (Builder $user): Builder => $user->where('is_active', true))
+            ->whereNotIn('profile_id', $activeStudentIds)
             ->when(
                 $query->hasSearch(),
-                fn (Builder $builder): Builder => $builder->where(
-                    fn (Builder $scoped): Builder => $scoped
-                        ->where('full_name', 'ilike', $query->searchLike())
-                        ->orWhere('phone', 'ilike', $query->searchLike()),
+                fn (Builder $builder): Builder => $builder->whereHas(
+                    'profile',
+                    fn (Builder $profile): Builder => $profile->where(
+                        fn (Builder $scoped): Builder => $scoped
+                            ->where('full_name', 'ilike', $query->searchLike())
+                            ->orWhere('phone', 'ilike', $query->searchLike()),
+                    ),
                 ),
             )
-            ->orderBy('full_name')
+            ->orderBy(
+                Profile::query()->select('full_name')->whereColumn('profiles.id', 'student_profiles.profile_id'),
+            )
             ->paginate(perPage: $query->perPage, page: $query->page);
     }
 
@@ -90,7 +96,7 @@ final class ClassEnrollmentRepository extends BaseRepository
     public function findById(int $enrollmentId): ?ClassEnrollment
     {
         return $this->modelQuery()
-            ->with(['schoolClass', 'student:id,full_name'])
+            ->with(['schoolClass', 'student.profile:id,full_name'])
             ->find($enrollmentId);
     }
 

@@ -151,7 +151,7 @@ final class ClassRepository extends BaseRepository
     private function withListRelations(Builder $query): Builder
     {
         return $query
-            ->with(['subject:id,name', 'teacher:id,full_name'])
+            ->with(['subject:id,name', 'teacher.profile:id,full_name'])
             ->withCount([
                 'enrollments as active_students_count' => fn (Builder $builder): Builder => $builder->active(),
             ]);

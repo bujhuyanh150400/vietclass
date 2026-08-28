@@ -4,7 +4,7 @@ namespace App\Modules\Academic\Models;
 
 use App\Modules\Academic\Enums\ClassStatus;
 use App\Modules\Identity\Enums\GradeLevel;
-use App\Modules\Identity\Models\Teacher;
+use App\Modules\Identity\Models\TeacherProfile;
 use Database\Factories\SchoolClassFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
@@ -26,8 +26,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'subject_id',
     'teacher_id',
     'grade_level',
-    'base_fee_per_session',
-    'teacher_salary_per_session',
     'max_students',
     'status',
     'start_at',
@@ -40,8 +38,6 @@ final class SchoolClass extends Model
 
     /** @var array<string, int> */
     protected $attributes = [
-        'base_fee_per_session' => 0,
-        'teacher_salary_per_session' => 0,
         'max_students' => 0,
         'status' => ClassStatus::Active->value,
     ];
@@ -64,8 +60,6 @@ final class SchoolClass extends Model
         return [
             'grade_level' => GradeLevel::class,
             'status' => ClassStatus::class,
-            'base_fee_per_session' => 'decimal:0',
-            'teacher_salary_per_session' => 'decimal:0',
             'max_students' => 'integer',
             'start_at' => 'date',
             'end_at' => 'date',
@@ -85,11 +79,14 @@ final class SchoolClass extends Model
     /**
      * Return the teacher responsible for this class.
      *
-     * @return BelongsTo<Teacher, $this>
+     * The key stored here is the shared `profile_id`, so the foreign key can only
+     * resolve to somebody who actually holds a teaching role.
+     *
+     * @return BelongsTo<TeacherProfile, $this>
      */
     public function teacher(): BelongsTo
     {
-        return $this->belongsTo(Teacher::class);
+        return $this->belongsTo(TeacherProfile::class, 'teacher_id', 'profile_id');
     }
 
     /**

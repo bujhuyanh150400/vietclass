@@ -28,7 +28,7 @@ final class StoreEnrollmentRequest extends FormRequest
     {
         return [
             'student_ids' => ['required', 'array', 'min:1', 'max:100'],
-            'student_ids.*' => ['integer', Rule::exists('students', 'id')],
+            'student_ids.*' => ['integer', Rule::exists('student_profiles', 'profile_id')],
             'enrolled_at' => ['required', 'date_format:Y-m-d'],
             'note' => ['sometimes', 'nullable', 'string', 'max:2000'],
         ];

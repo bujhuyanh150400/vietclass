@@ -31,11 +31,9 @@ final class StoreClassRequest extends FormRequest
             'code' => ['required', 'string', 'max:50', Rule::unique('classes', 'code')],
             'name' => ['required', 'string', 'max:50'],
             'subject_id' => ['required', 'integer', Rule::exists('subjects', 'id')],
-            'teacher_id' => ['required', 'integer', Rule::exists('teachers', 'id')],
+            'teacher_id' => ['required', 'integer', Rule::exists('teacher_profiles', 'profile_id')],
             'grade_level' => ['required', 'integer', Rule::in(GradeLevel::values())],
             'max_students' => ['required', 'integer', 'min:1', 'max:65535'],
-            'base_fee_per_session' => ['sometimes', 'integer', 'min:0'],
-            'teacher_salary_per_session' => ['sometimes', 'integer', 'min:0'],
             'start_at' => ['required', 'date_format:Y-m-d'],
             'end_at' => ['sometimes', 'nullable', 'date_format:Y-m-d', 'after_or_equal:start_at'],
         ];
