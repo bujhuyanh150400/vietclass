@@ -48,7 +48,7 @@ Bổ sung cho luồng trình duyệt:
 
 1. Mở `/login` và nhập tên đăng nhập cùng mật khẩu. Có thể bật `Ghi nhớ đăng nhập` để phiên sống lâu hơn.
 2. Nhấn `Đăng nhập`. Thành công sẽ chuyển tới `/dashboard`, hoặc trở lại đúng trang trong khu vực `/dashboard` hay `/academic` mà trước đó đã yêu cầu.
-3. Tên đăng nhập và nhãn vai trò hiển thị trong menu tài khoản ở thanh trên. Nhãn vai trò: `0` Quản trị viên, `1` Giáo viên, `2` Nhân viên, `3` Học viên.
+3. Tên đăng nhập và nhãn vai trò hiển thị trong menu tài khoản ở thanh trên. Nhãn vai trò: `0` Quản trị viên, `1` Giáo viên, `2` Học viên, `3` Phụ huynh.
 4. Chọn `Đăng xuất` trong menu tài khoản để kết thúc phiên.
 
 Các endpoint cùng nguồn mà trình duyệt gọi là `POST /api/auth/login`, `GET /api/auth/session`, và `POST /api/auth/logout`. Đây là endpoint của frontend, **không phải** endpoint Laravel; chúng khác với `/api/v1/auth/*` cả về đường dẫn lẫn phương thức, và chỉ tồn tại để giữ bearer token ở phía server.
