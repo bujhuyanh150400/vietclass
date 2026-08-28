@@ -70,9 +70,12 @@ final class UpdateStudentAction
     /**
      * Rewrite the main contact for a student.
      *
-     * An existing primary guardian is edited in place rather than replaced, so the
-     * link survives and a guardian shared with a sibling keeps one profile. A student
-     * with no primary guardian yet gets one created.
+     * A guardian used by only this student is edited in place, so the link survives.
+     * A guardian shared with a sibling is copy-on-write: the shared profile is left
+     * untouched (the sibling keeps their own name, phone, and relationship intact)
+     * and this student's link is re-pointed at a brand new profile built from the
+     * submitted values instead. A student with no primary guardian yet gets one
+     * created.
      *
      * @param  array<string, mixed>  $attributes
      */
@@ -82,27 +85,68 @@ final class UpdateStudentAction
         $link = $student->primaryGuardian()->first();
 
         if ($link instanceof StudentGuardian) {
-            $this->profiles->update($link->guardian, [
-                'full_name' => $attributes['guardian_name'],
-                'phone' => $attributes['guardian_phone'] ?? null,
-                'gender' => $attributes['guardian_gender'],
-            ]);
+            if ($this->guardians->countLinksTo($link->guardian_profile_id) > 1) {
+                $guardian = $this->profiles->create($this->newGuardianAttributes($attributes));
+                $link->fill(['guardian_profile_id' => $guardian->id, 'relationship' => $relationship])->save();
 
+                return;
+            }
+
+            $this->profiles->update($link->guardian, $this->guardianUpdateAttributes($attributes));
             $link->fill(['relationship' => $relationship])->save();
 
             return;
         }
 
-        $guardian = $this->profiles->create([
-            'full_name' => $attributes['guardian_name'],
-            'phone' => $attributes['guardian_phone'] ?? null,
-            'gender' => $attributes['guardian_gender'],
-        ]);
+        $guardian = $this->profiles->create($this->newGuardianAttributes($attributes));
 
         $this->guardians->linkPrimary(
             studentProfileId: $student->profile_id,
             guardianProfileId: $guardian->id,
             relationship: $relationship,
         );
+    }
+
+    /**
+     * Build the attributes for a brand new guardian profile from the submitted
+     * values. An omitted phone number becomes no phone number at all, matching how
+     * a guardian is created from scratch on the student creation form.
+     *
+     * @param  array<string, mixed>  $attributes
+     * @return array<string, mixed>
+     */
+    private function newGuardianAttributes(array $attributes): array
+    {
+        return [
+            'full_name' => $attributes['guardian_name'],
+            'phone' => $attributes['guardian_phone'] ?? null,
+            'gender' => $attributes['guardian_gender'],
+        ];
+    }
+
+    /**
+     * Build the attributes to apply to a guardian profile edited in place.
+     *
+     * `guardian_name` and `guardian_gender` are required by the request, so they are
+     * always present. `guardian_phone` is optional: an absent key means "leave the
+     * stored phone number alone", not "erase it", so it is only included when the
+     * caller actually sent it — even when the value sent is null, which is a
+     * deliberate request to clear it.
+     *
+     * @param  array<string, mixed>  $attributes
+     * @return array<string, mixed>
+     */
+    private function guardianUpdateAttributes(array $attributes): array
+    {
+        $update = [
+            'full_name' => $attributes['guardian_name'],
+            'gender' => $attributes['guardian_gender'],
+        ];
+
+        if (array_key_exists('guardian_phone', $attributes)) {
+            $update['phone'] = $attributes['guardian_phone'];
+        }
+
+        return $update;
     }
 }

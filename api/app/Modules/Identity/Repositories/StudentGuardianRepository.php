@@ -42,4 +42,16 @@ final class StudentGuardianRepository extends BaseRepository
             ],
         );
     }
+
+    /**
+     * Count how many students currently list the given profile as a guardian.
+     *
+     * Used to decide whether a guardian profile may be edited in place: more than
+     * one link means it is shared with a sibling and must never be mutated from
+     * just one student's form.
+     */
+    public function countLinksTo(int $guardianProfileId): int
+    {
+        return $this->modelQuery()->where('guardian_profile_id', $guardianProfileId)->count();
+    }
 }

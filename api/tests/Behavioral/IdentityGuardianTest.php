@@ -74,6 +74,7 @@ test('guardian name, gender and relationship are all required', function () {
 test('updating a student rewrites the primary guardian in place', function () {
     $created = $this->postJson('/api/v1/students', guardianStudentPayload())->assertCreated();
     $studentId = $created->json('data.id');
+    $guardianProfileId = Profile::query()->where('full_name', 'Phạm Văn D')->value('id');
 
     $this->putJson("/api/v1/students/{$studentId}", [
         'full_name' => 'Phạm Thùy Linh',
@@ -90,4 +91,76 @@ test('updating a student rewrites the primary guardian in place', function () {
         ->assertJsonPath('data.guardian_relationship', GuardianRelationship::Mother->value);
 
     $this->assertDatabaseCount('student_guardians', 1);
+    // "In place" means the very same profile row was renamed, not that a second one
+    // was created alongside it: the guardian profile count stays at one, and it is
+    // still the same id as before the edit.
+    expect(Profile::query()->where('full_name', 'Phạm Thị E')->count())->toBe(1)
+        ->and(Profile::query()->where('id', $guardianProfileId)->value('full_name'))->toBe('Phạm Thị E');
+});
+
+test('editing one sibling\'s guardian never rewrites the guardian shared with the other sibling', function () {
+    $first = $this->postJson('/api/v1/students', guardianStudentPayload())->assertCreated();
+    $firstId = $first->json('data.id');
+
+    $second = $this->postJson('/api/v1/students', guardianStudentPayload([
+        'username' => 'hs_minh',
+        'full_name' => 'Phạm Nhật Minh',
+        'gender' => Gender::Male->value,
+    ]))->assertCreated();
+    $secondId = $second->json('data.id');
+
+    $sharedGuardianId = Profile::query()->where('full_name', 'Phạm Văn D')->value('id');
+
+    $this->putJson("/api/v1/students/{$firstId}", [
+        'full_name' => 'Phạm Thùy Linh',
+        'gender' => Gender::Female->value,
+        'grade_level' => GradeLevel::Grade9->value,
+        'status' => 0,
+        'guardian_name' => 'Trần Thị Mẹ',
+        'guardian_gender' => Gender::Female->value,
+        'guardian_relationship' => GuardianRelationship::Mother->value,
+        'guardian_phone' => '0987654321',
+    ])->assertOk();
+
+    // The edited sibling now points at a brand new guardian profile.
+    $this->getJson("/api/v1/students/{$firstId}")
+        ->assertOk()
+        ->assertJsonPath('data.guardian_name', 'Trần Thị Mẹ')
+        ->assertJsonPath('data.guardian_phone', '0987654321')
+        ->assertJsonPath('data.guardian_relationship', GuardianRelationship::Mother->value);
+
+    // The other sibling's guardian — name, phone, and relationship — is untouched.
+    $this->getJson("/api/v1/students/{$secondId}")
+        ->assertOk()
+        ->assertJsonPath('data.guardian_name', 'Phạm Văn D')
+        ->assertJsonPath('data.guardian_phone', '0912345678')
+        ->assertJsonPath('data.guardian_relationship', GuardianRelationship::Father->value);
+
+    $this->assertDatabaseHas('profiles', [
+        'id' => $sharedGuardianId,
+        'full_name' => 'Phạm Văn D',
+        'phone' => '0912345678',
+    ]);
+    expect(Profile::query()->where('full_name', 'Trần Thị Mẹ')->count())->toBe(1);
+    $this->assertDatabaseCount('student_guardians', 2);
+});
+
+test('an update that omits guardian_phone leaves the stored guardian phone intact', function () {
+    $created = $this->postJson('/api/v1/students', guardianStudentPayload())->assertCreated();
+    $studentId = $created->json('data.id');
+
+    $this->putJson("/api/v1/students/{$studentId}", [
+        'full_name' => 'Phạm Thùy Linh',
+        'gender' => Gender::Female->value,
+        'grade_level' => GradeLevel::Grade9->value,
+        'status' => 0,
+        'guardian_name' => 'Phạm Văn D',
+        'guardian_gender' => Gender::Male->value,
+        'guardian_relationship' => GuardianRelationship::Father->value,
+        // guardian_phone intentionally absent from the payload.
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.guardian_phone', '0912345678');
+
+    $this->assertDatabaseHas('profiles', ['full_name' => 'Phạm Văn D', 'phone' => '0912345678']);
 });

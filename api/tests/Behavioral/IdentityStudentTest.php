@@ -148,9 +148,12 @@ test('the student list is paginated and searchable across profile and guardian',
 });
 
 test('the student list filters by study status, grade, and account state', function () {
+    // `grade_level` is pinned on every student here, not just the one the grade
+    // filter targets: `StudentProfileFactory` randomises it across 13 grades, and an
+    // unpinned sibling could coincidentally roll Grade6 and break the count assertion.
     $studying = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade6]);
-    $stopped = StudentProfile::factory()->create(['status' => StudentStatus::Stopped]);
-    $locked = StudentProfile::factory()->create();
+    $stopped = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade7, 'status' => StudentStatus::Stopped]);
+    $locked = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade8]);
     $locked->profile->user->forceFill(['is_active' => false])->save();
 
     $this->getJson('/api/v1/students?status[]='.StudentStatus::Stopped->value)
