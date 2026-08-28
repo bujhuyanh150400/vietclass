@@ -14,6 +14,7 @@ const teacherStatus = z.union([z.literal(0), z.literal(1)]);
 const studentStatus = z.union([z.literal(0), z.literal(1), z.literal(2)]);
 const classStatus = z.union([z.literal(0), z.literal(1)]);
 const gender = z.union([z.literal(0), z.literal(1), z.literal(2)]);
+const guardianRelationship = z.union([z.literal(0), z.literal(1), z.literal(2)]);
 const gradeLevel = z.union([
   z.literal(0), z.literal(1), z.literal(2), z.literal(3), z.literal(4),
   z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9),
@@ -99,8 +100,8 @@ export const studentSchema = z.object({
   grade_level: gradeLevel,
   guardian_name: z.string().nullable(),
   guardian_phone: z.string().nullable(),
-  guardian_gender: z.number().nullable(),
-  guardian_relationship: z.number().nullable(),
+  guardian_gender: gender.nullable(),
+  guardian_relationship: guardianRelationship.nullable(),
   address: z.string().nullable(),
   note: z.string().nullable(),
   status: studentStatus,

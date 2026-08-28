@@ -80,9 +80,10 @@ final class CreateStudentAction
     }
 
     /**
-     * Return the profile to record as guardian, reusing an existing one when the phone
-     * number already belongs to somebody. A guardian entered without a phone number
-     * always gets a profile of their own, because there is nothing to match on.
+     * Return the profile to record as guardian, reusing an existing one when both the
+     * phone number and the guardian name already belong to somebody eligible to be a
+     * guardian. A guardian entered without a phone number always gets a profile of
+     * their own, because there is nothing to match on.
      *
      * @param  array<string, mixed>  $attributes
      */
@@ -91,7 +92,10 @@ final class CreateStudentAction
         $phone = $attributes['guardian_phone'] ?? null;
 
         if ($phone !== null) {
-            $existing = $this->profiles->findByPhone((string) $phone);
+            $existing = $this->profiles->findGuardianByPhoneAndName(
+                (string) $phone,
+                (string) $attributes['guardian_name'],
+            );
 
             if ($existing instanceof Profile) {
                 return $existing;

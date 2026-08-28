@@ -6,6 +6,7 @@ use App\Core\Data\ActionResult;
 use App\Core\Exceptions\ActionError;
 use App\Modules\Identity\Enums\IdentityError;
 use App\Modules\Identity\Models\StudentProfile;
+use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Repositories\StudentRepository;
 use App\Modules\Identity\Repositories\UserRepository;
 
@@ -37,6 +38,13 @@ final class ToggleStudentAccountAction
                 throw new ActionError(
                     message: 'Không tìm thấy học sinh.',
                     code: IdentityError::StudentNotFound,
+                );
+            }
+
+            if (! $student->profile->user instanceof User) {
+                throw new ActionError(
+                    message: 'Học sinh này chưa có tài khoản đăng nhập.',
+                    code: IdentityError::AccountNotProvisioned,
                 );
             }
 

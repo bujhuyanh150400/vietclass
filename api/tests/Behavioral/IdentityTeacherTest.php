@@ -272,3 +272,22 @@ test('the teacher list sorts by the name held on the shared profile', function (
         ->assertJsonPath('data.0.full_name', 'Ẩn Danh')
         ->assertJsonPath('data.1.full_name', 'Trần Bích');
 });
+
+test('toggling the account or changing the password of a teacher with no login account is a business error, not a 500', function () {
+    $teacher = TeacherProfile::factory()->create([
+        'profile_id' => Profile::factory()->create()->id,
+    ]);
+
+    expect(app(ToggleTeacherAccountAction::class)->handle($teacher->profile_id, false)->getError())
+        ->toBe(IdentityError::AccountNotProvisioned)
+        ->and(app(ChangeTeacherPasswordAction::class)->handle($teacher->profile_id, 'matkhau123')->getError())
+        ->toBe(IdentityError::AccountNotProvisioned);
+
+    $this->patchJson("/api/v1/teachers/{$teacher->profile_id}/account", ['is_active' => false])
+        ->assertStatus(IdentityError::AccountNotProvisioned->httpStatus())
+        ->assertJsonPath('message', 'Giáo viên này chưa có tài khoản đăng nhập.');
+
+    $this->patchJson("/api/v1/teachers/{$teacher->profile_id}/password", ['password' => 'matkhaumoi1'])
+        ->assertStatus(IdentityError::AccountNotProvisioned->httpStatus())
+        ->assertJsonPath('message', 'Giáo viên này chưa có tài khoản đăng nhập.');
+});

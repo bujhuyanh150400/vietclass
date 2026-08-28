@@ -6,6 +6,7 @@ use App\Core\Data\ActionResult;
 use App\Core\Exceptions\ActionError;
 use App\Modules\Identity\Enums\IdentityError;
 use App\Modules\Identity\Models\TeacherProfile;
+use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Repositories\TeacherRepository;
 use App\Modules\Identity\Repositories\UserRepository;
 
@@ -37,6 +38,13 @@ final class ChangeTeacherPasswordAction
                 throw new ActionError(
                     message: 'Không tìm thấy giáo viên.',
                     code: IdentityError::TeacherNotFound,
+                );
+            }
+
+            if (! $teacher->profile->user instanceof User) {
+                throw new ActionError(
+                    message: 'Giáo viên này chưa có tài khoản đăng nhập.',
+                    code: IdentityError::AccountNotProvisioned,
                 );
             }
 

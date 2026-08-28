@@ -164,3 +164,79 @@ test('an update that omits guardian_phone leaves the stored guardian phone intac
 
     $this->assertDatabaseHas('profiles', ['full_name' => 'Phạm Văn D', 'phone' => '0912345678']);
 });
+
+test('editing a sibling\'s grade level while resubmitting the same guardian values does not fork the shared guardian', function () {
+    $first = $this->postJson('/api/v1/students', guardianStudentPayload())->assertCreated();
+    $firstId = $first->json('data.id');
+
+    $second = $this->postJson('/api/v1/students', guardianStudentPayload([
+        'username' => 'hs_minh',
+        'full_name' => 'Phạm Nhật Minh',
+        'gender' => Gender::Male->value,
+    ]))->assertCreated();
+    $secondId = $second->json('data.id');
+
+    $sharedGuardianId = Profile::query()->where('full_name', 'Phạm Văn D')->value('id');
+    $profileCountBefore = Profile::query()->count();
+
+    // Only the grade level changes; every guardian key is resubmitted unchanged, the
+    // way the frontend edit form always submits all four guardian keys.
+    $this->putJson("/api/v1/students/{$firstId}", [
+        'full_name' => 'Phạm Thùy Linh',
+        'gender' => Gender::Female->value,
+        'grade_level' => GradeLevel::Grade10->value,
+        'status' => 0,
+        'guardian_name' => 'Phạm Văn D',
+        'guardian_gender' => Gender::Male->value,
+        'guardian_relationship' => GuardianRelationship::Father->value,
+        'guardian_phone' => '0912345678',
+    ])->assertOk()->assertJsonPath('data.grade_level', GradeLevel::Grade10->value);
+
+    // No new profile was created: the family was not split across two rows that
+    // describe the same person.
+    expect(Profile::query()->count())->toBe($profileCountBefore);
+
+    $this->assertDatabaseHas('student_guardians', [
+        'student_profile_id' => $firstId,
+        'guardian_profile_id' => $sharedGuardianId,
+    ]);
+    $this->assertDatabaseHas('student_guardians', [
+        'student_profile_id' => $secondId,
+        'guardian_profile_id' => $sharedGuardianId,
+    ]);
+});
+
+test('a guardian phone typo matching an existing student does not adopt that student as guardian', function () {
+    $firstStudent = $this->postJson('/api/v1/students', guardianStudentPayload([
+        'username' => 'hs_an',
+        'full_name' => 'Nguyễn Văn An',
+        'phone' => '0977777777',
+    ]))->assertCreated();
+    $firstStudentProfileId = $firstStudent->json('data.id');
+
+    $second = $this->postJson('/api/v1/students', guardianStudentPayload([
+        'username' => 'hs_binh',
+        'full_name' => 'Trần Thị Bình',
+        'guardian_name' => 'Trần Văn Cường',
+        // Typo: lands on the same number as the first student's own contact phone,
+        // not their guardian's.
+        'guardian_phone' => '0977777777',
+    ]))->assertCreated();
+    $secondId = $second->json('data.id');
+
+    // The submitted guardian name is kept, not silently discarded in favour of
+    // whichever profile the typo'd phone happened to match.
+    $second->assertJsonPath('data.guardian_name', 'Trần Văn Cường');
+
+    // The first student's own profile is untouched and was never adopted as a guardian.
+    expect(Profile::query()->where('id', $firstStudentProfileId)->value('full_name'))->toBe('Nguyễn Văn An');
+
+    $guardianProfileId = Profile::query()->where('full_name', 'Trần Văn Cường')->value('id');
+    expect($guardianProfileId)->not->toBeNull()
+        ->and($guardianProfileId)->not->toBe($firstStudentProfileId);
+
+    $this->assertDatabaseHas('student_guardians', [
+        'student_profile_id' => $secondId,
+        'guardian_profile_id' => $guardianProfileId,
+    ]);
+});

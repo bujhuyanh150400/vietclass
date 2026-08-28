@@ -42,16 +42,31 @@ final class ProfileRepository extends BaseRepository
     }
 
     /**
-     * Find the oldest profile carrying a phone number.
+     * Find the oldest existing profile that may be reused as a guardian: one that
+     * already carries the exact same phone number and full name, and does not itself
+     * hold a student role.
+     *
+     * Both the phone and the name must match, compared exactly with no trimming or
+     * case folding. Matching on phone alone let a mistyped phone number transplant
+     * whichever unrelated profile already held that number — discarding the submitted
+     * guardian name and gender and silently attaching a stranger. Requiring the name
+     * too still lets a guardian entered twice from two siblings' forms resolve to one
+     * profile, since both submissions carry the identical name.
+     *
+     * A profile carrying a student role is never returned, even when phone and name
+     * happen to match: a student must never become another student's guardian. A
+     * profile carrying a teacher role (or no role at all) remains a valid match, so a
+     * teacher using their own number as their child's guardian contact keeps working.
      *
      * The column is deliberately not unique, so this returns the first match rather
-     * than the only one. It exists to let a guardian entered twice from two siblings'
-     * forms resolve to one profile instead of two.
+     * than the only one.
      */
-    public function findByPhone(string $phone): ?Profile
+    public function findGuardianByPhoneAndName(string $phone, string $name): ?Profile
     {
         return $this->modelQuery()
             ->where('phone', $phone)
+            ->where('full_name', $name)
+            ->whereDoesntHave('studentProfile')
             ->orderBy('id')
             ->first();
     }

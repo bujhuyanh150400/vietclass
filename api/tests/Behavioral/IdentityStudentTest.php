@@ -200,3 +200,22 @@ test('a missing student is reported as not found by every operation', function (
         ->assertNotFound()
         ->assertJsonPath('message', 'Không tìm thấy học sinh.');
 });
+
+test('toggling the account or changing the password of a student with no login account is a business error, not a 500', function () {
+    $student = StudentProfile::factory()->create([
+        'profile_id' => Profile::factory()->create()->id,
+    ]);
+
+    expect(app(ToggleStudentAccountAction::class)->handle($student->profile_id, false)->getError())
+        ->toBe(IdentityError::AccountNotProvisioned)
+        ->and(app(ChangeStudentPasswordAction::class)->handle($student->profile_id, 'matkhau123')->getError())
+        ->toBe(IdentityError::AccountNotProvisioned);
+
+    $this->patchJson("/api/v1/students/{$student->profile_id}/account", ['is_active' => false])
+        ->assertStatus(IdentityError::AccountNotProvisioned->httpStatus())
+        ->assertJsonPath('message', 'Học sinh này chưa có tài khoản đăng nhập.');
+
+    $this->patchJson("/api/v1/students/{$student->profile_id}/password", ['password' => 'matkhaumoi1'])
+        ->assertStatus(IdentityError::AccountNotProvisioned->httpStatus())
+        ->assertJsonPath('message', 'Học sinh này chưa có tài khoản đăng nhập.');
+});

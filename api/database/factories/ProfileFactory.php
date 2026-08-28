@@ -20,6 +20,11 @@ class ProfileFactory extends Factory
      * Define the model's default state. A profile carries no login account unless one
      * is asked for, because a guardian entered from the student form starts without one.
      *
+     * `metadata` is deliberately left out: the model's own attribute default (a jsonb
+     * object, `{}`) already matches what an action-made profile gets, and setting it
+     * explicitly to `[]` here would store a jsonb array instead, letting two different
+     * shapes coexist in the same column.
+     *
      * @return array<string, mixed>
      */
     public function definition(): array
@@ -33,7 +38,6 @@ class ProfileFactory extends Factory
             'gender' => fake()->randomElement(Gender::cases()),
             'address' => fake()->optional()->address(),
             'note' => null,
-            'metadata' => [],
         ];
     }
 

@@ -4,8 +4,10 @@ namespace App\Modules\Identity\Actions;
 
 use App\Core\Data\ActionResult;
 use App\Core\Exceptions\ActionError;
+use App\Modules\Identity\Enums\Gender;
 use App\Modules\Identity\Enums\GuardianRelationship;
 use App\Modules\Identity\Enums\IdentityError;
+use App\Modules\Identity\Models\Profile;
 use App\Modules\Identity\Models\StudentGuardian;
 use App\Modules\Identity\Models\StudentProfile;
 use App\Modules\Identity\Repositories\ProfileRepository;
@@ -71,11 +73,15 @@ final class UpdateStudentAction
      * Rewrite the main contact for a student.
      *
      * A guardian used by only this student is edited in place, so the link survives.
-     * A guardian shared with a sibling is copy-on-write: the shared profile is left
-     * untouched (the sibling keeps their own name, phone, and relationship intact)
-     * and this student's link is re-pointed at a brand new profile built from the
-     * submitted values instead. A student with no primary guardian yet gets one
-     * created.
+     * A guardian shared with a sibling is copy-on-write, but only when the submitted
+     * values actually differ from what the shared profile already holds: a form that
+     * resubmits the same name, gender, and phone changes nothing about the profile,
+     * because forking on every resubmission would silently split a family's shared
+     * guardian across two rows that describe the same person. When the shared values
+     * genuinely changed, the shared profile is left untouched (the sibling keeps their
+     * own name, phone, and relationship intact) and this student's link is re-pointed
+     * at a brand new profile built from the submitted values instead. A student with no
+     * primary guardian yet gets one created.
      *
      * @param  array<string, mixed>  $attributes
      */
@@ -85,14 +91,19 @@ final class UpdateStudentAction
         $link = $student->primaryGuardian()->first();
 
         if ($link instanceof StudentGuardian) {
-            if ($this->guardians->countLinksTo($link->guardian_profile_id) > 1) {
+            $isShared = $this->guardians->countLinksTo($link->guardian_profile_id) > 1;
+
+            if ($isShared && $this->guardianValuesChanged($link->guardian, $attributes)) {
                 $guardian = $this->profiles->create($this->newGuardianAttributes($attributes));
                 $link->fill(['guardian_profile_id' => $guardian->id, 'relationship' => $relationship])->save();
 
                 return;
             }
 
-            $this->profiles->update($link->guardian, $this->guardianUpdateAttributes($attributes));
+            if (! $isShared) {
+                $this->profiles->update($link->guardian, $this->guardianUpdateAttributes($attributes));
+            }
+
             $link->fill(['relationship' => $relationship])->save();
 
             return;
@@ -105,6 +116,38 @@ final class UpdateStudentAction
             guardianProfileId: $guardian->id,
             relationship: $relationship,
         );
+    }
+
+    /**
+     * Determine whether the submitted guardian values differ from what the shared
+     * guardian profile already holds.
+     *
+     * Compared exactly, with no trimming or case folding: this codebase does not
+     * normalise `full_name` anywhere else (not on creation, not on the solo-guardian
+     * edit path), so treating two differently-cased or differently-spaced names as
+     * "the same" here would be an inconsistency invented just for this check, and it
+     * would silently discard a genuine correction a caller made to a shared profile's
+     * name. `guardian_phone` is compared only when the payload carries the key,
+     * matching how an absent key means "leave the stored phone alone" everywhere else
+     * in this action.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function guardianValuesChanged(Profile $guardian, array $attributes): bool
+    {
+        if ($guardian->full_name !== (string) $attributes['guardian_name']) {
+            return true;
+        }
+
+        if ($guardian->gender !== Gender::from((int) $attributes['guardian_gender'])) {
+            return true;
+        }
+
+        if (array_key_exists('guardian_phone', $attributes) && $guardian->phone !== $attributes['guardian_phone']) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
