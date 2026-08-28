@@ -59,8 +59,8 @@ export const teacherSchema = z.object({
   status: teacherStatus,
   color_identification: z.string().nullable(),
   joined_at: z.string().nullable(),
-  username: z.string().optional(),
-  is_account_active: z.boolean().optional(),
+  username: z.string().nullable().optional(),
+  is_account_active: z.boolean().nullable().optional(),
   ...timestamps,
 });
 
@@ -104,8 +104,8 @@ export const studentSchema = z.object({
   address: z.string().nullable(),
   note: z.string().nullable(),
   status: studentStatus,
-  username: z.string().optional(),
-  is_account_active: z.boolean().optional(),
+  username: z.string().nullable().optional(),
+  is_account_active: z.boolean().nullable().optional(),
   ...timestamps,
 });
 

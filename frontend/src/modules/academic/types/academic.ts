@@ -94,8 +94,8 @@ export type Student = {
   address: string | null;
   note: string | null;
   status: StudentStatus;
-  username?: string;
-  is_account_active?: boolean;
+  username?: string | null;
+  is_account_active?: boolean | null;
   created_at: string | null;
   updated_at: string | null;
 };
