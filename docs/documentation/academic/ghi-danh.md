@@ -102,7 +102,7 @@ Danh sách lớp nhận thêm `active_only=1` để chỉ lấy bản ghi đang 
 ## Giới hạn hiện tại
 
 - **Chưa kiểm tra trùng lịch.** Một học sinh có thể được ghi danh vào hai lớp học cùng khung giờ mà hệ thống không phát hiện, cho tới khi có module Lịch học.
-- Chưa có học phí riêng theo học sinh. Cột `fee_per_session` được lưu nhưng không thao tác nào ghi vào.
+- Chưa có học phí riêng theo học sinh. Không có cột tiền nào trên bảng `class_enrollments`; module tài chính sau này sẽ tự thêm cột riêng khi cần.
 - Chuyển lớp luôn thực hiện ngay, chưa có luồng chờ duyệt như fork.
 - Không có chức năng xóa bản ghi ghi danh.
 

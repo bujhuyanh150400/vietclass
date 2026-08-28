@@ -7,7 +7,7 @@ use App\Modules\Academic\Enums\AcademicError;
 use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\Student;
+use App\Modules\Identity\Models\StudentProfile;
 use App\Modules\Identity\Models\User;
 
 beforeEach(function (): void {
@@ -17,10 +17,10 @@ beforeEach(function (): void {
 
 test('students are enrolled into a class from a shared join date', function () {
     $class = SchoolClass::factory()->create(['start_at' => now()->subMonth()->toDateString()]);
-    $students = Student::factory()->count(2)->create();
+    $students = StudentProfile::factory()->count(2)->create();
 
     $this->postJson("/api/v1/classes/{$class->id}/enrollments", [
-        'student_ids' => $students->pluck('id')->all(),
+        'student_ids' => $students->pluck('profile_id')->all(),
         'enrolled_at' => now()->toDateString(),
     ])
         ->assertCreated()
@@ -33,10 +33,10 @@ test('students are enrolled into a class from a shared join date', function () {
 
 test('the same student listed twice in one request is enrolled once', function () {
     $class = SchoolClass::factory()->create();
-    $student = Student::factory()->create();
+    $student = StudentProfile::factory()->create();
 
     $this->postJson("/api/v1/classes/{$class->id}/enrollments", [
-        'student_ids' => [$student->id, $student->id],
+        'student_ids' => [$student->profile_id, $student->profile_id],
         'enrolled_at' => now()->toDateString(),
     ])
         ->assertCreated()
@@ -45,10 +45,10 @@ test('the same student listed twice in one request is enrolled once', function (
 
 test('a join date cannot precede the class opening date', function () {
     $class = SchoolClass::factory()->create(['start_at' => '2026-03-01']);
-    $student = Student::factory()->create();
+    $student = StudentProfile::factory()->create();
 
     $this->postJson("/api/v1/classes/{$class->id}/enrollments", [
-        'student_ids' => [$student->id],
+        'student_ids' => [$student->profile_id],
         'enrolled_at' => '2026-02-28',
     ])
         ->assertStatus(422)
@@ -60,10 +60,10 @@ test('a join date cannot precede the class opening date', function () {
 test('a batch that would overfill the class is refused outright', function () {
     $class = SchoolClass::factory()->create(['max_students' => 2]);
     ClassEnrollment::factory()->create(['class_id' => $class->id]);
-    $students = Student::factory()->count(2)->create();
+    $students = StudentProfile::factory()->count(2)->create();
 
     $this->postJson("/api/v1/classes/{$class->id}/enrollments", [
-        'student_ids' => $students->pluck('id')->all(),
+        'student_ids' => $students->pluck('profile_id')->all(),
         'enrolled_at' => now()->toDateString(),
     ])
         ->assertStatus(409)
@@ -80,7 +80,7 @@ test('a student already studying in the class cannot be enrolled again', functio
         'enrolled_at' => now()->toDateString(),
     ])
         ->assertStatus(409)
-        ->assertJsonPath('message', 'Học sinh '.$existing->student->full_name.' đang học trong lớp này rồi.');
+        ->assertJsonPath('message', 'Học sinh '.$existing->student->profile->full_name.' đang học trong lớp này rồi.');
 });
 
 test('a student who left may be enrolled again and keeps the earlier period', function () {
@@ -100,11 +100,11 @@ test('a student who left may be enrolled again and keeps the earlier period', fu
 
 test('a finished class refuses every enrolment operation', function () {
     $class = SchoolClass::factory()->ended()->create();
-    $student = Student::factory()->create();
+    $student = StudentProfile::factory()->create();
     $enrollment = ClassEnrollment::factory()->create(['class_id' => $class->id]);
 
     $this->postJson("/api/v1/classes/{$class->id}/enrollments", [
-        'student_ids' => [$student->id],
+        'student_ids' => [$student->profile_id],
         'enrolled_at' => now()->toDateString(),
     ])->assertStatus(409)
         ->assertJsonPath('message', 'Lớp đã kết thúc, không thể thay đổi danh sách học sinh.');
@@ -135,16 +135,16 @@ test('the available student list hides those already studying in the class', fun
     $class = SchoolClass::factory()->create();
     $enrolled = ClassEnrollment::factory()->create(['class_id' => $class->id]);
     $returning = ClassEnrollment::factory()->left()->create(['class_id' => $class->id]);
-    $fresh = Student::factory()->create();
-    $locked = Student::factory()->create();
-    $locked->user->forceFill(['is_active' => false])->save();
+    $fresh = StudentProfile::factory()->create();
+    $locked = StudentProfile::factory()->create();
+    $locked->profile->user->forceFill(['is_active' => false])->save();
 
     $response = $this->getJson("/api/v1/classes/{$class->id}/available-students")->assertOk();
     $ids = collect($response->json('data'))->pluck('id');
 
-    expect($ids)->toContain($fresh->id, $returning->student_id)
+    expect($ids)->toContain($fresh->profile_id, $returning->student_id)
         ->and($ids)->not->toContain($enrolled->student_id)
-        ->and($ids)->not->toContain($locked->id);
+        ->and($ids)->not->toContain($locked->profile_id);
 });
 
 test('an enrolment date may be corrected on a closed period', function () {

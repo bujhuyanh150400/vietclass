@@ -11,8 +11,8 @@ export function getRoleLabel(role: UserRole): string {
     case 1:
       return "Giáo viên";
     case 2:
-      return "Nhân viên";
-    case 3:
       return "Học viên";
+    case 3:
+      return "Phụ huynh";
   }
 }

@@ -18,9 +18,12 @@ Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/a
 - Tạo hồ sơ học sinh tạo đồng thời một bản ghi tài khoản với vai trò Học viên, trong cùng một transaction. Thất bại ở bất kỳ bước nào không để lại tài khoản mồ côi hay hồ sơ mồ côi.
 - Tên đăng nhập là duy nhất trong toàn hệ thống và **không đổi được** sau khi tạo.
 - Mật khẩu tối thiểu 8 ký tự, được lưu dưới dạng hash và không bao giờ xuất hiện trong phản hồi.
-- Họ tên và tên phụ huynh là bắt buộc. Số điện thoại học sinh, ngày sinh, số điện thoại phụ huynh, địa chỉ và ghi chú đều không bắt buộc.
+- Họ tên, giới tính và khối lớp của học sinh là bắt buộc. Số điện thoại, ngày sinh, địa chỉ và ghi chú của học sinh đều không bắt buộc.
 - Ngày sinh, nếu có, phải trước ngày hôm nay.
-- Số điện thoại học sinh và phụ huynh, nếu có, phải bắt đầu bằng `0` và có 10 hoặc 11 chữ số. Khác với giáo viên, số điện thoại học sinh **không** cần duy nhất — anh chị em ruột thường dùng chung số của phụ huynh.
+- Tạo học sinh nhận thêm nhóm bốn trường phụ huynh: **tên** (bắt buộc), **giới tính** (bắt buộc), **quan hệ với học sinh** (bắt buộc — `0` Bố, `1` Mẹ, `2` Người giám hộ khác), và **số điện thoại** (tùy chọn). Nhóm trường này tạo ra một hồ sơ phụ huynh thật, không phải hai cột rời `parent_name`/`parent_phone` như trước đây.
+- Nếu số điện thoại phụ huynh trùng với một hồ sơ đã có trong hệ thống, hồ sơ đó được dùng lại thay vì tạo mới; không có số điện thoại thì luôn tạo một hồ sơ phụ huynh mới. Nhờ vậy, hai anh chị em ruột được nhập từ hai lần tạo học sinh riêng biệt tự động dùng chung một hồ sơ phụ huynh. Cấp tài khoản đăng nhập cho phụ huynh sau này chỉ là một lần cập nhật hồ sơ đó, không cần chuyển đổi dữ liệu.
+- Sửa hồ sơ với nhóm trường phụ huynh ghi đè lên hồ sơ phụ huynh hiện tại của học sinh — trừ khi hồ sơ đó đang dùng chung với một anh/chị/em khác, trường hợp này hệ thống tạo một hồ sơ phụ huynh mới riêng cho học sinh đang sửa thay vì sửa hồ sơ dùng chung, để không làm sai dữ liệu của người kia.
+- Số điện thoại học sinh và phụ huynh, nếu có, phải bắt đầu bằng `0` và có 10 hoặc 11 chữ số. Không số nào trong hai số này cần duy nhất — hồ sơ giáo viên, học sinh và phụ huynh dùng chung một bảng nhân thân, và anh chị em ruột thường dùng chung số của phụ huynh.
 - Trạng thái học tập gồm `0` Đang học, `1` Tạm nghỉ, `2` Dừng hẳn. Mặc định khi tạo là Đang học.
 - Trạng thái học tập và trạng thái tài khoản là hai thứ khác nhau: khóa tài khoản chỉ chặn đăng nhập, không đổi việc học sinh đang học hay đã nghỉ.
 - Không có thao tác xóa học sinh. Ngừng theo học bằng cách đổi trạng thái học tập hoặc khóa tài khoản; hồ sơ luôn được giữ để lịch sử ghi danh trỏ tới nó không bị hỏng.
@@ -33,17 +36,17 @@ Mọi endpoint nằm dưới tiền tố `/api/v1` và cần header `Authorizati
 | Thao tác | Yêu cầu |
 | --- | --- |
 | Xem danh sách | `GET /students` |
-| Tạo | `POST /students` với `username`, `password`, `full_name`, `gender`, `grade_level`, `parent_name` |
+| Tạo | `POST /students` với `username`, `password`, `full_name`, `gender`, `grade_level`, `guardian_name`, `guardian_gender`, `guardian_relationship` |
 | Xem chi tiết | `GET /students/{id}` |
-| Sửa hồ sơ | `PUT /students/{id}` với `full_name`, `gender`, `grade_level`, `parent_name`, `status` |
+| Sửa hồ sơ | `PUT /students/{id}` với `full_name`, `gender`, `grade_level`, `guardian_name`, `guardian_gender`, `guardian_relationship`, `status` |
 | Khóa hoặc mở tài khoản | `PATCH /students/{id}/account` với `is_active` |
 | Đổi mật khẩu | `PATCH /students/{id}/password` với `password` |
 
-Trường tùy chọn: `phone`, `dob`, `parent_phone`, `address`, `note`, và `status` khi tạo.
+Trường tùy chọn: `phone`, `dob`, `guardian_phone`, `address`, `note`, và `status` khi tạo.
 
-Giới tính: `0` Nam, `1` Nữ, `2` Khác. Khối lớp: `0` Tiền tiểu học, `1`–`12` theo số lớp.
+Giới tính (học sinh và phụ huynh): `0` Nam, `1` Nữ, `2` Khác. Khối lớp: `0` Tiền tiểu học, `1`–`12` theo số lớp. Quan hệ phụ huynh: `0` Bố, `1` Mẹ, `2` Người giám hộ khác.
 
-Danh sách nhận thêm `q` để tìm theo họ tên học sinh, số điện thoại, tên phụ huynh, số điện thoại phụ huynh hoặc tên đăng nhập; `status[]`, `grade_level[]`, `is_active` để lọc; cùng `page`, `per_page`, `sort`, `direction`. Cột sắp xếp cho phép: `id`, `full_name`, `grade_level`, `created_at`.
+Danh sách nhận thêm `q` để tìm theo họ tên học sinh, số điện thoại học sinh, tên phụ huynh, số điện thoại phụ huynh hoặc tên đăng nhập; `status[]`, `grade_level[]`, `is_active` để lọc; cùng `page`, `per_page`, `sort`, `direction`. Cột sắp xếp cho phép: `id`, `full_name`, `grade_level`, `created_at`.
 
 ## Kết quả mong đợi
 
@@ -56,9 +59,9 @@ Danh sách nhận thêm `q` để tìm theo họ tên học sinh, số điện t
 ## Lỗi và trường hợp ngoại lệ
 
 - Trùng tên đăng nhập trả `422` gắn vào `username`: `Có tài khoản đã dùng tên đăng nhập này, vui lòng chọn tên khác.`
-- Thiếu tên phụ huynh trả `422` gắn vào `parent_name`.
+- Thiếu tên, giới tính hoặc quan hệ của phụ huynh trả `422` gắn vào `guardian_name`, `guardian_gender`, hoặc `guardian_relationship` tương ứng.
 - Ngày sinh không ở quá khứ trả `422` gắn vào `dob`: `Ngày sinh phải trước ngày hôm nay.`
-- Số điện thoại sai định dạng trả `422` gắn vào `phone` (`Số điện thoại không hợp lệ.`) hoặc `parent_phone` (`Số điện thoại phụ huynh không hợp lệ.`).
+- Số điện thoại sai định dạng trả `422` gắn vào `phone` (`Số điện thoại không hợp lệ.`) hoặc `guardian_phone` (`Số điện thoại phụ huynh không hợp lệ.`).
 - Mật khẩu dưới 8 ký tự trả `422` gắn vào `password`.
 - Không tìm thấy học sinh trả `404`: `Không tìm thấy học sinh.`
 - Không đủ quyền trả `403`; thiếu token trả `401`.

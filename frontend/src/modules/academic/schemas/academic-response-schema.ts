@@ -10,10 +10,11 @@ import { z } from "zod";
  */
 
 /** Integer enums the API reports as numbers. */
-const employeeStatus = z.union([z.literal(0), z.literal(1)]);
+const teacherStatus = z.union([z.literal(0), z.literal(1)]);
 const studentStatus = z.union([z.literal(0), z.literal(1), z.literal(2)]);
 const classStatus = z.union([z.literal(0), z.literal(1)]);
 const gender = z.union([z.literal(0), z.literal(1), z.literal(2)]);
+const guardianRelationship = z.union([z.literal(0), z.literal(1), z.literal(2)]);
 const gradeLevel = z.union([
   z.literal(0), z.literal(1), z.literal(2), z.literal(3), z.literal(4),
   z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9),
@@ -50,20 +51,17 @@ export const subjectListSchema = z.array(subjectSchema);
 /** A teacher profile with the state of its login account. */
 export const teacherSchema = z.object({
   id: z.number().int(),
-  user_id: z.number().int(),
+  user_id: z.number().nullable(),
   full_name: z.string(),
-  phone: z.string(),
-  email: z.string(),
+  phone: z.string().nullable(),
+  email: z.string().nullable(),
+  gender,
   address: z.string().nullable(),
-  bank_bin: z.string().nullable(),
-  bank_name: z.string().nullable(),
-  bank_account_number: z.string().nullable(),
-  bank_account_holder: z.string().nullable(),
-  status: employeeStatus,
-  color: z.string().nullable(),
+  status: teacherStatus,
+  color_identification: z.string().nullable(),
   joined_at: z.string().nullable(),
-  username: z.string().optional(),
-  is_account_active: z.boolean().optional(),
+  username: z.string().nullable().optional(),
+  is_account_active: z.boolean().nullable().optional(),
   ...timestamps,
 });
 
@@ -80,8 +78,6 @@ export const schoolClassSchema = z.object({
   teacher_id: z.number().int(),
   teacher_name: z.string().nullable().optional(),
   grade_level: gradeLevel,
-  base_fee_per_session: z.number(),
-  teacher_salary_per_session: z.number(),
   max_students: z.number().int(),
   active_students_count: z.number().int().optional(),
   status: classStatus,
@@ -96,19 +92,21 @@ export const schoolClassListSchema = z.array(schoolClassSchema);
 /** A student profile with the state of its login account. */
 export const studentSchema = z.object({
   id: z.number().int(),
-  user_id: z.number().int(),
+  user_id: z.number().nullable(),
   full_name: z.string(),
   phone: z.string().nullable(),
   dob: z.string().nullable(),
   gender,
   grade_level: gradeLevel,
-  parent_name: z.string(),
-  parent_phone: z.string().nullable(),
+  guardian_name: z.string().nullable(),
+  guardian_phone: z.string().nullable(),
+  guardian_gender: gender.nullable(),
+  guardian_relationship: guardianRelationship.nullable(),
   address: z.string().nullable(),
   note: z.string().nullable(),
   status: studentStatus,
-  username: z.string().optional(),
-  is_account_active: z.boolean().optional(),
+  username: z.string().nullable().optional(),
+  is_account_active: z.boolean().nullable().optional(),
   ...timestamps,
 });
 
@@ -121,7 +119,6 @@ export const enrollmentSchema = z.object({
   class_id: z.number().int(),
   student_id: z.number().int(),
   student_name: z.string().nullable().optional(),
-  fee_per_session: z.number().nullable(),
   enrolled_at: z.string().nullable(),
   left_at: z.string().nullable(),
   is_active: z.boolean(),

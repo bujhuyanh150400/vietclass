@@ -5,7 +5,7 @@ namespace App\Modules\Identity\Actions;
 use App\Core\Data\ActionResult;
 use App\Core\Exceptions\ActionError;
 use App\Modules\Identity\Enums\IdentityError;
-use App\Modules\Identity\Models\Student;
+use App\Modules\Identity\Models\StudentProfile;
 use App\Modules\Identity\Repositories\StudentRepository;
 
 final class GetStudentAction
@@ -20,14 +20,14 @@ final class GetStudentAction
     /**
      * Return one student profile, or report that no profile carries the identifier.
      *
-     * @return ActionResult<Student, IdentityError>
+     * @return ActionResult<StudentProfile, IdentityError>
      */
     public function handle(int $studentId): ActionResult
     {
         try {
             $student = $this->students->findById($studentId);
 
-            if (! $student instanceof Student) {
+            if (! $student instanceof StudentProfile) {
                 throw new ActionError(
                     message: 'Không tìm thấy học sinh.',
                     code: IdentityError::StudentNotFound,

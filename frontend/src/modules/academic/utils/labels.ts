@@ -1,9 +1,10 @@
 import type {
   ClassStatus,
-  EmployeeStatus,
   Gender,
   GradeLevel,
+  GuardianRelationship,
   StudentStatus,
+  TeacherStatus,
 } from "../types/academic";
 
 /**
@@ -18,9 +19,16 @@ import type {
  */
 
 /** Whether a teacher still works here. */
-export const EMPLOYEE_STATUS_LABELS: Record<EmployeeStatus, string> = {
+export const TEACHER_STATUS_LABELS: Record<TeacherStatus, string> = {
   0: "Đang làm việc",
   1: "Đã nghỉ",
+};
+
+/** How a guardian is related to the student. */
+export const GUARDIAN_RELATIONSHIP_LABELS: Record<GuardianRelationship, string> = {
+  0: "Bố",
+  1: "Mẹ",
+  2: "Người giám hộ khác",
 };
 
 /** Where a student currently stands with their studies. */

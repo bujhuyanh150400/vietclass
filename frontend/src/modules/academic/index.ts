@@ -1,24 +1,26 @@
 export type {
   ClassStatus,
-  EmployeeStatus,
   Enrollment,
   Gender,
   GradeLevel,
+  GuardianRelationship,
   Option,
   SchoolClass,
   Student,
   StudentStatus,
   Subject,
   Teacher,
+  TeacherStatus,
 } from "./types/academic";
 
 export {
   CLASS_STATUS_LABELS,
-  EMPLOYEE_STATUS_LABELS,
   GENDER_LABELS,
   GRADE_LEVELS,
   GRADE_LEVEL_LABELS,
+  GUARDIAN_RELATIONSHIP_LABELS,
   STUDENT_STATUS_LABELS,
+  TEACHER_STATUS_LABELS,
   formatDate,
 } from "./utils/labels";
 

@@ -77,7 +77,7 @@ Danh sách nhận thêm `q` để tìm theo mã hoặc tên lớp; `status[]`, `
 
 - Không có chức năng xóa lớp.
 - Mở lại lớp đã kết thúc không khôi phục danh sách học sinh.
-- Chưa có lịch học, phòng học, điểm danh hay học phí. Các cột `base_fee_per_session` và `teacher_salary_per_session` được lưu nhưng chưa dùng.
+- Chưa có lịch học, phòng học, điểm danh hay học phí. Không có cột tiền nào trên bảng `classes`; module tài chính sau này sẽ tự thêm cột riêng khi cần.
 - Danh sách chọn trả tối đa 50 bản ghi mỗi lần gọi.
 
 ## Tham chiếu kỹ thuật

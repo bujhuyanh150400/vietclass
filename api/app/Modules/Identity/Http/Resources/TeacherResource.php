@@ -2,11 +2,11 @@
 
 namespace App\Modules\Identity\Http\Resources;
 
-use App\Modules\Identity\Models\Teacher;
+use App\Modules\Identity\Models\TeacherProfile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin Teacher */
+/** @mixin TeacherProfile */
 final class TeacherResource extends JsonResource
 {
     /**
@@ -18,21 +18,18 @@ final class TeacherResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'user_id' => $this->user_id,
-            'full_name' => $this->full_name,
-            'phone' => $this->phone,
-            'email' => $this->email,
-            'address' => $this->address,
-            'bank_bin' => $this->bank_bin,
-            'bank_name' => $this->bank_name,
-            'bank_account_number' => $this->bank_account_number,
-            'bank_account_holder' => $this->bank_account_holder,
+            'id' => $this->profile_id,
+            'user_id' => $this->profile->user_id,
+            'full_name' => $this->profile->full_name,
+            'phone' => $this->profile->phone,
+            'email' => $this->profile->email,
+            'gender' => $this->profile->gender->value,
+            'address' => $this->profile->address,
             'status' => $this->status->value,
-            'color' => $this->color,
+            'color_identification' => $this->color_identification,
             'joined_at' => $this->joined_at?->toDateString(),
-            'username' => $this->whenLoaded('user', fn (): string => $this->user->username),
-            'is_account_active' => $this->whenLoaded('user', fn (): bool => $this->user->is_active),
+            'username' => $this->profile->user?->username,
+            'is_account_active' => $this->profile->user?->is_active,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

@@ -22,7 +22,7 @@ import {
 import type { PageMeta } from "@/lib/api/contracts";
 
 import type { Teacher } from "../types/academic";
-import { EMPLOYEE_STATUS_LABELS, formatDate } from "../utils/labels";
+import { TEACHER_STATUS_LABELS, formatDate } from "../utils/labels";
 
 /** What the teacher list screen renders and reports back. */
 export type TeachersViewProps = {
@@ -88,7 +88,7 @@ export function TeachersView({
       className: "w-36",
       cell: (teacher) => (
         <Badge variant={teacher.status === 0 ? "default" : "secondary"}>
-          {EMPLOYEE_STATUS_LABELS[teacher.status]}
+          {TEACHER_STATUS_LABELS[teacher.status]}
         </Badge>
       ),
     },

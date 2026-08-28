@@ -22,7 +22,7 @@ import {
   type TeacherFormValues,
 } from "../schemas/academic-form-schema";
 import type { Teacher } from "../types/academic";
-import { EMPLOYEE_STATUS_LABELS } from "../utils/labels";
+import { GENDER_LABELS, TEACHER_STATUS_LABELS } from "../utils/labels";
 
 /** Fields the API may report validation messages for. */
 const FIELDS = [
@@ -31,14 +31,11 @@ const FIELDS = [
   "full_name",
   "phone",
   "email",
+  "gender",
   "address",
   "status",
-  "color",
+  "color_identification",
   "joined_at",
-  "bank_bin",
-  "bank_name",
-  "bank_account_number",
-  "bank_account_holder",
 ] as const;
 
 /** Where the form returns to once it is done. */
@@ -46,8 +43,15 @@ const LIST_HREF = "/academic/teachers";
 
 /** The two employment states, as choices for the select. */
 const STATUS_CHOICES = [
-  { value: 0, label: EMPLOYEE_STATUS_LABELS[0] },
-  { value: 1, label: EMPLOYEE_STATUS_LABELS[1] },
+  { value: 0, label: TEACHER_STATUS_LABELS[0] },
+  { value: 1, label: TEACHER_STATUS_LABELS[1] },
+];
+
+/** The recorded genders, as choices for the select. */
+const GENDER_CHOICES = [
+  { value: 0, label: GENDER_LABELS[0] },
+  { value: 1, label: GENDER_LABELS[1] },
+  { value: 2, label: GENDER_LABELS[2] },
 ];
 
 /**
@@ -76,14 +80,11 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
       full_name: teacher?.full_name ?? "",
       phone: teacher?.phone ?? "",
       email: teacher?.email ?? "",
+      gender: teacher?.gender ?? 0,
       address: teacher?.address ?? "",
       status: teacher?.status ?? 0,
-      color: teacher?.color ?? "",
+      color_identification: teacher?.color_identification ?? "",
       joined_at: teacher?.joined_at ?? "",
-      bank_bin: teacher?.bank_bin ?? "",
-      bank_name: teacher?.bank_name ?? "",
-      bank_account_number: teacher?.bank_account_number ?? "",
-      bank_account_holder: teacher?.bank_account_holder ?? "",
     },
     fieldNames: FIELDS,
     submit: async (values) => {
@@ -91,14 +92,11 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
         full_name: values.full_name,
         phone: values.phone,
         email: values.email,
+        gender: values.gender,
         address: emptyToNull(values.address),
         status: values.status,
-        color: emptyToNull(values.color),
+        color_identification: emptyToNull(values.color_identification),
         joined_at: values.joined_at,
-        bank_bin: emptyToNull(values.bank_bin),
-        bank_name: emptyToNull(values.bank_name),
-        bank_account_number: emptyToNull(values.bank_account_number),
-        bank_account_holder: emptyToNull(values.bank_account_holder),
       };
 
       if (isEditing) {
@@ -168,6 +166,22 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
 
         <Controller
           control={form.control}
+          name="gender"
+          render={({ field }) => (
+            <SelectField
+              name="gender"
+              label="Giới tính"
+              required
+              value={field.value}
+              choices={GENDER_CHOICES}
+              onChange={field.onChange}
+              error={errors.gender?.message}
+            />
+          )}
+        />
+
+        <Controller
+          control={form.control}
           name="joined_at"
           render={({ field }) => (
             <DateField
@@ -199,14 +213,14 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
         />
 
         <Field
-          name="color"
+          name="color_identification"
           label="Màu đại diện"
           hint="Không bắt buộc. Dùng cho lịch học sau này."
-          error={errors.color?.message}
+          error={errors.color_identification?.message}
         >
           <Input
-            {...form.register("color")}
-            {...fieldAria("color", errors.color?.message, "Không bắt buộc.")}
+            {...form.register("color_identification")}
+            {...fieldAria("color_identification", errors.color_identification?.message, "Không bắt buộc.")}
             placeholder="#FD7110"
           />
         </Field>

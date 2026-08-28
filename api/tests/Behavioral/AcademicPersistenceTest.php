@@ -5,23 +5,23 @@ use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Identity\Enums\GradeLevel;
-use App\Modules\Identity\Models\Student;
-use App\Modules\Identity\Models\Teacher;
+use App\Modules\Identity\Models\StudentProfile;
+use App\Modules\Identity\Models\TeacherProfile;
 use Illuminate\Database\QueryException;
 
 test('every academic factory persists a usable record', function () {
     $enrollment = ClassEnrollment::factory()->create();
 
     $this->assertDatabaseCount('subjects', 1);
-    $this->assertDatabaseCount('teachers', 1);
+    $this->assertDatabaseCount('teacher_profiles', 1);
     $this->assertDatabaseCount('classes', 1);
-    $this->assertDatabaseCount('students', 1);
+    $this->assertDatabaseCount('student_profiles', 1);
     $this->assertDatabaseCount('class_enrollments', 1);
 
     expect($enrollment->schoolClass)->toBeInstanceOf(SchoolClass::class)
-        ->and($enrollment->student)->toBeInstanceOf(Student::class)
+        ->and($enrollment->student)->toBeInstanceOf(StudentProfile::class)
         ->and($enrollment->schoolClass->subject)->toBeInstanceOf(Subject::class)
-        ->and($enrollment->schoolClass->teacher)->toBeInstanceOf(Teacher::class);
+        ->and($enrollment->schoolClass->teacher)->toBeInstanceOf(TeacherProfile::class);
 });
 
 test('the class model maps to the conventionally named table', function () {

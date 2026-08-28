@@ -22,7 +22,13 @@ import {
   type StudentFormValues,
 } from "../schemas/academic-form-schema";
 import type { Student } from "../types/academic";
-import { GENDER_LABELS, GRADE_LEVELS, GRADE_LEVEL_LABELS, STUDENT_STATUS_LABELS } from "../utils/labels";
+import {
+  GENDER_LABELS,
+  GRADE_LEVELS,
+  GRADE_LEVEL_LABELS,
+  GUARDIAN_RELATIONSHIP_LABELS,
+  STUDENT_STATUS_LABELS,
+} from "../utils/labels";
 
 /** Fields the API may report validation messages for. */
 const FIELDS = [
@@ -33,8 +39,10 @@ const FIELDS = [
   "dob",
   "gender",
   "grade_level",
-  "parent_name",
-  "parent_phone",
+  "guardian_name",
+  "guardian_gender",
+  "guardian_relationship",
+  "guardian_phone",
   "address",
   "note",
   "status",
@@ -59,6 +67,12 @@ const GRADE_CHOICES = GRADE_LEVELS.map((grade) => ({
   value: grade,
   label: GRADE_LEVEL_LABELS[grade],
 }));
+
+const GUARDIAN_RELATIONSHIP_CHOICES = [
+  { value: 0, label: GUARDIAN_RELATIONSHIP_LABELS[0] },
+  { value: 1, label: GUARDIAN_RELATIONSHIP_LABELS[1] },
+  { value: 2, label: GUARDIAN_RELATIONSHIP_LABELS[2] },
+];
 
 /**
  * Coordinates creating and editing a student.
@@ -86,8 +100,10 @@ export function StudentFormContainer({ student }: { student?: Student }) {
       dob: student?.dob ?? "",
       gender: student?.gender ?? 0,
       grade_level: student?.grade_level ?? 0,
-      parent_name: student?.parent_name ?? "",
-      parent_phone: student?.parent_phone ?? "",
+      guardian_name: student?.guardian_name ?? "",
+      guardian_gender: student?.guardian_gender ?? 0,
+      guardian_relationship: student?.guardian_relationship ?? 0,
+      guardian_phone: student?.guardian_phone ?? "",
       address: student?.address ?? "",
       note: student?.note ?? "",
       status: student?.status ?? 0,
@@ -100,8 +116,10 @@ export function StudentFormContainer({ student }: { student?: Student }) {
         dob: emptyToNull(values.dob),
         gender: values.gender,
         grade_level: values.grade_level,
-        parent_name: values.parent_name,
-        parent_phone: emptyToNull(values.parent_phone),
+        guardian_name: values.guardian_name,
+        guardian_gender: values.guardian_gender,
+        guardian_relationship: values.guardian_relationship,
+        guardian_phone: emptyToNull(values.guardian_phone),
         address: emptyToNull(values.address),
         note: emptyToNull(values.note),
         status: values.status,
@@ -232,27 +250,59 @@ export function StudentFormContainer({ student }: { student?: Student }) {
         />
 
         <Field
-          name="parent_name"
+          name="guardian_name"
           label="Tên phụ huynh"
           required
-          error={errors.parent_name?.message}
+          error={errors.guardian_name?.message}
         >
           <Input
-            {...form.register("parent_name")}
-            {...fieldAria("parent_name", errors.parent_name?.message)}
+            {...form.register("guardian_name")}
+            {...fieldAria("guardian_name", errors.guardian_name?.message)}
             autoComplete="off"
           />
         </Field>
 
+        <Controller
+          control={form.control}
+          name="guardian_gender"
+          render={({ field }) => (
+            <SelectField
+              name="guardian_gender"
+              label="Giới tính phụ huynh"
+              required
+              value={field.value}
+              choices={GENDER_CHOICES}
+              onChange={field.onChange}
+              error={errors.guardian_gender?.message}
+            />
+          )}
+        />
+
+        <Controller
+          control={form.control}
+          name="guardian_relationship"
+          render={({ field }) => (
+            <SelectField
+              name="guardian_relationship"
+              label="Quan hệ với học sinh"
+              required
+              value={field.value}
+              choices={GUARDIAN_RELATIONSHIP_CHOICES}
+              onChange={field.onChange}
+              error={errors.guardian_relationship?.message}
+            />
+          )}
+        />
+
         <Field
-          name="parent_phone"
+          name="guardian_phone"
           label="Số điện thoại phụ huynh"
           hint="Không bắt buộc."
-          error={errors.parent_phone?.message}
+          error={errors.guardian_phone?.message}
         >
           <Input
-            {...form.register("parent_phone")}
-            {...fieldAria("parent_phone", errors.parent_phone?.message, "Không bắt buộc.")}
+            {...form.register("guardian_phone")}
+            {...fieldAria("guardian_phone", errors.guardian_phone?.message, "Không bắt buộc.")}
             type="tel"
             inputMode="tel"
           />

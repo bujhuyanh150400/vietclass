@@ -63,18 +63,15 @@ const teacherProfileShape = {
     .max(255, { error: "Họ và tên không được vượt quá 255 ký tự." }),
   phone: z.string().regex(PHONE_PATTERN, { error: "Số điện thoại không hợp lệ." }),
   email: z.email({ error: "Email không hợp lệ." }).max(255),
+  gender: z.union([z.literal(0), z.literal(1), z.literal(2)]),
   address: z.string().max(2000).default(""),
   status: z.union([z.literal(0), z.literal(1)]),
-  color: z
+  color_identification: z
     .string()
     .regex(HEX_COLOUR_PATTERN, { error: "Màu phải ở dạng mã hex, ví dụ #FD7110." })
     .or(z.literal(""))
     .default(""),
   joined_at: requiredDate,
-  bank_bin: z.string().max(20).default(""),
-  bank_name: z.string().max(100).default(""),
-  bank_account_number: z.string().max(30).default(""),
-  bank_account_holder: z.string().max(100).default(""),
 };
 
 /** Creating a teacher, which also creates the login account. */
@@ -111,11 +108,13 @@ const studentProfileShape = {
   dob: optionalDate.default(""),
   gender: z.union([z.literal(0), z.literal(1), z.literal(2)]),
   grade_level: z.number().int().min(0).max(12),
-  parent_name: z
+  guardian_name: z
     .string()
     .min(1, { error: "Vui lòng nhập tên phụ huynh." })
     .max(255, { error: "Tên phụ huynh không được vượt quá 255 ký tự." }),
-  parent_phone: optionalPhone.default(""),
+  guardian_gender: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+  guardian_relationship: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+  guardian_phone: optionalPhone.default(""),
   address: z.string().max(2000).default(""),
   note: z.string().max(2000).default(""),
   status: z.union([z.literal(0), z.literal(1), z.literal(2)]),

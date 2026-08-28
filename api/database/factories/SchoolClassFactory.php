@@ -6,7 +6,7 @@ use App\Modules\Academic\Enums\ClassStatus;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Identity\Enums\GradeLevel;
-use App\Modules\Identity\Models\Teacher;
+use App\Modules\Identity\Models\TeacherProfile;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -28,7 +28,7 @@ class SchoolClassFactory extends Factory
             'code' => mb_strtoupper(fake()->unique()->bothify('??##-##')),
             'name' => 'Lớp '.fake()->bothify('?#'),
             'subject_id' => Subject::factory(),
-            'teacher_id' => Teacher::factory(),
+            'teacher_id' => TeacherProfile::factory(),
             'grade_level' => fake()->randomElement(GradeLevel::cases()),
             'max_students' => 20,
             'status' => ClassStatus::Active,

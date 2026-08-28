@@ -2,7 +2,7 @@
 
 namespace App\Modules\Academic\Models;
 
-use App\Modules\Identity\Models\Student;
+use App\Modules\Identity\Models\StudentProfile;
 use Carbon\CarbonInterface;
 use Database\Factories\ClassEnrollmentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -21,7 +21,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable([
     'class_id',
     'student_id',
-    'fee_per_session',
     'enrolled_at',
     'left_at',
     'note',
@@ -47,7 +46,6 @@ final class ClassEnrollment extends Model
     protected function casts(): array
     {
         return [
-            'fee_per_session' => 'decimal:0',
             'enrolled_at' => 'date',
             'left_at' => 'date',
         ];
@@ -94,10 +92,10 @@ final class ClassEnrollment extends Model
     /**
      * Return the enrolled student.
      *
-     * @return BelongsTo<Student, $this>
+     * @return BelongsTo<StudentProfile, $this>
      */
     public function student(): BelongsTo
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(StudentProfile::class, 'student_id', 'profile_id');
     }
 }

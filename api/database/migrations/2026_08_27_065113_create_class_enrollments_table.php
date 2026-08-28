@@ -14,10 +14,7 @@ return new class extends Migration
         Schema::create('class_enrollments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('class_id')->index()->constrained('classes');
-            $table->foreignId('student_id')->index()->constrained();
-            // NULL means the student pays the class base fee. Only the future finance
-            // module writes this column.
-            $table->decimal('fee_per_session', 12, 0)->nullable();
+            $table->foreignId('student_id')->index()->constrained('student_profiles', 'profile_id');
             $table->date('enrolled_at');
             $table->date('left_at')->nullable();
             $table->text('note')->nullable();

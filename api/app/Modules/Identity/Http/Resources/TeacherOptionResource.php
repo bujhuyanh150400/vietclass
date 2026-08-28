@@ -2,11 +2,11 @@
 
 namespace App\Modules\Identity\Http\Resources;
 
-use App\Modules\Identity\Models\Teacher;
+use App\Modules\Identity\Models\TeacherProfile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin Teacher */
+/** @mixin TeacherProfile */
 final class TeacherOptionResource extends JsonResource
 {
     /**
@@ -18,8 +18,8 @@ final class TeacherOptionResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'label' => $this->full_name,
+            'id' => $this->profile_id,
+            'label' => $this->profile->full_name,
         ];
     }
 }

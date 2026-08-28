@@ -15,7 +15,7 @@ use App\Modules\Identity\Http\Requests\Students\StoreStudentRequest;
 use App\Modules\Identity\Http\Requests\Students\UpdateStudentRequest;
 use App\Modules\Identity\Http\Requests\ToggleAccountRequest;
 use App\Modules\Identity\Http\Resources\StudentResource;
-use App\Modules\Identity\Models\Student;
+use App\Modules\Identity\Models\StudentProfile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,7 +30,7 @@ final class StudentController extends BaseController
     {
         $result = $students->handle(query: $request->toListQuery());
 
-        /** @var LengthAwarePaginator<int, Student> $page */
+        /** @var LengthAwarePaginator<int, StudentProfile> $page */
         $page = $result->getData();
 
         return $this->paginated($request, $page, StudentResource::class);
@@ -43,7 +43,7 @@ final class StudentController extends BaseController
     {
         $result = $create->handle(attributes: $request->validated());
 
-        /** @var Student $student */
+        /** @var StudentProfile $student */
         $student = $result->getData();
 
         return $this->success(
@@ -63,7 +63,7 @@ final class StudentController extends BaseController
             return $this->actionFailure(result: $result);
         }
 
-        /** @var Student $found */
+        /** @var StudentProfile $found */
         $found = $result->getData();
 
         return $this->success(data: StudentResource::make($found)->resolve($request));
@@ -80,7 +80,7 @@ final class StudentController extends BaseController
             return $this->actionFailure(result: $result);
         }
 
-        /** @var Student $student */
+        /** @var StudentProfile $student */
         $student = $result->getData();
 
         return $this->success(data: StudentResource::make($student)->resolve($request));
@@ -103,7 +103,7 @@ final class StudentController extends BaseController
             return $this->actionFailure(result: $result);
         }
 
-        /** @var Student $student */
+        /** @var StudentProfile $student */
         $student = $result->getData();
 
         return $this->success(data: StudentResource::make($student)->resolve($request));

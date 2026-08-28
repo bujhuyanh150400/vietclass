@@ -9,7 +9,7 @@ use App\Modules\Academic\Enums\AcademicError;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Repositories\ClassEnrollmentRepository;
 use App\Modules\Academic\Repositories\ClassRepository;
-use App\Modules\Identity\Models\Student;
+use App\Modules\Identity\Models\StudentProfile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 final class ListAvailableStudentsAction
@@ -26,7 +26,7 @@ final class ListAvailableStudentsAction
      * Return one page of students who may still be added to a class, so the picker
      * never offers someone the enrolment rules would reject.
      *
-     * @return ActionResult<LengthAwarePaginator<int, Student>, AcademicError>
+     * @return ActionResult<LengthAwarePaginator<int, StudentProfile>, AcademicError>
      */
     public function handle(int $classId, ListQuery $query): ActionResult
     {

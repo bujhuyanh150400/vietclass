@@ -18,7 +18,7 @@ use App\Modules\Academic\Http\Resources\EnrollmentResource;
 use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Identity\Http\Requests\Students\IndexStudentRequest;
 use App\Modules\Identity\Http\Resources\StudentResource;
-use App\Modules\Identity\Models\Student;
+use App\Modules\Identity\Models\StudentProfile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 
@@ -58,7 +58,7 @@ final class EnrollmentController extends BaseController
             return $this->actionFailure(result: $result);
         }
 
-        /** @var LengthAwarePaginator<int, Student> $page */
+        /** @var LengthAwarePaginator<int, StudentProfile> $page */
         $page = $result->getData();
 
         return $this->paginated($request, $page, StudentResource::class);

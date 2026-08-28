@@ -2,11 +2,11 @@
 
 namespace App\Modules\Identity\Http\Resources;
 
-use App\Modules\Identity\Models\Student;
+use App\Modules\Identity\Models\StudentProfile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin Student */
+/** @mixin StudentProfile */
 final class StudentResource extends JsonResource
 {
     /**
@@ -17,21 +17,25 @@ final class StudentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $guardianLink = $this->primaryGuardian;
+
         return [
-            'id' => $this->id,
-            'user_id' => $this->user_id,
-            'full_name' => $this->full_name,
-            'phone' => $this->phone,
-            'dob' => $this->dob?->toDateString(),
-            'gender' => $this->gender->value,
+            'id' => $this->profile_id,
+            'user_id' => $this->profile->user_id,
+            'full_name' => $this->profile->full_name,
+            'phone' => $this->profile->phone,
+            'dob' => $this->profile->dob?->toDateString(),
+            'gender' => $this->profile->gender->value,
             'grade_level' => $this->grade_level->value,
-            'parent_name' => $this->parent_name,
-            'parent_phone' => $this->parent_phone,
-            'address' => $this->address,
-            'note' => $this->note,
+            'guardian_name' => $guardianLink?->guardian->full_name,
+            'guardian_phone' => $guardianLink?->guardian->phone,
+            'guardian_gender' => $guardianLink?->guardian->gender->value,
+            'guardian_relationship' => $guardianLink?->relationship->value,
+            'address' => $this->profile->address,
+            'note' => $this->profile->note,
             'status' => $this->status->value,
-            'username' => $this->whenLoaded('user', fn (): string => $this->user->username),
-            'is_account_active' => $this->whenLoaded('user', fn (): bool => $this->user->is_active),
+            'username' => $this->profile->user?->username,
+            'is_account_active' => $this->profile->user?->is_active,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

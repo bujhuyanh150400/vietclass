@@ -10,7 +10,7 @@ use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Repositories\ClassEnrollmentRepository;
 use App\Modules\Academic\Repositories\ClassRepository;
-use App\Modules\Identity\Models\Student;
+use App\Modules\Identity\Models\StudentProfile;
 use App\Modules\Identity\Repositories\StudentRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -73,9 +73,9 @@ final class EnrollStudentsAction
             // timetable already has a session clashing with this class from $joinsOn.
 
             $created = DB::transaction(fn (): array => array_map(
-                fn (Student $student): ClassEnrollment => $this->enrollments->create([
+                fn (StudentProfile $student): ClassEnrollment => $this->enrollments->create([
                     'class_id' => $classId,
-                    'student_id' => $student->id,
+                    'student_id' => $student->profile_id,
                     'enrolled_at' => $joinsOn->toDateString(),
                     'note' => $note,
                 ]),
@@ -111,7 +111,7 @@ final class EnrollStudentsAction
      * in this class.
      *
      * @param  list<int>  $studentIds
-     * @return list<Student>
+     * @return list<StudentProfile>
      */
     private function resolveStudents(int $classId, array $studentIds): array
     {
@@ -120,16 +120,16 @@ final class EnrollStudentsAction
         foreach ($studentIds as $studentId) {
             $student = $this->students->findById($studentId);
 
-            if (! $student instanceof Student) {
+            if (! $student instanceof StudentProfile) {
                 throw new ActionError(
                     message: 'Không tìm thấy học sinh.',
                     code: AcademicError::StudentNotFound,
                 );
             }
 
-            if ($this->enrollments->findActive($classId, (int) $student->id) instanceof ClassEnrollment) {
+            if ($this->enrollments->findActive($classId, (int) $student->profile_id) instanceof ClassEnrollment) {
                 throw new ActionError(
-                    message: "Học sinh {$student->full_name} đang học trong lớp này rồi.",
+                    message: "Học sinh {$student->profile->full_name} đang học trong lớp này rồi.",
                     code: AcademicError::StudentAlreadyEnrolled,
                 );
             }

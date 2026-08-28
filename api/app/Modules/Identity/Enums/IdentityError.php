@@ -12,13 +12,17 @@ enum IdentityError: string implements ErrorDeclarationEnum
     /** No student profile carries the given identifier. */
     case StudentNotFound = 'IDENTITY-002';
 
+    /** The profile is not linked to a login account, so it has none to change. */
+    case AccountNotProvisioned = 'IDENTITY-003';
+
     /**
-     * Return the not-found status for every declared identity lookup failure.
+     * Return the HTTP status this business failure reaches the API boundary with.
      */
     public function httpStatus(): int
     {
         return match ($this) {
             self::TeacherNotFound, self::StudentNotFound => 404,
+            self::AccountNotProvisioned => 409,
         };
     }
 }
