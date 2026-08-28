@@ -21,6 +21,8 @@ return new class extends Migration
             // Không UNIQUE: giáo viên được phép dùng chính số của mình làm số phụ huynh
             // cho con. Index vẫn cần cho tìm kiếm và cho bước dò trùng phụ huynh.
             $table->string('phone', 20)->nullable()->index();
+            // Không UNIQUE: giáo viên, học sinh và phụ huynh dùng chung bảng này, phần lớn
+            // học sinh và phụ huynh không có email. Không tầng nào kiểm tra trùng lặp.
             $table->string('email', 255)->nullable();
             $table->date('dob')->nullable();
             $table->smallInteger('gender');

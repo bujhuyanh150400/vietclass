@@ -18,7 +18,7 @@ use App\Modules\Identity\Http\Requests\Teachers\UpdateTeacherRequest;
 use App\Modules\Identity\Http\Requests\ToggleAccountRequest;
 use App\Modules\Identity\Http\Resources\TeacherOptionResource;
 use App\Modules\Identity\Http\Resources\TeacherResource;
-use App\Modules\Identity\Models\Teacher;
+use App\Modules\Identity\Models\TeacherProfile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -34,7 +34,7 @@ final class TeacherController extends BaseController
     {
         $result = $teachers->handle(query: $request->toListQuery());
 
-        /** @var LengthAwarePaginator<int, Teacher> $page */
+        /** @var LengthAwarePaginator<int, TeacherProfile> $page */
         $page = $result->getData();
 
         return $this->paginated($request, $page, TeacherResource::class);
@@ -47,7 +47,7 @@ final class TeacherController extends BaseController
     {
         $result = $options->handle(query: $request->toListQuery());
 
-        /** @var Collection<int, Teacher> $teachers */
+        /** @var Collection<int, TeacherProfile> $teachers */
         $teachers = $result->getData();
 
         return $this->success(
@@ -62,7 +62,7 @@ final class TeacherController extends BaseController
     {
         $result = $create->handle(attributes: $request->validated());
 
-        /** @var Teacher $teacher */
+        /** @var TeacherProfile $teacher */
         $teacher = $result->getData();
 
         return $this->success(
@@ -82,7 +82,7 @@ final class TeacherController extends BaseController
             return $this->actionFailure(result: $result);
         }
 
-        /** @var Teacher $found */
+        /** @var TeacherProfile $found */
         $found = $result->getData();
 
         return $this->success(data: TeacherResource::make($found)->resolve($request));
@@ -99,7 +99,7 @@ final class TeacherController extends BaseController
             return $this->actionFailure(result: $result);
         }
 
-        /** @var Teacher $teacher */
+        /** @var TeacherProfile $teacher */
         $teacher = $result->getData();
 
         return $this->success(data: TeacherResource::make($teacher)->resolve($request));
@@ -122,7 +122,7 @@ final class TeacherController extends BaseController
             return $this->actionFailure(result: $result);
         }
 
-        /** @var Teacher $teacher */
+        /** @var TeacherProfile $teacher */
         $teacher = $result->getData();
 
         return $this->success(data: TeacherResource::make($teacher)->resolve($request));

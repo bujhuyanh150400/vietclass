@@ -5,7 +5,7 @@ namespace App\Modules\Identity\Actions;
 use App\Core\Data\ActionResult;
 use App\Core\Data\ListQuery;
 use App\Modules\Identity\Enums\IdentityError;
-use App\Modules\Identity\Models\Teacher;
+use App\Modules\Identity\Models\TeacherProfile;
 use App\Modules\Identity\Repositories\TeacherRepository;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -24,7 +24,7 @@ final class ListTeacherOptionsAction
      * Teachers who have left, or whose account is locked, are excluded here rather
      * than only rejected on submit.
      *
-     * @return ActionResult<Collection<int, Teacher>, IdentityError>
+     * @return ActionResult<Collection<int, TeacherProfile>, IdentityError>
      */
     public function handle(ListQuery $query): ActionResult
     {

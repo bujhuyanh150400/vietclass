@@ -5,7 +5,7 @@ namespace App\Modules\Identity\Actions;
 use App\Core\Data\ActionResult;
 use App\Core\Exceptions\ActionError;
 use App\Modules\Identity\Enums\IdentityError;
-use App\Modules\Identity\Models\Teacher;
+use App\Modules\Identity\Models\TeacherProfile;
 use App\Modules\Identity\Repositories\TeacherRepository;
 
 final class GetTeacherAction
@@ -20,14 +20,14 @@ final class GetTeacherAction
     /**
      * Return one teacher profile, or report that no profile carries the identifier.
      *
-     * @return ActionResult<Teacher, IdentityError>
+     * @return ActionResult<TeacherProfile, IdentityError>
      */
     public function handle(int $teacherId): ActionResult
     {
         try {
             $teacher = $this->teachers->findById($teacherId);
 
-            if (! $teacher instanceof Teacher) {
+            if (! $teacher instanceof TeacherProfile) {
                 throw new ActionError(
                     message: 'Không tìm thấy giáo viên.',
                     code: IdentityError::TeacherNotFound,
