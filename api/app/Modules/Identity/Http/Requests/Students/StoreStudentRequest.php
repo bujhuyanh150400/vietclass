@@ -4,6 +4,7 @@ namespace App\Modules\Identity\Http\Requests\Students;
 
 use App\Modules\Identity\Enums\Gender;
 use App\Modules\Identity\Enums\GradeLevel;
+use App\Modules\Identity\Enums\GuardianRelationship;
 use App\Modules\Identity\Enums\StudentStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -34,8 +35,10 @@ final class StoreStudentRequest extends FormRequest
             'dob' => ['sometimes', 'nullable', 'date_format:Y-m-d', 'before:today'],
             'gender' => ['required', 'integer', Rule::in(Gender::values())],
             'grade_level' => ['required', 'integer', Rule::in(GradeLevel::values())],
-            'parent_name' => ['required', 'string', 'max:255'],
-            'parent_phone' => ['sometimes', 'nullable', 'string', 'regex:/^0[0-9]{9,10}$/'],
+            'guardian_name' => ['required', 'string', 'max:255'],
+            'guardian_gender' => ['required', 'integer', Rule::in(Gender::values())],
+            'guardian_relationship' => ['required', 'integer', Rule::in(GuardianRelationship::values())],
+            'guardian_phone' => ['sometimes', 'nullable', 'string', 'regex:/^0[0-9]{9,10}$/'],
             'address' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'note' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'status' => ['sometimes', 'integer', Rule::in(StudentStatus::values())],
@@ -52,7 +55,7 @@ final class StoreStudentRequest extends FormRequest
         return [
             'username.unique' => 'Có tài khoản đã dùng tên đăng nhập này, vui lòng chọn tên khác.',
             'phone.regex' => 'Số điện thoại không hợp lệ.',
-            'parent_phone.regex' => 'Số điện thoại phụ huynh không hợp lệ.',
+            'guardian_phone.regex' => 'Số điện thoại phụ huynh không hợp lệ.',
             'dob.before' => 'Ngày sinh phải trước ngày hôm nay.',
         ];
     }

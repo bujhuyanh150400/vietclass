@@ -5,8 +5,9 @@ use App\Modules\Identity\Enums\GuardianRelationship;
 use App\Modules\Identity\Enums\StudentStatus;
 use App\Modules\Identity\Enums\TeacherStatus;
 use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\Student;
-use App\Modules\Identity\Models\Teacher;
+use App\Modules\Identity\Models\Profile;
+use App\Modules\Identity\Models\StudentProfile;
+use App\Modules\Identity\Models\TeacherProfile;
 use App\Modules\Identity\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Hash;
@@ -52,17 +53,18 @@ test('it seeds one idempotent development administrator', function () {
 });
 
 test('the teacher and student enums are cast in both directions', function () {
-    $student = Student::factory()->create([
-        'gender' => Gender::Female,
+    $student = StudentProfile::factory()->create([
+        'profile_id' => Profile::factory()->forRole(UserRole::Student)->create(['gender' => Gender::Female])->id,
         'status' => StudentStatus::Paused,
     ]);
-    $teacher = Teacher::factory()->inactive()->create();
+    $teacher = TeacherProfile::factory()->inactive()->create();
 
-    expect($student->fresh()->gender)->toBe(Gender::Female)
+    expect($student->profile->fresh()->gender)->toBe(Gender::Female)
         ->and($student->fresh()->status)->toBe(StudentStatus::Paused)
         ->and($teacher->fresh()->status)->toBe(TeacherStatus::Inactive);
 
-    $this->assertDatabaseHas('students', ['id' => $student->id, 'gender' => 1, 'status' => 1]);
+    $this->assertDatabaseHas('student_profiles', ['profile_id' => $student->profile_id, 'status' => 1]);
+    $this->assertDatabaseHas('profiles', ['id' => $student->profile_id, 'gender' => 1]);
 });
 
 test('student status values start at zero rather than the fork numbering', function () {
@@ -70,35 +72,26 @@ test('student status values start at zero rather than the fork numbering', funct
 });
 
 test('database defaults match the values a new teacher or student starts with', function () {
-    $student = new Student;
-    $teacher = new Teacher;
+    $student = new StudentProfile;
+    $teacher = new TeacherProfile;
 
     expect($student->status)->toBe(StudentStatus::Studying)
         ->and($teacher->status)->toBe(TeacherStatus::Active);
 });
 
-test('a teacher phone and email cannot be reused', function () {
-    Teacher::factory()->create(['phone' => '0900000001', 'email' => 'gv@vietclass.test']);
+test('one login account carries at most one profile', function () {
+    $profile = Profile::factory()->forRole(UserRole::Teacher)->create();
 
-    expect(fn () => Teacher::factory()->create(['phone' => '0900000001']))
-        ->toThrow(QueryException::class)
-        ->and(fn () => Teacher::factory()->create(['email' => 'gv@vietclass.test']))
-        ->toThrow(QueryException::class);
-});
-
-test('one login account carries at most one teacher profile', function () {
-    $teacher = Teacher::factory()->create();
-
-    expect(fn () => Teacher::factory()->create(['user_id' => $teacher->user_id]))
+    expect(fn () => Profile::factory()->create(['user_id' => $profile->user_id]))
         ->toThrow(QueryException::class);
 });
 
 test('a teacher profile is created with a teacher login account', function () {
-    $teacher = Teacher::factory()->create();
-    $student = Student::factory()->create();
+    $teacher = TeacherProfile::factory()->create();
+    $student = StudentProfile::factory()->create();
 
-    expect($teacher->user->role)->toBe(UserRole::Teacher)
-        ->and($student->user->role)->toBe(UserRole::Student);
+    expect($teacher->profile->user->role)->toBe(UserRole::Teacher)
+        ->and($student->profile->user->role)->toBe(UserRole::Student);
 });
 
 test('identity enums keep the stored integer contract', function () {
