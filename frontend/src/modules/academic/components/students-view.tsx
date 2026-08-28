@@ -79,13 +79,13 @@ export function StudentsView({
       cell: (student) => GRADE_LEVEL_LABELS[student.grade_level],
     },
     {
-      key: "parent",
+      key: "guardian",
       header: "Phụ huynh",
       hideOnMobile: true,
       cell: (student) => (
         <div className="grid gap-0.5">
-          <span>{student.parent_name}</span>
-          <span className="text-xs text-muted-foreground">{student.parent_phone ?? "—"}</span>
+          <span>{student.guardian_name ?? "—"}</span>
+          <span className="text-xs text-muted-foreground">{student.guardian_phone ?? "—"}</span>
         </div>
       ),
     },
