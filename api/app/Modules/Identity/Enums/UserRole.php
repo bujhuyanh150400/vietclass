@@ -10,6 +10,6 @@ enum UserRole: int
 
     case Admin = 0;
     case Teacher = 1;
-    case Staff = 2;
-    case Student = 3;
+    case Student = 2;
+    case Guardian = 3;
 }

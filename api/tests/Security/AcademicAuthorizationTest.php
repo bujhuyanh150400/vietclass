@@ -59,10 +59,10 @@ test('an academic endpoint refuses a teacher account', function (string $method,
         ->assertExactJson(['message' => 'Bạn không có quyền thực hiện thao tác này.']);
 })->with('academic endpoints');
 
-test('an academic endpoint refuses a staff account', function (string $method, string $uri) {
-    $staff = User::factory()->create(['role' => UserRole::Staff]);
+test('an academic endpoint refuses a guardian account', function (string $method, string $uri) {
+    $guardian = User::factory()->create(['role' => UserRole::Guardian]);
 
-    $this->withToken($staff->createToken('test')->plainTextToken)
+    $this->withToken($guardian->createToken('test')->plainTextToken)
         ->{$method}($uri)
         ->assertForbidden();
 })->with('academic endpoints');

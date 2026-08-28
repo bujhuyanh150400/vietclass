@@ -4,8 +4,8 @@ use App\Modules\Identity\Actions\ChangeTeacherPasswordAction;
 use App\Modules\Identity\Actions\GetTeacherAction;
 use App\Modules\Identity\Actions\ToggleTeacherAccountAction;
 use App\Modules\Identity\Actions\UpdateTeacherAction;
-use App\Modules\Identity\Enums\EmployeeStatus;
 use App\Modules\Identity\Enums\IdentityError;
+use App\Modules\Identity\Enums\TeacherStatus;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\Teacher;
 use App\Modules\Identity\Models\User;
@@ -24,7 +24,7 @@ function teacherPayload(array $overrides = []): array
         'full_name' => 'Nguyễn Văn A',
         'phone' => '0901234567',
         'email' => 'gv.a@vietclass.test',
-        'status' => EmployeeStatus::Active->value,
+        'status' => TeacherStatus::Active->value,
         'joined_at' => '2026-01-15',
         ...$overrides,
     ];
@@ -36,7 +36,7 @@ test('creating a teacher creates the profile and its login account together', fu
         ->assertJsonPath('data.full_name', 'Nguyễn Văn A')
         ->assertJsonPath('data.username', 'gv_nguyen')
         ->assertJsonPath('data.is_account_active', true)
-        ->assertJsonPath('data.status', EmployeeStatus::Active->value);
+        ->assertJsonPath('data.status', TeacherStatus::Active->value);
 
     $this->assertDatabaseHas('users', ['username' => 'gv_nguyen', 'role' => UserRole::Teacher->value]);
     $this->assertDatabaseHas('teachers', ['full_name' => 'Nguyễn Văn A']);
@@ -107,7 +107,7 @@ test('the teacher list filters by employment status and account state', function
     $locked = Teacher::factory()->create();
     $locked->user->forceFill(['is_active' => false])->save();
 
-    $this->getJson('/api/v1/teachers?status[]='.EmployeeStatus::Inactive->value)
+    $this->getJson('/api/v1/teachers?status[]='.TeacherStatus::Inactive->value)
         ->assertOk()
         ->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.id', $left->id);
@@ -126,7 +126,7 @@ test('updating a teacher cannot change the login name', function () {
         'full_name' => 'Tên mới',
         'phone' => '0911111111',
         'email' => 'moi@vietclass.test',
-        'status' => EmployeeStatus::Active->value,
+        'status' => TeacherStatus::Active->value,
         'joined_at' => '2026-02-01',
         'username' => 'gv_khac',
     ])
@@ -143,7 +143,7 @@ test('a teacher may keep their own phone and email while editing', function () {
         'full_name' => 'Giữ nguyên liên hệ',
         'phone' => '0912345678',
         'email' => 'giu@vietclass.test',
-        'status' => EmployeeStatus::Active->value,
+        'status' => TeacherStatus::Active->value,
         'joined_at' => '2026-02-01',
     ])->assertOk();
 });

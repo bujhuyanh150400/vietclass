@@ -4,7 +4,7 @@ namespace App\Modules\Identity\Enums;
 
 use App\Core\Support\IntBackedEnum;
 
-enum EmployeeStatus: int
+enum TeacherStatus: int
 {
     use IntBackedEnum;
 

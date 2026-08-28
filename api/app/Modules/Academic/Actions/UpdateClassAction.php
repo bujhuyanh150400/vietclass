@@ -9,7 +9,7 @@ use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Academic\Repositories\ClassRepository;
 use App\Modules\Academic\Repositories\SubjectRepository;
-use App\Modules\Identity\Enums\EmployeeStatus;
+use App\Modules\Identity\Enums\TeacherStatus;
 use App\Modules\Identity\Models\Teacher;
 use App\Modules\Identity\Repositories\TeacherRepository;
 
@@ -114,7 +114,7 @@ final class UpdateClassAction
             );
         }
 
-        if ($teacher->status !== EmployeeStatus::Active) {
+        if ($teacher->status !== TeacherStatus::Active) {
             throw new ActionError(
                 message: 'Giáo viên này không còn làm việc, không thể phụ trách lớp.',
                 code: AcademicError::TeacherInactive,

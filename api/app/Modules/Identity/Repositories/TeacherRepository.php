@@ -4,7 +4,7 @@ namespace App\Modules\Identity\Repositories;
 
 use App\Core\Data\ListQuery;
 use App\Core\Repositories\BaseRepository;
-use App\Modules\Identity\Enums\EmployeeStatus;
+use App\Modules\Identity\Enums\TeacherStatus;
 use App\Modules\Identity\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -70,7 +70,7 @@ final class TeacherRepository extends BaseRepository
     public function options(ListQuery $query): Collection
     {
         return $this->modelQuery()
-            ->where('status', EmployeeStatus::Active)
+            ->where('status', TeacherStatus::Active)
             ->whereHas('user', fn (Builder $user): Builder => $user->where('is_active', true))
             ->when(
                 $query->hasSearch(),

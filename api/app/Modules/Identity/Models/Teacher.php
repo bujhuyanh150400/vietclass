@@ -2,7 +2,7 @@
 
 namespace App\Modules\Identity\Models;
 
-use App\Modules\Identity\Enums\EmployeeStatus;
+use App\Modules\Identity\Enums\TeacherStatus;
 use Database\Factories\TeacherFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -30,7 +30,7 @@ final class Teacher extends Model
 
     /** @var array<string, int> */
     protected $attributes = [
-        'status' => EmployeeStatus::Active->value,
+        'status' => TeacherStatus::Active->value,
     ];
 
     /**
@@ -49,7 +49,7 @@ final class Teacher extends Model
     protected function casts(): array
     {
         return [
-            'status' => EmployeeStatus::class,
+            'status' => TeacherStatus::class,
             'joined_at' => 'date',
         ];
     }

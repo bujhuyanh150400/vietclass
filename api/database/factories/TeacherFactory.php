@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Modules\Identity\Enums\EmployeeStatus;
+use App\Modules\Identity\Enums\TeacherStatus;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\Teacher;
 use App\Modules\Identity\Models\User;
@@ -29,7 +29,7 @@ class TeacherFactory extends Factory
             'phone' => '0'.fake()->unique()->numerify('#########'),
             'email' => fake()->unique()->safeEmail(),
             'address' => fake()->optional()->address(),
-            'status' => EmployeeStatus::Active,
+            'status' => TeacherStatus::Active,
             'color' => fake()->hexColor(),
             'joined_at' => fake()->dateTimeBetween('-3 years')->format('Y-m-d'),
         ];
@@ -40,6 +40,6 @@ class TeacherFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn (): array => ['status' => EmployeeStatus::Inactive]);
+        return $this->state(fn (): array => ['status' => TeacherStatus::Inactive]);
     }
 }

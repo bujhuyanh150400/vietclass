@@ -2,7 +2,7 @@
 
 namespace App\Modules\Identity\Http\Requests\Teachers;
 
-use App\Modules\Identity\Enums\EmployeeStatus;
+use App\Modules\Identity\Enums\TeacherStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -45,7 +45,7 @@ final class UpdateTeacherRequest extends FormRequest
             'bank_name' => ['sometimes', 'nullable', 'string', 'max:100'],
             'bank_account_number' => ['sometimes', 'nullable', 'string', 'max:30'],
             'bank_account_holder' => ['sometimes', 'nullable', 'string', 'max:100'],
-            'status' => ['required', 'integer', Rule::in(EmployeeStatus::values())],
+            'status' => ['required', 'integer', Rule::in(TeacherStatus::values())],
             'color' => ['sometimes', 'nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'joined_at' => ['required', 'date_format:Y-m-d'],
         ];

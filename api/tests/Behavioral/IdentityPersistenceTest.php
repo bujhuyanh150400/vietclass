@@ -1,8 +1,9 @@
 <?php
 
-use App\Modules\Identity\Enums\EmployeeStatus;
 use App\Modules\Identity\Enums\Gender;
+use App\Modules\Identity\Enums\GuardianRelationship;
 use App\Modules\Identity\Enums\StudentStatus;
+use App\Modules\Identity\Enums\TeacherStatus;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\Student;
 use App\Modules\Identity\Models\Teacher;
@@ -59,7 +60,7 @@ test('the teacher and student enums are cast in both directions', function () {
 
     expect($student->fresh()->gender)->toBe(Gender::Female)
         ->and($student->fresh()->status)->toBe(StudentStatus::Paused)
-        ->and($teacher->fresh()->status)->toBe(EmployeeStatus::Inactive);
+        ->and($teacher->fresh()->status)->toBe(TeacherStatus::Inactive);
 
     $this->assertDatabaseHas('students', ['id' => $student->id, 'gender' => 1, 'status' => 1]);
 });
@@ -73,7 +74,7 @@ test('database defaults match the values a new teacher or student starts with', 
     $teacher = new Teacher;
 
     expect($student->status)->toBe(StudentStatus::Studying)
-        ->and($teacher->status)->toBe(EmployeeStatus::Active);
+        ->and($teacher->status)->toBe(TeacherStatus::Active);
 });
 
 test('a teacher phone and email cannot be reused', function () {
@@ -98,4 +99,13 @@ test('a teacher profile is created with a teacher login account', function () {
 
     expect($teacher->user->role)->toBe(UserRole::Teacher)
         ->and($student->user->role)->toBe(UserRole::Student);
+});
+
+test('identity enums keep the stored integer contract', function () {
+    expect(UserRole::values())->toBe([0, 1, 2, 3])
+        ->and(UserRole::Student->value)->toBe(2)
+        ->and(UserRole::Guardian->value)->toBe(3)
+        ->and(TeacherStatus::values())->toBe([0, 1])
+        ->and(GuardianRelationship::values())->toBe([0, 1, 2])
+        ->and(GuardianRelationship::Mother->value)->toBe(1);
 });

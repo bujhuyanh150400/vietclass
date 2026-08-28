@@ -3,7 +3,7 @@
 namespace App\Modules\Identity\Http\Requests\Teachers;
 
 use App\Core\Http\Requests\Concerns\PaginatesQuery;
-use App\Modules\Identity\Enums\EmployeeStatus;
+use App\Modules\Identity\Enums\TeacherStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -29,7 +29,7 @@ final class IndexTeacherRequest extends FormRequest
         return [
             ...$this->paginationRules(),
             'status' => ['sometimes', 'array'],
-            'status.*' => ['integer', Rule::in(EmployeeStatus::values())],
+            'status.*' => ['integer', Rule::in(TeacherStatus::values())],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
