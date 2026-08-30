@@ -5,6 +5,7 @@ import { Suspense, type ReactNode } from "react";
 import { ProtectedShell } from "@/components/layouts/protected-shell";
 import { AppShellSkeleton } from "@/components/shared/app-shell-skeleton";
 import { AuthServiceUnavailable } from "@/components/shared/auth-service-unavailable";
+import { RouteLoadingState } from "@/components/shared/route-loading-state";
 import { isApiClientError } from "@/lib/api/api-client-error";
 import {
   CurrentUserMenuContainer,
@@ -103,8 +104,13 @@ async function AuthenticatedShell({ children }: { children: ReactNode }) {
  */
 export default function ProtectedLayout({ children }: LayoutProps<"/">) {
   return (
-    <Suspense fallback={<AppShellSkeleton />}>
-      <AuthenticatedShell>{children}</AuthenticatedShell>
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <RouteLoadingState />
+      </Suspense>
+      <Suspense fallback={<AppShellSkeleton />}>
+        <AuthenticatedShell>{children}</AuthenticatedShell>
+      </Suspense>
+    </>
   );
 }

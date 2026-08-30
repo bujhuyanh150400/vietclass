@@ -1,9 +1,9 @@
-import { DashboardSkeleton } from "@/modules/dashboard";
+import { LoadingState } from "@/components/shared/loading-state";
 
 /**
- * Shows the dashboard-sized placeholder while a protected route segment loads,
- * so navigation inside the shell has immediate feedback.
+ * Shows the shared loading overlay while a protected route segment loads, so
+ * navigation inside the shell has immediate feedback.
  */
 export default function ProtectedLoading() {
-  return <DashboardSkeleton />;
+  return <LoadingState open />;
 }
