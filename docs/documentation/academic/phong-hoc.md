@@ -22,7 +22,7 @@ Chức năng có màn quản trị tại `/academic/rooms` (mục **Phòng học
 - Ba trạng thái phòng là `0` — **Hoạt động**, `1` — **Tạm khóa**, và `2` — **Bảo trì**.
 - Tên, sức chứa và ghi chú được sửa qua endpoint sửa phòng; trạng thái có endpoint riêng.
 - Danh sách chọn chỉ trả các phòng **Hoạt động**.
-- Không xóa được phòng khi còn lịch học tham chiếu. Ở phase hiện tại chưa có bảng lịch học, nên bộ đếm tham chiếu trả `0`; phase Lịch học sẽ nối số đếm thật vào cùng quy tắc xóa này.
+- Không xóa được phòng khi còn lịch học tham chiếu. Bộ đếm tham chiếu hiện đếm số [lịch cố định](../schedule/lich-co-dinh.md) trỏ vào phòng; khi có buổi học chi tiết, các buổi đó sẽ được cộng vào cùng số đếm này.
 
 ## Hướng dẫn thao tác
 
@@ -71,11 +71,11 @@ Danh sách nhận `q` để tìm theo tên, `status` để lọc theo một tr�
 | Chức năng liên quan | Loại quan hệ | Ảnh hưởng nghiệp vụ | Người dùng quan sát được |
 | --- | --- | --- | --- |
 | [Phân quyền theo chức năng](../auth/phan-quyen.md) | Tiên quyết | Quyết định ai sử dụng được từng endpoint phòng học. | Không đủ quyền thì nhận `403`. |
-| Lịch học | Hạ nguồn đã chuẩn bị | Lịch học sẽ tham chiếu phòng và trở thành điều kiện chặn xóa. | Hiện chưa có màn hay bảng lịch học; một phòng có thể xóa khi chưa có tham chiếu. |
+| [Lịch cố định theo lớp](../schedule/lich-co-dinh.md) | Hạ nguồn | Lịch cố định phải chọn một phòng đang Hoạt động, và phòng còn lịch trỏ vào thì không xóa được. | Xóa phòng đang có lịch trả `409` kèm số lịch đang dùng; phòng chưa có lịch nào thì xóa được. |
 
 ## Giới hạn hiện tại
 
-- Chưa có lịch học hoặc bảng lịch học, nên không có tham chiếu phòng thật trong dữ liệu ở phase này.
+- Chưa có buổi học chi tiết, nên tham chiếu phòng hiện chỉ đến từ lịch cố định.
 - Chưa lưu lịch sử thay đổi phòng hoặc trạng thái.
 - Danh sách chọn trả tối đa 50 phòng mỗi lần gọi.
 

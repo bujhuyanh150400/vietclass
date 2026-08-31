@@ -14,6 +14,7 @@ use App\Modules\Academic\Models\Room;
 use App\Modules\Academic\Repositories\RoomRepository;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\User;
+use App\Modules\Schedule\Models\ScheduleTemplate;
 
 beforeEach(function (): void {
     $admin = User::factory()->create(['role' => UserRole::Admin]);
@@ -227,26 +228,28 @@ test('a room status outside the declared states is rejected', function (): void 
         ->assertJsonValidationErrorFor('status');
 });
 
-test('a room with schedule references cannot be deleted', function (): void {
+test('a room a fixed schedule references cannot be deleted', function (): void {
     $room = Room::factory()->create();
-    $rooms = new class extends RoomRepository
-    {
-        /**
-         * Simulate the reference count phase 2 will supply from its schedule table.
-         */
-        public function countScheduleReferences(Room $room): int
-        {
-            return 1;
-        }
-    };
+    ScheduleTemplate::factory()->create(['room_id' => $room->id]);
 
-    $result = (new DeleteRoomAction($rooms))->handle($room->id);
+    $result = app(DeleteRoomAction::class)->handle($room->id);
 
     expect($result->isSuccess())->toBeFalse()
         ->and($result->getError())->toBe(AcademicError::RoomInUse)
         ->and($result->getMessage())->toBe('Phòng học đang được dùng bởi 1 lịch, không thể xóa.');
 
     $this->assertDatabaseHas('rooms', ['id' => $room->id]);
+});
+
+test('the room reference count reads the fixed schedules of that room only', function (): void {
+    $room = Room::factory()->create();
+    $otherRoom = Room::factory()->create();
+
+    ScheduleTemplate::factory()->count(2)->create(['room_id' => $room->id]);
+    ScheduleTemplate::factory()->create(['room_id' => $otherRoom->id]);
+
+    expect(app(RoomRepository::class)->countScheduleReferences($room))->toBe(2)
+        ->and(app(RoomRepository::class)->countScheduleReferences($otherRoom))->toBe(1);
 });
 
 test('a non-administrator cannot use any room endpoint', function (): void {

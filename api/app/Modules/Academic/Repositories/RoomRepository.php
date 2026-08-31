@@ -9,6 +9,7 @@ use App\Modules\Academic\Models\Room;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class RoomRepository extends BaseRepository
 {
@@ -103,12 +104,20 @@ class RoomRepository extends BaseRepository
     /**
      * Count schedule records that reference a room before it can be removed.
      *
-     * The Schedule module has no tables in phase 1, so this deliberately returns zero.
-     * Phase 2 adds class_schedule_templates and replaces this placeholder with its real
-     * reference count without changing the deletion rule's caller.
+     * The table is named as a string rather than reached through the Schedule module's
+     * model on purpose: Schedule depends on Academic for rooms and classes, so an
+     * import in this direction would close the cycle and make neither module loadable
+     * without the other. A room deletion is refused by counting rows, and a row count
+     * needs no model.
+     *
+     * Only fixed schedules exist to count today. When written sessions arrive they
+     * reference a room directly as well, and their count has to be added here — a room
+     * still holding a session is as much in use as one holding a weekly slot.
      */
     public function countScheduleReferences(Room $room): int
     {
-        return 0;
+        return DB::table('schedule_templates')
+            ->where('room_id', $room->id)
+            ->count();
     }
 }
