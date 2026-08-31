@@ -5,6 +5,8 @@ export type {
   GradeLevel,
   GuardianRelationship,
   Option,
+  Room,
+  RoomStatus,
   SchoolClass,
   Student,
   StudentStatus,
@@ -21,12 +23,17 @@ export {
   GUARDIAN_RELATIONSHIP_LABELS,
   STUDENT_STATUS_LABELS,
   TEACHER_STATUS_LABELS,
+  ROOM_STATUS_LABELS,
   formatDate,
 } from "./utils/labels";
 
 export { SubjectsContainer } from "./containers/subjects-container";
 export { SubjectFormContainer } from "./containers/subject-form-container";
 export { SubjectEditContainer } from "./containers/subject-edit-container";
+
+export { RoomsContainer } from "./containers/rooms-container";
+export { RoomFormContainer } from "./containers/room-form-container";
+export { RoomEditContainer } from "./containers/room-edit-container";
 
 export { TeachersContainer } from "./containers/teachers-container";
 export { TeacherFormContainer } from "./containers/teacher-form-container";

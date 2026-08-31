@@ -11,6 +11,7 @@ import { SESSION_COOKIE_NAME } from "@/modules/identity/server";
  */
 const ALLOWED_PATHS: RegExp[] = [
   /^subjects(\/options|\/\d+(\/active)?)?$/,
+  /^rooms(\/options|\/\d+(\/status)?)?$/,
   /^teachers(\/options|\/\d+(\/account|\/password)?)?$/,
   /^classes(\/options|\/\d+(\/status|\/enrollments|\/available-students)?)?$/,
   /^students(\/\d+(\/account|\/password)?)?$/,

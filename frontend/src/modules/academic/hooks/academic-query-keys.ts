@@ -14,6 +14,12 @@ export const academicQueryKeys = {
     detail: (id: number) => ["academic", "subjects", "detail", id] as const,
     options: (search: string) => ["academic", "subjects", "options", search] as const,
   },
+  rooms: {
+    root: () => ["academic", "rooms"] as const,
+    list: (params: ListParams) => ["academic", "rooms", "list", params] as const,
+    detail: (id: number) => ["academic", "rooms", "detail", id] as const,
+    options: (search: string) => ["academic", "rooms", "options", search] as const,
+  },
   teachers: {
     root: () => ["academic", "teachers"] as const,
     list: (params: ListParams) => ["academic", "teachers", "list", params] as const,

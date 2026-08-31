@@ -1,9 +1,12 @@
 <?php
 
 use App\Modules\Academic\Enums\ClassStatus;
+use App\Modules\Academic\Enums\RoomStatus;
 use App\Modules\Academic\Models\ClassEnrollment;
+use App\Modules\Academic\Models\Room;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\Subject;
+use App\Modules\Academic\Repositories\RoomRepository;
 use App\Modules\Identity\Enums\GradeLevel;
 use App\Modules\Identity\Models\StudentProfile;
 use App\Modules\Identity\Models\TeacherProfile;
@@ -43,10 +46,50 @@ test('the class enums are cast in both directions', function () {
 test('database defaults match the values a new model starts with', function () {
     $class = new SchoolClass;
     $subject = new Subject;
+    $room = new Room;
 
     expect($class->status)->toBe(ClassStatus::Active)
         ->and($class->max_students)->toBe(0)
-        ->and($subject->is_active)->toBeTrue();
+        ->and($subject->is_active)->toBeTrue()
+        ->and($room->status)->toBe(RoomStatus::Active)
+        ->and($room->capacity)->toBe(0);
+});
+
+test('room statuses expose the Vietnamese labels used by the API and interface', function () {
+    expect(RoomStatus::Active->label())->toBe('Hoạt động')
+        ->and(RoomStatus::Inactive->label())->toBe('Tạm khóa')
+        ->and(RoomStatus::Maintenance->label())->toBe('Bảo trì');
+});
+
+test('a room factory persists its database-backed status and capacity', function () {
+    $room = Room::factory()->create([
+        'name' => 'Phòng A1',
+        'capacity' => 36,
+        'status' => RoomStatus::Maintenance,
+    ]);
+
+    expect($room->fresh()->status)->toBe(RoomStatus::Maintenance)
+        ->and($room->fresh()->capacity)->toBe(36);
+
+    $this->assertDatabaseHas('rooms', [
+        'id' => $room->id,
+        'name' => 'Phòng A1',
+        'capacity' => 36,
+        'status' => 2,
+    ]);
+});
+
+test('a room name cannot be reused', function () {
+    Room::factory()->create(['name' => 'Phòng A1']);
+
+    expect(fn () => Room::factory()->create(['name' => 'Phòng A1']))
+        ->toThrow(QueryException::class);
+});
+
+test('a room reports no schedule references before the Schedule module exists', function () {
+    $room = Room::factory()->create();
+
+    expect((new RoomRepository)->countScheduleReferences(room: $room))->toBe(0);
 });
 
 test('a subject name cannot be reused', function () {

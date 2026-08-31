@@ -59,6 +59,24 @@ enum AcademicFeature: string implements FeatureEnum
     /** End a student's membership of a class. */
     case ClassRemoveStudent = 'class.remove_student';
 
+    /** See the room list. */
+    case RoomList = 'room.list';
+
+    /** See one room in detail. */
+    case RoomView = 'room.view';
+
+    /** Create a room. */
+    case RoomCreate = 'room.create';
+
+    /** Change a room's details. */
+    case RoomUpdate = 'room.update';
+
+    /** Change a room's availability status. */
+    case RoomChangeStatus = 'room.change_status';
+
+    /** Remove a room no schedule references. */
+    case RoomDelete = 'room.delete';
+
     /**
      * Return the caller-facing name shown for this permission in the catalogue.
      */
@@ -80,6 +98,12 @@ enum AcademicFeature: string implements FeatureEnum
             self::ClassUpdateStudentEnrollment => 'Sửa thông tin ghi danh',
             self::ClassTransferStudent => 'Chuyển lớp cho học sinh',
             self::ClassRemoveStudent => 'Cho học sinh nghỉ lớp',
+            self::RoomList => 'Xem danh sách phòng học',
+            self::RoomView => 'Xem chi tiết phòng học',
+            self::RoomCreate => 'Tạo phòng học',
+            self::RoomUpdate => 'Sửa phòng học',
+            self::RoomChangeStatus => 'Đổi trạng thái phòng học',
+            self::RoomDelete => 'Xóa phòng học',
         };
     }
 

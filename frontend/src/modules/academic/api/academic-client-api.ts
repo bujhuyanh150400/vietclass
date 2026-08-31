@@ -6,6 +6,8 @@ import {
   enrollmentListSchema,
   enrollmentSchema,
   optionListSchema,
+  roomListSchema,
+  roomSchema,
   schoolClassListSchema,
   schoolClassSchema,
   studentListSchema,
@@ -18,6 +20,7 @@ import {
 import type {
   Enrollment,
   Option,
+  Room,
   SchoolClass,
   Student,
   Subject,
@@ -108,6 +111,59 @@ export async function setSubjectActive(id: number, isActive: boolean): Promise<S
 /** Removes a subject no class references. */
 export async function deleteSubject(id: number): Promise<void> {
   await browserRequest<undefined>(`${BASE}/subjects/${id}`, { method: "DELETE" });
+}
+
+/** Fetches one page of rooms. */
+export async function fetchRooms(params: ListParams): Promise<Page<Room>> {
+  return parsePage<Room>(
+    await browserRequestList<unknown>(`${BASE}/rooms`, { params }),
+    roomListSchema,
+  );
+}
+
+/** Fetches the rooms a schedule may be assigned to. */
+export async function fetchRoomOptions(params: ListParams): Promise<Option[]> {
+  return parseOne<Option[]>(
+    await browserRequest<unknown>(`${BASE}/rooms/options`, { params }),
+    optionListSchema,
+  );
+}
+
+/** Fetches one room. */
+export async function fetchRoom(id: number): Promise<Room> {
+  return parseOne<Room>(await browserRequest<unknown>(`${BASE}/rooms/${id}`), roomSchema);
+}
+
+/** Creates a room. */
+export async function createRoom(body: unknown): Promise<Room> {
+  return parseOne<Room>(
+    await browserRequest<unknown>(`${BASE}/rooms`, { method: "POST", body }),
+    roomSchema,
+  );
+}
+
+/** Changes a room's editable details. */
+export async function updateRoom(id: number, body: unknown): Promise<Room> {
+  return parseOne<Room>(
+    await browserRequest<unknown>(`${BASE}/rooms/${id}`, { method: "PUT", body }),
+    roomSchema,
+  );
+}
+
+/** Changes a room's availability status. */
+export async function changeRoomStatus(id: number, status: number): Promise<Room> {
+  return parseOne<Room>(
+    await browserRequest<unknown>(`${BASE}/rooms/${id}/status`, {
+      method: "PATCH",
+      body: { status },
+    }),
+    roomSchema,
+  );
+}
+
+/** Removes a room no schedule references. */
+export async function deleteRoom(id: number): Promise<void> {
+  await browserRequest<undefined>(`${BASE}/rooms/${id}`, { method: "DELETE" });
 }
 
 /** Fetches one page of teacher profiles. */
