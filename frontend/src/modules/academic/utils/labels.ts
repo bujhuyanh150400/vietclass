@@ -3,6 +3,7 @@ import type {
   Gender,
   GradeLevel,
   GuardianRelationship,
+  RoomStatus,
   StudentStatus,
   TeacherStatus,
 } from "../types/academic";
@@ -42,6 +43,13 @@ export const STUDENT_STATUS_LABELS: Record<StudentStatus, string> = {
 export const CLASS_STATUS_LABELS: Record<ClassStatus, string> = {
   0: "Đang hoạt động",
   1: "Kết thúc",
+};
+
+/** Whether a room can be assigned to a new schedule. */
+export const ROOM_STATUS_LABELS: Record<RoomStatus, string> = {
+  0: "Hoạt động",
+  1: "Tạm khóa",
+  2: "Bảo trì",
 };
 
 /** A student's recorded gender. */

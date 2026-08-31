@@ -55,6 +55,26 @@ export const subjectFormSchema = z.object({
 export type SubjectFormInput = z.input<typeof subjectFormSchema>;
 export type SubjectFormValues = z.output<typeof subjectFormSchema>;
 
+/** Creating or editing a room. */
+export const roomFormSchema = z.object({
+  name: z
+    .string()
+    .min(1, { error: "Vui lòng nhập tên phòng học." })
+    .max(50, { error: "Tên phòng học không được vượt quá 50 ký tự." }),
+  capacity: z
+    .number()
+    .int()
+    .min(0, { error: "Sức chứa không được nhỏ hơn 0." })
+    .max(32767, { error: "Sức chứa không được vượt quá 32767." }),
+  note: z
+    .string()
+    .max(2000, { error: "Ghi chú không được vượt quá 2000 ký tự." })
+    .default(""),
+});
+
+export type RoomFormInput = z.input<typeof roomFormSchema>;
+export type RoomFormValues = z.output<typeof roomFormSchema>;
+
 /** The profile fields shared by creating and editing a teacher. */
 const teacherProfileShape = {
   full_name: z

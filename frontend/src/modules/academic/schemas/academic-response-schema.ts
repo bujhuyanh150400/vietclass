@@ -13,6 +13,7 @@ import { z } from "zod";
 const teacherStatus = z.union([z.literal(0), z.literal(1)]);
 const studentStatus = z.union([z.literal(0), z.literal(1), z.literal(2)]);
 const classStatus = z.union([z.literal(0), z.literal(1)]);
+const roomStatus = z.union([z.literal(0), z.literal(1), z.literal(2)]);
 const gender = z.union([z.literal(0), z.literal(1), z.literal(2)]);
 const guardianRelationship = z.union([z.literal(0), z.literal(1), z.literal(2)]);
 const gradeLevel = z.union([
@@ -47,6 +48,19 @@ export const subjectSchema = z.object({
 
 /** A page of subjects. */
 export const subjectListSchema = z.array(subjectSchema);
+
+/** A teaching room managed by the Academic module. */
+export const roomSchema = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  capacity: z.number().int(),
+  note: z.string().nullable(),
+  status: roomStatus,
+  ...timestamps,
+});
+
+/** A page of rooms. */
+export const roomListSchema = z.array(roomSchema);
 
 /** A teacher profile with the state of its login account. */
 export const teacherSchema = z.object({

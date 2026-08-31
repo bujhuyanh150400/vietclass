@@ -17,6 +17,9 @@ export type GuardianRelationship = 0 | 1 | 2;
 /** Whether a class is still running. */
 export type ClassStatus = 0 | 1;
 
+/** Whether a room can be assigned to a new schedule. */
+export type RoomStatus = 0 | 1 | 2;
+
 /** A student's recorded gender. */
 export type Gender = 0 | 1 | 2;
 
@@ -37,6 +40,17 @@ export type Subject = {
   description: string | null;
   is_active: boolean;
   active_classes_count?: number;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+/** A teaching room managed by the Academic module. */
+export type Room = {
+  id: number;
+  name: string;
+  capacity: number;
+  note: string | null;
+  status: RoomStatus;
   created_at: string | null;
   updated_at: string | null;
 };

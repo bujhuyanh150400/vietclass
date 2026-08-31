@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  DoorOpen,
   GraduationCap,
   LayoutDashboard,
   School,
@@ -12,6 +13,7 @@ import {
 export const NAVIGATION_ICONS = {
   dashboard: LayoutDashboard,
   subjects: BookOpen,
+  rooms: DoorOpen,
   teachers: GraduationCap,
   classes: School,
   students: Users,
@@ -43,6 +45,7 @@ export const NAVIGATION: NavigationGroup[] = [
     label: "Học vụ",
     items: [
       { href: "/academic/subjects", label: "Môn học", icon: "subjects" },
+      { href: "/academic/rooms", label: "Phòng học", icon: "rooms" },
       { href: "/academic/teachers", label: "Giáo viên", icon: "teachers" },
       { href: "/academic/classes", label: "Lớp học", icon: "classes" },
       { href: "/academic/students", label: "Học sinh", icon: "students" },

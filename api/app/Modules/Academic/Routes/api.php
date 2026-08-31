@@ -3,6 +3,7 @@
 use App\Modules\Academic\Enums\AcademicFeature;
 use App\Modules\Academic\Http\Controllers\ClassController;
 use App\Modules\Academic\Http\Controllers\EnrollmentController;
+use App\Modules\Academic\Http\Controllers\RoomController;
 use App\Modules\Academic\Http\Controllers\SubjectController;
 use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,40 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::delete('{subject}', [SubjectController::class, 'destroy'])
             ->whereNumber('subject')
             ->middleware(Authorize::using(AcademicFeature::SubjectDelete))
+            ->name('destroy');
+    });
+
+    Route::prefix('rooms')->name('rooms.')->group(function (): void {
+        Route::get('/', [RoomController::class, 'index'])
+            ->middleware(Authorize::using(AcademicFeature::RoomList))
+            ->name('index');
+
+        Route::get('options', [RoomController::class, 'options'])
+            ->middleware(Authorize::using(AcademicFeature::RoomList))
+            ->name('options');
+
+        Route::post('/', [RoomController::class, 'store'])
+            ->middleware(Authorize::using(AcademicFeature::RoomCreate))
+            ->name('store');
+
+        Route::get('{room}', [RoomController::class, 'show'])
+            ->whereNumber('room')
+            ->middleware(Authorize::using(AcademicFeature::RoomView))
+            ->name('show');
+
+        Route::put('{room}', [RoomController::class, 'update'])
+            ->whereNumber('room')
+            ->middleware(Authorize::using(AcademicFeature::RoomUpdate))
+            ->name('update');
+
+        Route::patch('{room}/status', [RoomController::class, 'changeStatus'])
+            ->whereNumber('room')
+            ->middleware(Authorize::using(AcademicFeature::RoomChangeStatus))
+            ->name('change-status');
+
+        Route::delete('{room}', [RoomController::class, 'destroy'])
+            ->whereNumber('room')
+            ->middleware(Authorize::using(AcademicFeature::RoomDelete))
             ->name('destroy');
     });
 

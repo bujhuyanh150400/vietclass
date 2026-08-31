@@ -64,6 +64,15 @@ enum AcademicError: string implements ErrorDeclarationEnum
     /** A transfer target must be a class that is still running. */
     case TransferTargetNotActive = 'ACADEMIC-017';
 
+    /** No room exists for the requested identifier. */
+    case RoomNotFound = 'ACADEMIC-018';
+
+    /** The room still has scheduled references, so it cannot be removed. */
+    case RoomInUse = 'ACADEMIC-019';
+
+    /** The room is unavailable and cannot be assigned to a new schedule. */
+    case RoomInactive = 'ACADEMIC-020';
+
     /**
      * Return the HTTP status this business failure reaches the API boundary with.
      */
@@ -74,13 +83,15 @@ enum AcademicError: string implements ErrorDeclarationEnum
             self::TeacherNotFound,
             self::ClassNotFound,
             self::StudentNotFound,
-            self::EnrollmentNotFound => 404,
+            self::EnrollmentNotFound,
+            self::RoomNotFound => 404,
 
             self::SubjectInUse,
             self::ClassNotActive,
             self::ClassFull,
             self::EnrollmentNotActive,
-            self::StudentAlreadyEnrolled => 409,
+            self::StudentAlreadyEnrolled,
+            self::RoomInUse => 409,
 
             self::SubjectInactive,
             self::TeacherInactive,
@@ -88,7 +99,8 @@ enum AcademicError: string implements ErrorDeclarationEnum
             self::EnrollmentBeforeClassStart,
             self::LeftBeforeEnrolled,
             self::TransferSubjectMismatch,
-            self::TransferTargetNotActive => 422,
+            self::TransferTargetNotActive,
+            self::RoomInactive => 422,
         };
     }
 }

@@ -126,6 +126,27 @@ test('capacity may be set to exactly the current headcount', function () {
     ])->assertOk()->assertJsonPath('data.max_students', 3);
 });
 
+test('a class capacity accepts the PostgreSQL smallint maximum', function () {
+    $this->postJson('/api/v1/classes', classPayload(['max_students' => 32767]))
+        ->assertCreated()
+        ->assertJsonPath('data.max_students', 32767);
+});
+
+test('a class capacity above the PostgreSQL smallint range is refused as a field error', function () {
+    $class = SchoolClass::factory()->create();
+
+    $this->postJson('/api/v1/classes', classPayload(['max_students' => 32768]))
+        ->assertJsonValidationErrorFor('max_students');
+
+    $this->putJson("/api/v1/classes/{$class->id}", [
+        'name' => $class->name,
+        'subject_id' => $class->subject_id,
+        'teacher_id' => $class->teacher_id,
+        'grade_level' => $class->grade_level->value,
+        'max_students' => 32768,
+    ])->assertJsonValidationErrorFor('max_students');
+});
+
 test('a class cannot be handed to a teacher who has left', function () {
     $class = SchoolClass::factory()->create();
     $gone = TeacherProfile::factory()->inactive()->create();
