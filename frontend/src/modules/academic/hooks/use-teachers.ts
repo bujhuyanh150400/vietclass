@@ -43,6 +43,9 @@ export function useTeacherOptions(search = "") {
   return useQuery<Option[]>({
     queryKey: academicQueryKeys.teachers.options(search),
     queryFn: () => fetchTeacherOptions({ q: search, limit: 50 }),
+    // Keeps the previous matches on screen while the next term is in flight, so a
+    // picker narrows rather than blanking to a loading line on every keystroke.
+    placeholderData: (previous) => previous,
   });
 }
 
