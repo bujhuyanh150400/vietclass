@@ -148,6 +148,8 @@ export function StudentFormContainer({ student }: { student?: Student }) {
   return (
     <div className="grid max-w-3xl gap-6">
       <PageHeader
+        backHref={LIST_HREF}
+        backLabel="Danh sách học sinh"
         title={isEditing ? "Sửa hồ sơ học sinh" : "Thêm học sinh"}
         description={
           isEditing

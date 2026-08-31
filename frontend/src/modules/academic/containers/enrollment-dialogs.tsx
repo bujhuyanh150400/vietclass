@@ -15,9 +15,9 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
+import { AsyncSelectField } from "../components/async-select-field";
 import { DateField } from "../components/date-field";
 import { Field, fieldAria } from "../components/field";
-import { SelectField } from "../components/select-field";
 import { useClassOptions } from "../hooks/use-classes";
 import { useResourceForm } from "../hooks/use-resource-form";
 import {
@@ -144,8 +144,6 @@ export function TransferEnrollmentDialog({
   onClose: () => void;
   submit: (body: unknown) => Promise<unknown>;
 }) {
-  const classes = useClassOptions();
-
   const { form, onSubmit, alertMessage, isSubmitting } = useResourceForm<
     TransferInput,
     TransferValues
@@ -164,10 +162,6 @@ export function TransferEnrollmentDialog({
 
   const errors = form.formState.errors;
 
-  const choices = (classes.data ?? [])
-    .filter((option) => option.id !== enrollment.class_id)
-    .map((option) => ({ value: option.id, label: option.label }));
-
   return (
     <EnrollmentDialogShell
       title="Chuyển lớp"
@@ -182,15 +176,18 @@ export function TransferEnrollmentDialog({
         control={form.control}
         name="class_id"
         render={({ field }) => (
-          <SelectField
+          <AsyncSelectField
             name="class_id"
             label="Lớp đích"
             required
+            useOptions={useClassOptions}
             value={field.value === 0 ? undefined : field.value}
-            choices={choices}
             onChange={field.onChange}
+            filterOption={(option) => option.id !== enrollment.class_id}
             error={errors.class_id?.message}
-            placeholder={classes.isPending ? "Đang tải…" : "Chọn lớp"}
+            placeholder="Chọn lớp"
+            searchPlaceholder="Tìm lớp học…"
+            emptyMessage="Không tìm thấy lớp học phù hợp."
           />
         )}
       />

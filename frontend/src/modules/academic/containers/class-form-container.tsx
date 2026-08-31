@@ -7,6 +7,7 @@ import { Controller } from "react-hook-form";
 import { PageHeader } from "@/components/shared/data-table";
 import { Input } from "@/components/ui/input";
 
+import { AsyncSelectField } from "../components/async-select-field";
 import { DateField } from "../components/date-field";
 import { Field, fieldAria } from "../components/field";
 import { FormShell } from "../components/form-shell";
@@ -62,9 +63,6 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
   const create = useCreateClass();
   const update = useUpdateClass(schoolClass?.id ?? 0);
 
-  const subjects = useSubjectOptions();
-  const teachers = useTeacherOptions();
-
   const { form, onSubmit, alertMessage, isSubmitting } = useResourceForm<
     ClassFormInput,
     ClassFormValues
@@ -113,18 +111,11 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
 
   const errors = form.formState.errors;
 
-  const subjectChoices = (subjects.data ?? []).map((option) => ({
-    value: option.id,
-    label: option.label,
-  }));
-  const teacherChoices = (teachers.data ?? []).map((option) => ({
-    value: option.id,
-    label: option.label,
-  }));
-
   return (
     <div className="grid max-w-3xl gap-6">
       <PageHeader
+        backHref={LIST_HREF}
+        backLabel="Danh sách lớp học"
         title={isEditing ? "Sửa lớp học" : "Thêm lớp học"}
         description={
           isEditing
@@ -169,15 +160,18 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
           control={form.control}
           name="subject_id"
           render={({ field }) => (
-            <SelectField
+            <AsyncSelectField
               name="subject_id"
               label="Môn học"
               required
+              useOptions={useSubjectOptions}
               value={field.value === 0 ? undefined : field.value}
-              choices={subjectChoices}
               onChange={field.onChange}
+              selectedLabel={schoolClass?.subject_name ?? undefined}
               error={errors.subject_id?.message}
-              placeholder={subjects.isPending ? "Đang tải…" : "Chọn môn học"}
+              placeholder="Chọn môn học"
+              searchPlaceholder="Tìm môn học…"
+              emptyMessage="Không tìm thấy môn học phù hợp."
               hint="Chỉ hiển thị môn học đang mở."
             />
           )}
@@ -187,15 +181,18 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
           control={form.control}
           name="teacher_id"
           render={({ field }) => (
-            <SelectField
+            <AsyncSelectField
               name="teacher_id"
               label="Giáo viên phụ trách"
               required
+              useOptions={useTeacherOptions}
               value={field.value === 0 ? undefined : field.value}
-              choices={teacherChoices}
               onChange={field.onChange}
+              selectedLabel={schoolClass?.teacher_name ?? undefined}
               error={errors.teacher_id?.message}
-              placeholder={teachers.isPending ? "Đang tải…" : "Chọn giáo viên"}
+              placeholder="Chọn giáo viên"
+              searchPlaceholder="Tìm giáo viên…"
+              emptyMessage="Không tìm thấy giáo viên phù hợp."
               hint="Chỉ hiển thị giáo viên đang làm việc."
             />
           )}

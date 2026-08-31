@@ -122,6 +122,8 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
   return (
     <div className="grid max-w-3xl gap-6">
       <PageHeader
+        backHref={LIST_HREF}
+        backLabel="Danh sách giáo viên"
         title={isEditing ? "Sửa hồ sơ giáo viên" : "Thêm giáo viên"}
         description={
           isEditing

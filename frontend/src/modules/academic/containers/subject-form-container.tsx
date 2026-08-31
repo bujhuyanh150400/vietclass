@@ -68,6 +68,8 @@ export function SubjectFormContainer({ subject }: { subject?: Subject }) {
   return (
     <div className="grid max-w-3xl gap-6">
       <PageHeader
+        backHref={LIST_HREF}
+        backLabel="Danh sách môn học"
         title={subject === undefined ? "Thêm môn học" : "Sửa môn học"}
         description={
           subject === undefined

@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { BackLink } from "@/components/shared/back-link";
 
 import { ClassSummary } from "../components/class-summary";
 import { ResourceLoader } from "../components/resource-loader";
@@ -67,12 +65,7 @@ function ClassDetail({ schoolClass }: { schoolClass: SchoolClass }) {
 
   return (
     <div className="grid gap-6">
-      <Button variant="ghost" size="sm" className="justify-self-start" asChild>
-        <Link href="/academic/classes">
-          <ArrowLeft aria-hidden="true" />
-          Danh sách lớp học
-        </Link>
-      </Button>
+      <BackLink href="/academic/classes" label="Danh sách lớp học" />
 
       <ClassSummary schoolClass={schoolClass} />
 
