@@ -61,6 +61,7 @@ export function RoomFormContainer({ room }: { room?: Room }) {
       router.push(LIST_HREF);
       router.refresh();
     },
+    successMessage: isEditing ? "Đã lưu thay đổi phòng học." : "Đã tạo phòng học.",
   });
 
   const errors = form.formState.errors;

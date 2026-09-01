@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
 import { ConfirmActionDialog } from "../components/confirm-action-dialog";
@@ -27,6 +28,7 @@ export function SubjectsContainer() {
   const list = useSubjectList();
   const toggleActive = useSetSubjectActive();
   const remove = useDeleteSubject();
+  const showToast = useToast();
 
   const [pending, setPending] = useState<PendingAction>({ kind: "none" });
   const [actionError, setActionError] = useState<string | null>(null);
@@ -66,6 +68,7 @@ export function SubjectsContainer() {
         await remove.mutateAsync(pending.subject.id);
       }
 
+      showToast({ variant: "success", title: successMessage(pending) });
       close();
     } catch (error) {
       reportFailure(error);
@@ -100,6 +103,28 @@ export function SubjectsContainer() {
       />
     </>
   );
+}
+
+/**
+ * States what the confirmed action just did, for the toast that reports it.
+ *
+ * The subject is read as it was before the call, so a lock that has already been
+ * applied is still described as locking rather than as the state it produced.
+ */
+function successMessage(pending: PendingAction): string {
+  if (pending.kind === "none") {
+    return "";
+  }
+
+  const name = pending.subject.name;
+
+  if (pending.kind === "delete") {
+    return `Đã xóa môn học "${name}".`;
+  }
+
+  return pending.subject.is_active
+    ? `Đã khóa môn học "${name}".`
+    : `Đã mở lại môn học "${name}".`;
 }
 
 /** Names the decision being confirmed. */

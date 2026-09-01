@@ -1,6 +1,6 @@
 # Quản lý phòng học
 
-Last Verified: 2026-08-31
+Last Verified: 2026-09-01
 Related Task: `.tasks/schedule-phase-1-rooms.md`
 
 ## Tổng quan
@@ -57,6 +57,11 @@ Danh sách nhận `q` để tìm theo tên, `status` để lọc theo một tr�
 - Xóa thành công trả `204` và phòng không còn tồn tại.
 - Danh sách chọn trả mảng gồm `id` và `label`.
 - Màn hình giữ danh sách đang xem sau khi tạo, sửa, đổi trạng thái hoặc xóa và làm mới dữ liệu phòng học.
+
+Trên trình duyệt:
+
+- Mỗi thao tác thành công hiện một thông báo nổi ở góc dưới bên phải rồi tự đóng sau vài giây: `Đã tạo phòng học.`, `Đã lưu thay đổi phòng học.`, `Đã chuyển phòng học "<tên>" sang trạng thái <trạng thái>.`, `Đã xóa phòng học "<tên>".`
+- Danh sách phòng học tự hiển thị bản ghi vừa tạo hoặc vừa sửa khi màn hình quay lại, không cần tải lại trang.
 
 ## Lỗi và trường hợp ngoại lệ
 

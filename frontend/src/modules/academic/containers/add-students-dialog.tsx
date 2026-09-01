@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
 import { DateField } from "../components/date-field";
@@ -58,6 +59,7 @@ export function AddStudentsDialog({
 
   const available = useAvailableStudents(classId, search, page);
   const enrol = useEnrolStudents(classId);
+  const showToast = useToast();
 
   /** Adds or removes one student from the selection. */
   function toggle(studentId: number) {
@@ -82,7 +84,12 @@ export function AddStudentsDialog({
     setError(null);
 
     try {
+      // Counted before the reset below clears the selection.
+      const added = selected.length;
+
       await enrol.mutateAsync({ student_ids: selected, enrolled_at: enrolledAt });
+
+      showToast({ variant: "success", title: `Đã thêm ${added} học sinh vào lớp.` });
       reset();
       onOpenChange(false);
     } catch (caught) {

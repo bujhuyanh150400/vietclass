@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
 import { ChangePasswordDialog } from "../components/change-password-dialog";
@@ -26,6 +27,7 @@ export function StudentsContainer() {
   const list = useStudentList();
   const toggleAccount = useSetStudentAccountActive();
   const changePassword = useChangeStudentPassword();
+  const showToast = useToast();
 
   const [lockTarget, setLockTarget] = useState<Student | null>(null);
   const [passwordTarget, setPasswordTarget] = useState<Student | null>(null);
@@ -40,9 +42,18 @@ export function StudentsContainer() {
     setActionError(null);
 
     try {
+      const wasActive = lockTarget.is_account_active !== false;
+
       await toggleAccount.mutateAsync({
         id: lockTarget.id,
         isActive: lockTarget.is_account_active === false,
+      });
+
+      showToast({
+        variant: "success",
+        title: wasActive
+          ? `Đã khóa tài khoản của ${lockTarget.full_name}.`
+          : `Đã mở lại tài khoản của ${lockTarget.full_name}.`,
       });
       setLockTarget(null);
     } catch (error) {

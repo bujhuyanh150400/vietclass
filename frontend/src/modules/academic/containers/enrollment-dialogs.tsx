@@ -73,6 +73,7 @@ export function EditEnrollmentDialog({
         note: emptyToNull(values.note),
       }),
     onSuccess: onClose,
+    successMessage: "Đã lưu thông tin ghi danh.",
   });
 
   const errors = form.formState.errors;
@@ -158,6 +159,7 @@ export function TransferEnrollmentDialog({
         note: emptyToNull(values.note),
       }),
     onSuccess: onClose,
+    successMessage: `Đã chuyển ${enrollment.student_name ?? "học sinh"} sang lớp mới.`,
   });
 
   const errors = form.formState.errors;
@@ -242,6 +244,7 @@ export function LeaveClassDialog({
     fieldNames: ["left_at", "reason"],
     submit: (values) => submit(values),
     onSuccess: onClose,
+    successMessage: `Đã cho ${enrollment.student_name ?? "học sinh"} nghỉ lớp.`,
   });
 
   const errors = form.formState.errors;

@@ -107,6 +107,7 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
       router.push(LIST_HREF);
       router.refresh();
     },
+    successMessage: isEditing ? "Đã lưu thay đổi lớp học." : "Đã tạo lớp học.",
   });
 
   const errors = form.formState.errors;

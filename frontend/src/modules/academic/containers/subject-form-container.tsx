@@ -61,6 +61,8 @@ export function SubjectFormContainer({ subject }: { subject?: Subject }) {
       router.push(LIST_HREF);
       router.refresh();
     },
+    successMessage:
+      subject === undefined ? "Đã tạo môn học." : "Đã lưu thay đổi môn học.",
   });
 
   const errors = form.formState.errors;

@@ -1,6 +1,6 @@
 # Quản lý giáo viên
 
-Last Verified: 2026-08-28
+Last Verified: 2026-09-01
 
 ## Tổng quan
 
@@ -55,6 +55,11 @@ Danh sách nhận thêm `q` để tìm theo họ tên, số điện thoại, ema
 - Đổi mật khẩu trả `204`; mật khẩu mới dùng được, mật khẩu cũ thì không.
 - Danh sách chọn trả về mảng chỉ gồm `id` và `label`.
 
+Trên trình duyệt:
+
+- Mỗi thao tác thành công hiện một thông báo nổi ở góc dưới bên phải rồi tự đóng sau vài giây: `Đã tạo giáo viên và tài khoản đăng nhập.`, `Đã lưu thay đổi hồ sơ giáo viên.`, `Đã khóa tài khoản của <tên>.`, `Đã mở lại tài khoản của <tên>.`, `Đã đổi mật khẩu cho <tên>.` Thông báo vẫn hiển thị sau khi màn hình quay về danh sách giáo viên.
+- Danh sách giáo viên tự hiển thị bản ghi vừa tạo hoặc vừa sửa khi màn hình quay lại, không cần tải lại trang.
+
 ## Lỗi và trường hợp ngoại lệ
 
 - Trùng tên đăng nhập trả `422` gắn vào `username`: `Có tài khoản đã dùng tên đăng nhập này, vui lòng chọn tên khác.`
@@ -64,6 +69,11 @@ Danh sách nhận thêm `q` để tìm theo họ tên, số điện thoại, ema
 - Không tìm thấy giáo viên trả `404`: `Không tìm thấy giáo viên.`
 - Không đủ quyền trả `403`; thiếu token trả `401`.
 - Tạo hồ sơ thất bại vì dữ liệu không hợp lệ thì không tạo tài khoản nào.
+
+Trên trình duyệt:
+
+- API từ chối lưu thì màn hình ở nguyên form với dữ liệu đã nhập, kèm một thông báo nổi `Chưa lưu được`. Phần mô tả của thông báo là thông điệp lỗi chung của API, hoặc `Vui lòng kiểm tra lại các trường được đánh dấu.` khi mọi lỗi đều đã gắn được vào từng trường.
+- Lỗi `422` gắn vào một trường vẫn hiện ngay dưới trường đó; lỗi không thuộc trường nào vẫn hiện trong vùng thông báo `aria-live` ở đầu form.
 
 ## Quan hệ với chức năng khác
 

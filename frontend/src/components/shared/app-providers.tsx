@@ -4,6 +4,8 @@ import { useState, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
+import { ToastProvider } from "@/components/shared/toast-provider";
+
 /**
  * Creates the single browser QueryClient with defaults that keep freshly
  * rendered server data authoritative, so hydration does not trigger an
@@ -27,16 +29,18 @@ function createQueryClient() {
 }
 
 /**
- * Wraps server-rendered children with the client-side query cache and the
- * nuqs URL-state adapter, keeping those browser-only providers out of the root
- * layout so route segments stay Server Components.
+ * Wraps server-rendered children with the client-side query cache, the toast
+ * surface, and the nuqs URL-state adapter, keeping those browser-only providers
+ * out of the root layout so route segments stay Server Components.
  */
 export function AppProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(createQueryClient);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <NuqsAdapter>{children}</NuqsAdapter>
+      <NuqsAdapter>
+        <ToastProvider>{children}</ToastProvider>
+      </NuqsAdapter>
     </QueryClientProvider>
   );
 }

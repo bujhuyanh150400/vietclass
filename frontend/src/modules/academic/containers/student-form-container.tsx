@@ -141,6 +141,9 @@ export function StudentFormContainer({ student }: { student?: Student }) {
       router.push(LIST_HREF);
       router.refresh();
     },
+    successMessage: isEditing
+      ? "Đã lưu thay đổi hồ sơ học sinh."
+      : "Đã tạo học sinh và tài khoản đăng nhập.",
   });
 
   const errors = form.formState.errors;

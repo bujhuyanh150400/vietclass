@@ -55,6 +55,7 @@ export function ChangePasswordDialog({
       form.reset({ password: "" });
       onOpenChange(false);
     },
+    successMessage: `Đã đổi mật khẩu cho ${subjectName}.`,
   });
 
   const error = form.formState.errors.password?.message;

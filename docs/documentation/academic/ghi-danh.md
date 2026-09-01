@@ -1,6 +1,6 @@
 # Ghi danh vào lớp
 
-Last Verified: 2026-08-28
+Last Verified: 2026-09-01
 
 ## Tổng quan
 
@@ -75,6 +75,11 @@ Danh sách lớp nhận thêm `active_only=1` để chỉ lấy bản ghi đang 
 - Thêm học sinh trả `201` cùng mảng các bản ghi vừa tạo.
 - Chuyển lớp trả `201` cùng bản ghi mới ở lớp đích.
 - Sửa và cho nghỉ trả `200` cùng bản ghi sau khi cập nhật.
+
+Trên trình duyệt:
+
+- Mỗi thao tác thành công hiện một thông báo nổi ở góc dưới bên phải rồi tự đóng sau vài giây: `Đã thêm <n> học sinh vào lớp.`, `Đã lưu thông tin ghi danh.`, `Đã chuyển <tên> sang lớp mới.`, `Đã cho <tên> nghỉ lớp.`
+- Danh sách lớp và sĩ số của lớp cập nhật ngay sau thao tác, không cần tải lại trang.
 
 ## Lỗi và trường hợp ngoại lệ
 

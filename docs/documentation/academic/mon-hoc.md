@@ -1,6 +1,6 @@
 # Quản lý môn học
 
-Last Verified: 2026-08-28
+Last Verified: 2026-09-01
 
 ## Tổng quan
 
@@ -47,6 +47,11 @@ Danh sách nhận thêm `q` để tìm theo tên, `is_active` để lọc theo t
 - Khóa, mở và sửa trả `200` cùng bản ghi sau khi cập nhật.
 - Xóa thành công trả `204` và không còn bản ghi.
 - Danh sách chọn trả về mảng chỉ gồm `id` và `label`.
+
+Trên trình duyệt:
+
+- Mỗi thao tác thành công hiện một thông báo nổi ở góc dưới bên phải rồi tự đóng sau vài giây: `Đã tạo môn học.`, `Đã lưu thay đổi môn học.`, `Đã khóa môn học "<tên>".`, `Đã mở lại môn học "<tên>".`, `Đã xóa môn học "<tên>".`
+- Danh sách môn học tự hiển thị bản ghi vừa tạo hoặc vừa sửa khi màn hình quay lại, không cần tải lại trang.
 
 ## Lỗi và trường hợp ngoại lệ
 

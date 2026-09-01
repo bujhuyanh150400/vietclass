@@ -18,6 +18,7 @@
   --vc-paper: #fdf5e8;
   --vc-wood: #78310a;
   --vc-ember: #d62b0c;
+  --vc-leaf: #2e7d55;
 
   /* Login-surface roles, named separately from --vc-paper so the paper
      column can be retargeted without touching every consumer. */
@@ -46,6 +47,8 @@
   --accent-foreground: oklch(0.21 0.006 285.885);
   --destructive: var(--vc-ember);
   --destructive-foreground: #fffdf7;
+  --success: var(--vc-leaf);
+  --success-foreground: #fffdf7;
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
   --ring: var(--vc-orange-deep);

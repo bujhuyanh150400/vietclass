@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
 import { ClassesView } from "../components/classes-view";
@@ -19,6 +20,7 @@ import type { SchoolClass } from "../types/academic";
 export function ClassesContainer() {
   const list = useClassList();
   const changeStatus = useChangeClassStatus();
+  const showToast = useToast();
 
   const [target, setTarget] = useState<SchoolClass | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -32,9 +34,18 @@ export function ClassesContainer() {
     setActionError(null);
 
     try {
+      const wasRunning = target.status === 0;
+
       await changeStatus.mutateAsync({
         id: target.id,
-        status: target.status === 0 ? 1 : 0,
+        status: wasRunning ? 1 : 0,
+      });
+
+      showToast({
+        variant: "success",
+        title: wasRunning
+          ? `Đã kết thúc lớp "${target.name}".`
+          : `Đã mở lại lớp "${target.name}".`,
       });
       setTarget(null);
     } catch (error) {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
 import { ConfirmActionDialog } from "../components/confirm-action-dialog";
@@ -28,6 +29,7 @@ export function RoomsContainer() {
   const list = useRoomList(status);
   const changeStatus = useChangeRoomStatus();
   const remove = useDeleteRoom();
+  const showToast = useToast();
 
   const [pending, setPending] = useState<PendingAction>({ kind: "none" });
   const [actionError, setActionError] = useState<string | null>(null);
@@ -64,6 +66,7 @@ export function RoomsContainer() {
         await changeStatus.mutateAsync({ id: pending.room.id, status: pending.status });
       }
 
+      showToast({ variant: "success", title: successMessage(pending) });
       close();
     } catch (error) {
       reportFailure(error);
@@ -101,6 +104,19 @@ export function RoomsContainer() {
       />
     </>
   );
+}
+
+/** States what the confirmed room action just did, for the toast that reports it. */
+function successMessage(pending: PendingAction): string {
+  if (pending.kind === "none") {
+    return "";
+  }
+
+  if (pending.kind === "delete") {
+    return `Đã xóa phòng học "${pending.room.name}".`;
+  }
+
+  return `Đã chuyển phòng học "${pending.room.name}" sang trạng thái ${ROOM_STATUS_LABELS[pending.status]}.`;
 }
 
 /**

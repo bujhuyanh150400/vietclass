@@ -115,6 +115,9 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
       router.push(LIST_HREF);
       router.refresh();
     },
+    successMessage: isEditing
+      ? "Đã lưu thay đổi hồ sơ giáo viên."
+      : "Đã tạo giáo viên và tài khoản đăng nhập.",
   });
 
   const errors = form.formState.errors;

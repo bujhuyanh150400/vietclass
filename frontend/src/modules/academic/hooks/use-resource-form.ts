@@ -10,7 +10,11 @@ import {
   type UseFormReturn,
 } from "react-hook-form";
 
+import { useToast } from "@/components/shared/toast-provider";
 import { mapApiErrorToForm } from "@/lib/utils";
+
+/** What the error toast says when every refusal landed on a field. */
+const FIELD_REFUSAL_MESSAGE = "Vui lòng kiểm tra lại các trường được đánh dấu.";
 
 /** What a form screen renders and submits. */
 export type ResourceFormViewModel<TInput extends FieldValues, TOutput extends FieldValues> = {
@@ -28,6 +32,12 @@ export type ResourceFormViewModel<TInput extends FieldValues, TOutput extends Fi
  * class code lands on the input that caused it rather than in a banner. Anything
  * the API reports about state instead of shape — a locked subject, a full class —
  * has no field to attach to and is shown as one form-level message.
+ *
+ * A form that passes `successMessage` also announces both outcomes as a toast.
+ * A create screen redirects the moment it succeeds, so the only evidence the save
+ * happened would otherwise be a list that looks slightly different; and its
+ * form-level message sits above fields the submit button may have scrolled well
+ * past. The toast outlives the redirect and does not depend on scroll position.
  */
 export function useResourceForm<TInput extends FieldValues, TOutput extends FieldValues>({
   resolver,
@@ -35,14 +45,17 @@ export function useResourceForm<TInput extends FieldValues, TOutput extends Fiel
   fieldNames,
   submit,
   onSuccess,
+  successMessage,
 }: {
   resolver: Resolver<TInput, unknown, TOutput>;
   defaultValues: DefaultValues<TInput>;
   fieldNames: readonly Path<TInput>[];
   submit: (values: TOutput) => Promise<unknown>;
   onSuccess: () => void;
+  successMessage?: string;
 }): ResourceFormViewModel<TInput, TOutput> {
   const [formError, setFormError] = useState<string | null>(null);
+  const showToast = useToast();
 
   const form = useForm<TInput, unknown, TOutput>({ resolver, defaultValues });
 
@@ -52,6 +65,11 @@ export function useResourceForm<TInput extends FieldValues, TOutput extends Fiel
 
     try {
       await submit(values);
+
+      if (successMessage !== undefined) {
+        showToast({ variant: "success", title: successMessage });
+      }
+
       onSuccess();
     } catch (error) {
       const mapped = mapApiErrorToForm(error, fieldNames as readonly string[]);
@@ -65,6 +83,14 @@ export function useResourceForm<TInput extends FieldValues, TOutput extends Fiel
       }
 
       setFormError(mapped.formError);
+
+      if (successMessage !== undefined) {
+        showToast({
+          variant: "error",
+          title: "Chưa lưu được",
+          description: mapped.formError ?? FIELD_REFUSAL_MESSAGE,
+        });
+      }
     }
   }
 

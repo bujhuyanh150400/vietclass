@@ -1,6 +1,6 @@
 # Quản lý lớp học
 
-Last Verified: 2026-08-28
+Last Verified: 2026-09-01
 
 ## Tổng quan
 
@@ -53,6 +53,11 @@ Danh sách nhận thêm `q` để tìm theo mã hoặc tên lớp; `status[]`, `
 - Sửa và đổi trạng thái trả `200` cùng bản ghi sau khi cập nhật.
 - Kết thúc lớp trả về `active_students_count` bằng `0` vì mọi bản ghi ghi danh đã bị đóng.
 - Danh sách chọn chỉ trả các lớp đang hoạt động, nhãn dạng `Tên lớp (MÃ)`.
+
+Trên trình duyệt:
+
+- Mỗi thao tác thành công hiện một thông báo nổi ở góc dưới bên phải rồi tự đóng sau vài giây: `Đã tạo lớp học.`, `Đã lưu thay đổi lớp học.`, `Đã kết thúc lớp "<tên>".`, `Đã mở lại lớp "<tên>".`
+- Danh sách lớp học tự hiển thị bản ghi vừa tạo hoặc vừa sửa khi màn hình quay lại, không cần tải lại trang.
 
 ## Lỗi và trường hợp ngoại lệ
 

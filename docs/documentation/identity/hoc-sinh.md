@@ -1,6 +1,6 @@
 # Quản lý học sinh
 
-Last Verified: 2026-08-28
+Last Verified: 2026-09-01
 
 ## Tổng quan
 
@@ -55,6 +55,11 @@ Danh sách nhận thêm `q` để tìm theo họ tên học sinh, số điện t
 - Tạo thành công trả `201` với trạng thái Đang học; học sinh đăng nhập được ngay.
 - Sửa hồ sơ, khóa và mở tài khoản trả `200` cùng bản ghi sau khi cập nhật.
 - Đổi mật khẩu trả `204`.
+
+Trên trình duyệt:
+
+- Mỗi thao tác thành công hiện một thông báo nổi ở góc dưới bên phải rồi tự đóng sau vài giây: `Đã tạo học sinh và tài khoản đăng nhập.`, `Đã lưu thay đổi hồ sơ học sinh.`, `Đã khóa tài khoản của <tên>.`, `Đã mở lại tài khoản của <tên>.`, `Đã đổi mật khẩu cho <tên>.`
+- Danh sách học sinh tự hiển thị bản ghi vừa tạo hoặc vừa sửa khi màn hình quay lại, không cần tải lại trang.
 
 ## Lỗi và trường hợp ngoại lệ
 
