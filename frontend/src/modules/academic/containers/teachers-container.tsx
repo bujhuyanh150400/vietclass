@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 
+import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
 import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
 import { ChangePasswordDialog } from "../components/change-password-dialog";
-import { ConfirmActionDialog } from "../components/confirm-action-dialog";
 import { TeachersView } from "../components/teachers-view";
 import {
   useChangeTeacherPassword,

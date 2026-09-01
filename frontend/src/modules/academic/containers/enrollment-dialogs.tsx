@@ -3,6 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller } from "react-hook-form";
 
+import { AsyncSelectField } from "@/components/shared/async-select-field";
+import { DateField } from "@/components/shared/date-field";
+import { Field, fieldAria } from "@/components/shared/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,12 +17,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useResourceForm } from "@/hooks/use-resource-form";
 
-import { AsyncSelectField } from "../components/async-select-field";
-import { DateField } from "../components/date-field";
-import { Field, fieldAria } from "../components/field";
 import { useClassOptions } from "../hooks/use-classes";
-import { useResourceForm } from "../hooks/use-resource-form";
 import {
   emptyToNull,
   enrollmentUpdateSchema,

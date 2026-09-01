@@ -4,12 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 
 import { PageHeader } from "@/components/shared/data-table";
+import { Field, fieldAria } from "@/components/shared/field";
+import { FormShell } from "@/components/shared/form-shell";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useResourceForm } from "@/hooks/use-resource-form";
 
-import { Field, fieldAria } from "../components/field";
-import { FormShell } from "../components/form-shell";
-import { useResourceForm } from "../hooks/use-resource-form";
 import { useCreateSubject, useUpdateSubject } from "../hooks/use-subjects";
 import {
   emptyToNull,

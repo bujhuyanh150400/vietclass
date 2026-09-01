@@ -4,16 +4,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Controller } from "react-hook-form";
 
+import { AsyncSelectField } from "@/components/shared/async-select-field";
 import { PageHeader } from "@/components/shared/data-table";
+import { DateField } from "@/components/shared/date-field";
+import { Field, fieldAria } from "@/components/shared/field";
+import { FormShell } from "@/components/shared/form-shell";
+import { SelectField } from "@/components/shared/select-field";
 import { Input } from "@/components/ui/input";
+import { useResourceForm } from "@/hooks/use-resource-form";
 
-import { AsyncSelectField } from "../components/async-select-field";
-import { DateField } from "../components/date-field";
-import { Field, fieldAria } from "../components/field";
-import { FormShell } from "../components/form-shell";
-import { SelectField } from "../components/select-field";
 import { useCreateClass, useUpdateClass } from "../hooks/use-classes";
-import { useResourceForm } from "../hooks/use-resource-form";
 import { useSubjectOptions } from "../hooks/use-subjects";
 import { useTeacherOptions } from "../hooks/use-teachers";
 import {

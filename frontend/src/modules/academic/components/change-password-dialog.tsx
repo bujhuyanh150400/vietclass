@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { Field, fieldAria } from "@/components/shared/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,14 +14,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useResourceForm } from "@/hooks/use-resource-form";
 
-import { useResourceForm } from "../hooks/use-resource-form";
 import {
   passwordFormSchema,
   type PasswordFormInput,
   type PasswordFormValues,
 } from "../schemas/academic-form-schema";
-import { Field, fieldAria } from "./field";
 
 /** Fields the API may report validation messages for. */
 const FIELDS = ["password"] as const;

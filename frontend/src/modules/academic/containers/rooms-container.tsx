@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 
+import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
 import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
-import { ConfirmActionDialog } from "../components/confirm-action-dialog";
 import { RoomsView } from "../components/rooms-view";
 import { useChangeRoomStatus, useDeleteRoom, useRoomList } from "../hooks/use-rooms";
 import type { Room, RoomStatus } from "../types/academic";

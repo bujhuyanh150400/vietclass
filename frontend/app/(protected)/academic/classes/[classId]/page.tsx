@@ -2,13 +2,19 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { ClassDetailContainer } from "@/modules/academic";
+import { ClassScheduleContainer } from "@/modules/schedule";
 
 export const metadata: Metadata = {
   title: "Chi tiết lớp học",
 };
 
 /**
- * Renders one class with its roster.
+ * Renders one class with its roster and its fixed weekly schedules.
+ *
+ * The schedule section is a second module's container rather than part of the
+ * academic one: a fixed schedule belongs to the Schedule module and has no list
+ * screen of its own, so the class it belongs to is the only way in. Each container
+ * loads its own data, so neither waits on the other.
  *
  * A path segment that is not a number never reaches the API: it cannot identify a
  * record, so it is a wrong URL rather than a missing class.
@@ -23,5 +29,10 @@ export default async function ClassDetailPage({
     notFound();
   }
 
-  return <ClassDetailContainer classId={id} />;
+  return (
+    <div className="grid gap-8">
+      <ClassDetailContainer classId={id} />
+      <ClassScheduleContainer classId={id} />
+    </div>
+  );
 }

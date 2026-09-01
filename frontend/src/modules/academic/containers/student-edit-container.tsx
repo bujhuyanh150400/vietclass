@@ -1,6 +1,7 @@
 "use client";
 
-import { ResourceLoader } from "../components/resource-loader";
+import { ResourceLoader } from "@/components/shared/resource-loader";
+
 import { useStudent } from "../hooks/use-students";
 import { StudentFormContainer } from "./student-form-container";
 

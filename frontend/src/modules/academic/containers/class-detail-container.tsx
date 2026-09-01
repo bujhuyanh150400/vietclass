@@ -3,9 +3,9 @@
 import { useState } from "react";
 
 import { BackLink } from "@/components/shared/back-link";
+import { ResourceLoader } from "@/components/shared/resource-loader";
 
 import { ClassSummary } from "../components/class-summary";
-import { ResourceLoader } from "../components/resource-loader";
 import { RosterView } from "../components/roster-view";
 import { useClass } from "../hooks/use-classes";
 import {

@@ -8,6 +8,8 @@ export type {
 export { loginSchema } from "./schemas/login-schema";
 export type { LoginFormInput, LoginFormValues } from "./schemas/login-schema";
 
+export { useCurrentUser } from "./hooks/use-current-user";
+
 export { getRoleLabel } from "./utils/get-role-label";
 export { DEFAULT_RETURN_TO, sanitizeReturnTo } from "./utils/sanitize-return-to";
 

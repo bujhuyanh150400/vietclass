@@ -25,7 +25,7 @@ export type ResourceFormViewModel<TInput extends FieldValues, TOutput extends Fi
 };
 
 /**
- * Owns the state every academic create and edit screen shares: validation, one
+ * Owns the state every create and edit screen shares: validation, one
  * submission, and what to do with the answer.
  *
  * A `422` is split back onto the fields it names, so a duplicate subject name or

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 /**
- * Renders the frame every academic create and edit screen shares: the fields, a
+ * Renders the frame every create and edit screen shares: the fields, a
  * form-level message when the API refuses for a reason no single field owns, and
  * the submit and cancel controls.
  *

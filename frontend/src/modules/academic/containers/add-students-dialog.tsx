@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { DateField } from "@/components/shared/date-field";
+import { Field } from "@/components/shared/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,8 +21,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
-import { DateField } from "../components/date-field";
-import { Field } from "../components/field";
 import { useAvailableStudents, useEnrolStudents } from "../hooks/use-enrollments";
 import { GRADE_LEVEL_LABELS } from "../utils/labels";
 
