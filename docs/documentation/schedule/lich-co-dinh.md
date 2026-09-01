@@ -1,7 +1,7 @@
 # Lịch cố định theo lớp
 
 Last Verified: 2026-09-01
-Related Task: `.tasks/schedule-phase-2-templates.md`, `.tasks/schedule-phase-3-projection.md`
+Related Task: `.tasks/schedule-phase-2-templates.md`, `.tasks/schedule-phase-2-frontend.md`, `.tasks/schedule-phase-3-projection.md`
 
 ## Tổng quan
 
@@ -9,12 +9,16 @@ Lịch cố định là khai báo "lớp này học vào thứ mấy, từ giờ
 
 Đây là nền cho [buổi học theo ngày](buoi-hoc.md): hệ thống không sinh sẵn buổi học nào, mà suy ra từng buổi từ lịch cố định khi có người đọc lịch theo khoảng ngày.
 
-Chức năng hiện chỉ có API quản trị dưới tiền tố `/api/v1`, chưa có màn hình quản trị.
+Chức năng có màn quản trị nằm ngay trong **trang chi tiết lớp học** tại `/academic/classes/{id}`, ở mục **Lịch cố định** dưới danh sách học sinh, và API quản trị dưới tiền tố `/api/v1`.
+
+Lịch cố định **không có mục riêng trên thanh bên**: một lịch cố định chỉ có nghĩa cùng với lớp của nó, hệ thống không có màn danh sách lịch cố định toàn hệ thống, nên đường vào duy nhất là **Lớp học** → chọn một lớp.
 
 ## Người dùng và điều kiện
 
 - Quản trị viên xem, tạo, sửa, đổi giáo viên, đóng và xóa lịch cố định.
 - Giáo viên chỉ xem được danh sách lịch cố định của một lớp, và **chỉ thấy những lịch có tên mình**, bất kể mình là giáo viên chính hay trợ giảng. Mọi endpoint ghi trả `403` với giáo viên.
+- Trên màn hình, giáo viên **không thấy** bất kỳ control ghi nào: không có nút **Thêm lịch cố định** và không có cột **Thao tác** trên bảng. Màn hình đọc vai trò của người đang đăng nhập rồi mới hiện control, nên giáo viên không bị dẫn vào một thao tác chắc chắn bị từ chối.
+- Màn hình ẩn control theo **vai trò**, còn API vẫn là nơi cưỡng chế quyền. Một giáo viên được cấp thêm quyền ghi riêng cho tài khoản mình thì API cho phép, nhưng màn hình vẫn ẩn control — phần ghi khi đó phải gọi trực tiếp qua API.
 - Tài khoản giáo viên chưa có hồ sơ thì danh sách trả về rỗng, không trả toàn bộ lớp.
 - Cần bearer token hợp lệ; thiếu token trả `401`.
 
@@ -79,6 +83,16 @@ Giáo viên của một lịch cố định được **khai tường minh**, kh�
 
 ## Hướng dẫn thao tác
 
+Vào **Lớp học** ở nhóm Học vụ trên thanh bên, chọn một lớp, rồi cuộn tới mục **Lịch cố định**. Bảng ở đó xếp các buổi theo thứ rồi giờ và **giữ cả những bản đã kết thúc** — ghi chú thường trực phía trên bảng giải thích vì sao, để dòng lịch sử không bị đọc thành dữ liệu thừa.
+
+1. Chọn **Thêm lịch cố định** để khai một buổi hằng tuần: thứ, giờ bắt đầu và kết thúc, phòng học, ngày bắt đầu áp dụng, ngày kết thúc nếu có, một giáo viên chính và các trợ giảng. Danh sách phòng chỉ hiện phòng **Hoạt động**, danh sách giáo viên chỉ hiện giáo viên **Đang làm việc**.
+2. Bộ chọn giáo viên cưỡng chế luật bằng chính hình dạng control: giáo viên chính là chọn một, trợ giảng là chọn nhiều, và người đã làm giáo viên chính không còn xuất hiện trong danh sách trợ giảng.
+3. Chọn **Sửa lịch (ra bản mới)** trong menu của một dòng để đổi thứ, giờ, phòng hoặc giáo viên. Hộp thoại nói rõ trước khi lưu rằng bản đang chạy sẽ **được đóng** vào ngày liền trước ngày hiệu lực và một **bản mới** mở ra từ ngày hiệu lực; nhãn hành động cũng vậy, để không ai tưởng đây là sửa tại chỗ.
+4. Chọn **Đổi giáo viên** khi chỉ muốn thay người dạy. Thao tác này **không** ra bản mới: thứ, giờ, phòng và khoảng hiệu lực giữ nguyên, còn danh sách bên dưới thay thế toàn bộ danh sách hiện tại.
+5. Chọn **Đóng lịch** rồi chọn ngày áp dụng cuối cùng khi lớp thôi học buổi đó mà không thay bằng buổi khác. Dòng lịch vẫn ở lại bảng như lịch sử.
+6. Chọn **Xóa** cho một lịch chưa tới ngày áp dụng, xác nhận, rồi đọc lý do ngay trong hộp thoại nếu hệ thống từ chối.
+7. Dòng lịch **đã kết thúc** không có menu thao tác: nó mô tả những tuần đã dạy, và API từ chối viết lại chúng.
+
 Mọi endpoint cần header `Authorization: Bearer <token>`.
 
 | Thao tác | Yêu cầu |
@@ -105,6 +119,13 @@ Mọi endpoint cần header `Authorization: Bearer <token>`.
 - Sửa trả `200` cùng **bản mới**, không phải bản bị thay thế.
 - Đổi giáo viên và đóng lịch trả `200` cùng lịch sau cập nhật.
 - Xóa thành công trả `204`.
+
+Trên trình duyệt:
+
+- Mỗi dòng của bảng hiện thứ, khung giờ, phòng, giáo viên chính, danh sách trợ giảng, khoảng hiệu lực và một trạng thái suy ra từ ngày: `Chưa áp dụng`, `Đang áp dụng` hoặc `Đã kết thúc`.
+- Thao tác thành công đóng hộp thoại và bảng tự làm mới ngay tại trang, không cần tải lại. Màn hình này **không** hiện thông báo nổi như các màn Học vụ; bằng chứng của thao tác là chính dòng lịch vừa đổi.
+- Sau một lần **Sửa lịch (ra bản mới)**, bảng có **thêm một dòng**: bản cũ đóng lại với ngày kết thúc là ngày liền trước ngày hiệu lực, và bản mới nằm ngay dưới. Không dòng nào biến mất.
+- Lỗi trùng phòng hoặc trùng giáo viên hiện **nguyên văn message của server** ngay trong hộp thoại, kèm mã lớp đang chiếm chỗ, còn hộp thoại vẫn mở để sửa lại giờ hoặc phòng.
 
 ## Lỗi và trường hợp ngoại lệ
 
@@ -159,7 +180,8 @@ Không đủ quyền trả `403`; thiếu token trả `401`.
 
 ## Giới hạn hiện tại
 
-- Chưa có màn hình quản trị cho lịch cố định.
+- Màn hình chỉ vào được qua trang chi tiết lớp; không có màn danh sách lịch cố định toàn hệ thống, cũng chưa có màn xem lịch theo tuần.
+- Màn hình ẩn control ghi theo **vai trò**, chưa theo quyền thực tế của từng tài khoản, nên một tài khoản được cấp quyền ghi riêng vẫn không thấy control.
 - Không sửa được lịch tại chỗ theo thiết kế. Một lần sửa luôn để lại thêm một dòng lịch sử.
 - Ra bản mới **chưa dọn** các buổi đã ghi của bản cũ từ ngày hiệu lực trở đi, nên một buổi đã ghi có thể mô tả thứ, giờ hoặc phòng mà lịch cố định không còn khai nữa.
 - Lớp kết thúc chưa tự động đóng các lịch cố định đang mở.
@@ -169,4 +191,7 @@ Không đủ quyền trả `403`; thiếu token trả `401`.
 
 - Route: `api/app/Modules/Schedule/Routes/api.php`
 - Kiểm thử xác định: `api/tests/Behavioral/ScheduleTemplateTest.php`, `api/tests/Behavioral/ScheduleConflictTest.php`
+- Màn hình: `frontend/src/modules/schedule/`, nối vào `frontend/app/(protected)/academic/classes/[classId]/page.tsx`
+- Cửa BFF của màn hình: `frontend/app/api/schedule/[...path]/route.ts`
+- Ẩn control theo vai trò: `frontend/src/hooks/use-write-access.ts`
 - Schema: `.docs/database.md`, mục **Schedule**
