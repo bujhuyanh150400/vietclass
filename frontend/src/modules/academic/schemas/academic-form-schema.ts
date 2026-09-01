@@ -40,6 +40,15 @@ const username = z
   .min(1, { error: "Vui lòng nhập tên đăng nhập." })
   .max(50, { error: "Tên đăng nhập không được vượt quá 50 ký tự." });
 
+/* An edit screen renders no credential input, but the shared form still holds the
+   empty strings its default values put there. `.optional()` alone would reject
+   those — it admits `undefined`, not `""` — and the refusal would land on a field
+   that screen never draws, so the form would refuse to submit and say nothing.
+   The empty string is accepted here the same way `optionalPhone` accepts it. */
+const optionalPassword = password.optional().or(z.literal(""));
+
+const optionalUsername = username.optional().or(z.literal(""));
+
 /** Creating or editing a subject. */
 export const subjectFormSchema = z.object({
   name: z
@@ -111,8 +120,8 @@ export const teacherCreateSchema = z.object({
  */
 export const teacherEditSchema = z.object({
   ...teacherProfileShape,
-  username: username.optional(),
-  password: password.optional(),
+  username: optionalUsername,
+  password: optionalPassword,
 });
 
 export type TeacherFormInput = z.input<typeof teacherEditSchema>;
@@ -150,8 +159,8 @@ export const studentCreateSchema = z.object({
 /** Editing a student, where the credentials are optional for the same reason. */
 export const studentEditSchema = z.object({
   ...studentProfileShape,
-  username: username.optional(),
-  password: password.optional(),
+  username: optionalUsername,
+  password: optionalPassword,
 });
 
 export type StudentFormInput = z.input<typeof studentEditSchema>;
