@@ -22,10 +22,17 @@ enum ScheduleError: string implements ErrorDeclarationEnum
     /** No fixed schedule exists for the requested identifier. */
     case ScheduleTemplateNotFound = 'SCHEDULE-001';
 
-    /** Another fixed schedule already holds the room at an overlapping time. */
+    /**
+     * The room is already held at an overlapping time — by another fixed schedule, by a
+     * written session, or by a session a fixed schedule projects onto that date. One code
+     * covers all three: the caller has to move the room whichever of them is in the way.
+     */
     case RoomConflict = 'SCHEDULE-002';
 
-    /** One of the teachers already has a fixed schedule at an overlapping time. */
+    /**
+     * One of the teachers is already teaching at an overlapping time, on a fixed
+     * schedule, a written session, or a projected one. Role plays no part.
+     */
     case TeacherConflict = 'SCHEDULE-003';
 
     /** The submitted teacher list names nobody as the main teacher. */
@@ -52,17 +59,42 @@ enum ScheduleError: string implements ErrorDeclarationEnum
     /** The closing date falls before the date the schedule started applying. */
     case CloseDateBeforeStartDate = 'SCHEDULE-011';
 
+    /** Written sessions still point at the fixed schedule, so it cannot be removed. */
+    case ScheduleTemplateHasSessions = 'SCHEDULE-012';
+
+    /** The requested calendar range is wider than one read is allowed to cover. */
+    case DateRangeTooWide = 'SCHEDULE-013';
+
+    /** No written session exists for the requested identifier. */
+    case SessionNotFound = 'SCHEDULE-014';
+
+    /**
+     * No fixed schedule projects a session onto that date, so there is nothing to
+     * materialise. This is what stops a lesson being invented on a date the class does
+     * not have.
+     */
+    case VirtualSessionNotProjected = 'SCHEDULE-015';
+
+    /**
+     * A session produced by a fixed schedule must say which class it belongs to. The
+     * rule was a CHECK constraint in an earlier draft of the schema and now lives in the
+     * Actions, so it needs a declaration of its own.
+     */
+    case SessionClassRequired = 'SCHEDULE-016';
+
     /**
      * Return the HTTP status this business failure reaches the API boundary with.
      */
     public function httpStatus(): int
     {
         return match ($this) {
-            self::ScheduleTemplateNotFound => 404,
+            self::ScheduleTemplateNotFound,
+            self::SessionNotFound => 404,
 
             self::RoomConflict,
             self::TeacherConflict,
-            self::ScheduleTemplateAlreadyStarted => 409,
+            self::ScheduleTemplateAlreadyStarted,
+            self::ScheduleTemplateHasSessions => 409,
 
             self::MainTeacherRequired,
             self::MultipleMainTeachers,
@@ -70,7 +102,10 @@ enum ScheduleError: string implements ErrorDeclarationEnum
             self::StartDateBeforeClassStart,
             self::EndDateAfterClassEnd,
             self::RevisionEffectiveDateInPast,
-            self::CloseDateBeforeStartDate => 422,
+            self::CloseDateBeforeStartDate,
+            self::DateRangeTooWide,
+            self::VirtualSessionNotProjected,
+            self::SessionClassRequired => 422,
         };
     }
 }

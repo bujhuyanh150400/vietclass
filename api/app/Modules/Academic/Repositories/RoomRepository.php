@@ -110,14 +110,18 @@ class RoomRepository extends BaseRepository
      * without the other. A room deletion is refused by counting rows, and a row count
      * needs no model.
      *
-     * Only fixed schedules exist to count today. When written sessions arrive they
-     * reference a room directly as well, and their count has to be added here — a room
-     * still holding a session is as much in use as one holding a weekly slot.
+     * Both kinds of schedule record count: a weekly slot booked into the room, and a
+     * written session held in it. A room still holding one session is as much in use as
+     * one holding a weekly slot, and a projected session needs no counting of its own
+     * because the fixed schedule it comes from is already counted.
      */
     public function countScheduleReferences(Room $room): int
     {
         return DB::table('schedule_templates')
             ->where('room_id', $room->id)
-            ->count();
+            ->count()
+            + DB::table('schedule_instances')
+                ->where('room_id', $room->id)
+                ->count();
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Schedule\Enums\ScheduleFeature;
+use App\Modules\Schedule\Http\Controllers\ScheduleSessionController;
 use App\Modules\Schedule\Http\Controllers\ScheduleTemplateController;
 use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Support\Facades\Route;
@@ -43,5 +44,26 @@ Route::middleware('auth:sanctum')->group(function (): void {
             ->whereNumber('template')
             ->middleware(Authorize::using(ScheduleFeature::TemplateDelete))
             ->name('destroy');
+    });
+
+    // A session is addressed on its own rather than through its class: the calendar read
+    // spans classes, and a session may belong to none once make-up and extra lessons
+    // arrive.
+    Route::prefix('schedule-sessions')->name('schedule-sessions.')->group(function (): void {
+        Route::get('/', [ScheduleSessionController::class, 'index'])
+            ->middleware(Authorize::using(ScheduleFeature::SessionList))
+            ->name('index');
+
+        // Declared before the identifier route on purpose. A projected session has no
+        // identifier, so materialising it cannot be addressed as one, and this literal
+        // path would otherwise be read as an identifier by whichever route matched first.
+        Route::post('resolve', [ScheduleSessionController::class, 'resolve'])
+            ->middleware(Authorize::using(ScheduleFeature::SessionManage))
+            ->name('resolve');
+
+        Route::get('{instance}', [ScheduleSessionController::class, 'show'])
+            ->whereNumber('instance')
+            ->middleware(Authorize::using(ScheduleFeature::SessionView))
+            ->name('show');
     });
 });

@@ -1,16 +1,25 @@
 <?php
 
+use App\Core\Exceptions\ActionError;
 use App\Modules\Academic\Models\Room;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\TeacherProfile;
 use App\Modules\Identity\Models\User;
+use App\Modules\Schedule\Actions\CloseScheduleTemplateAction;
 use App\Modules\Schedule\Actions\CreateScheduleTemplateAction;
+use App\Modules\Schedule\Actions\ResolveScheduleSessionAction;
 use App\Modules\Schedule\Actions\ReviseScheduleTemplateAction;
 use App\Modules\Schedule\Actions\SetScheduleTemplateTeachersAction;
 use App\Modules\Schedule\Enums\DayOfWeek;
 use App\Modules\Schedule\Enums\ScheduleError;
+use App\Modules\Schedule\Enums\ScheduleStatus;
 use App\Modules\Schedule\Enums\ScheduleTeacherRole;
+use App\Modules\Schedule\Models\ScheduleInstance;
+use App\Modules\Schedule\Models\ScheduleInstanceTeacher;
+use App\Modules\Schedule\Models\ScheduleTemplate;
+use App\Modules\Schedule\Support\ScheduleConflictChecker;
+use Illuminate\Support\Carbon;
 
 beforeEach(function (): void {
     $this->admin = User::factory()->create(['role' => UserRole::Admin]);
@@ -203,6 +212,357 @@ test('moving a teacher into a slot they already occupy elsewhere is refused', fu
         'schedule_template_id' => $second->id,
         'teacher_profile_id' => $free->profile_id,
     ]);
+});
+
+/**
+ * Run something that may refuse a slot and hand back the refusal, or null when the slot
+ * was accepted. The three comparisons added in this phase have no Action calling them
+ * yet — the write paths for sessions arrive in the next phase — so they are exercised
+ * through the checker itself.
+ */
+function refusalFrom(Closure $attempt): ?ActionError
+{
+    try {
+        $attempt();
+
+        return null;
+    } catch (ActionError $error) {
+        return $error;
+    }
+}
+
+/** The next Monday comfortably inside the windows the helpers above open. */
+function conflictMonday(): string
+{
+    return Carbon::today()->addWeek()->startOfWeek()->toDateString();
+}
+
+/**
+ * Write a session directly, with the given teachers attached, so a comparison has a real
+ * row to be held against without a session-writing Action existing yet.
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function writtenSession(array $overrides, TeacherProfile ...$teachers): ScheduleInstance
+{
+    $session = ScheduleInstance::factory()->create([
+        'date' => conflictMonday(),
+        'start_time' => '08:00:00',
+        'end_time' => '09:30:00',
+        ...$overrides,
+    ]);
+
+    foreach ($teachers as $index => $teacher) {
+        ScheduleInstanceTeacher::factory()->create([
+            'schedule_instance_id' => $session->id,
+            'teacher_profile_id' => $teacher->profile_id,
+            'role' => $index === 0 ? ScheduleTeacherRole::MainTeacher : ScheduleTeacherRole::Assistant,
+        ]);
+    }
+
+    return $session;
+}
+
+test('a written session blocks a weekly slot that would land on its room', function (): void {
+    [$class, $room, $main] = conflictContext();
+    $checker = app(ScheduleConflictChecker::class);
+
+    writtenSession(['class_id' => $class->id, 'room_id' => $room->id]);
+
+    $refusal = refusalFrom(fn () => $checker->assertTemplateSlotIsFreeOfWrittenSessions(
+        roomId: (int) $room->id,
+        dayOfWeek: DayOfWeek::Monday,
+        startTime: '09:00:00',
+        endTime: '10:30:00',
+        startDate: Carbon::today()->toDateString(),
+        endDate: null,
+        teacherProfileIds: [(int) $main->profile_id],
+    ));
+
+    expect($refusal?->code())->toBe(ScheduleError::RoomConflict)
+        ->and($refusal?->getMessage())->toContain('Phòng học đã có buổi học của lớp')
+        ->and($refusal?->getMessage())->toContain(Carbon::parse(conflictMonday())->format('d/m/Y'));
+});
+
+test('a weekly slot is only held against written sessions on its own weekday and inside its window', function (): void {
+    [$class, $room, $main] = conflictContext();
+    $checker = app(ScheduleConflictChecker::class);
+
+    // Same room and same time, but a Tuesday: the weekday predicate is what keeps a
+    // recurrence from being compared against every row in its window.
+    writtenSession([
+        'class_id' => $class->id,
+        'room_id' => $room->id,
+        'date' => Carbon::parse(conflictMonday())->addDay()->toDateString(),
+    ]);
+
+    // The right weekday, but after the slot stops applying.
+    writtenSession([
+        'class_id' => $class->id,
+        'room_id' => $room->id,
+        'date' => Carbon::parse(conflictMonday())->addWeeks(4)->toDateString(),
+    ]);
+
+    // The right weekday inside the window, but called off, so it holds nothing.
+    writtenSession([
+        'class_id' => $class->id,
+        'room_id' => $room->id,
+        'status' => ScheduleStatus::Cancelled,
+    ]);
+
+    $refusal = refusalFrom(fn () => $checker->assertTemplateSlotIsFreeOfWrittenSessions(
+        roomId: (int) $room->id,
+        dayOfWeek: DayOfWeek::Monday,
+        startTime: '08:00:00',
+        endTime: '09:30:00',
+        startDate: Carbon::today()->toDateString(),
+        endDate: Carbon::parse(conflictMonday())->addWeek()->toDateString(),
+        teacherProfileIds: [(int) $main->profile_id],
+    ));
+
+    expect($refusal)->toBeNull();
+});
+
+test('a weekly slot is refused when a written session in another room already has one of its people', function (): void {
+    [$class, $room, $shared] = conflictContext();
+    $otherRoom = Room::factory()->create();
+    $checker = app(ScheduleConflictChecker::class);
+
+    $session = writtenSession(
+        ['class_id' => $class->id, 'room_id' => $otherRoom->id],
+        TeacherProfile::factory()->create(),
+        $shared,
+    );
+
+    $refusal = refusalFrom(fn () => $checker->assertTemplateSlotIsFreeOfWrittenSessions(
+        roomId: (int) $room->id,
+        dayOfWeek: DayOfWeek::Monday,
+        startTime: '08:00:00',
+        endTime: '09:30:00',
+        startDate: Carbon::today()->toDateString(),
+        endDate: null,
+        teacherProfileIds: [(int) $shared->profile_id],
+    ));
+
+    // The shared person assists rather than leads, which changes nothing.
+    expect($refusal?->code())->toBe(ScheduleError::TeacherConflict)
+        ->and($session->teachers()->where('teacher_profile_id', $shared->profile_id)->value('role'))
+        ->toBe(ScheduleTeacherRole::Assistant);
+
+    $ownRows = refusalFrom(fn () => $checker->assertTemplateSlotIsFreeOfWrittenSessions(
+        roomId: (int) $room->id,
+        dayOfWeek: DayOfWeek::Monday,
+        startTime: '08:00:00',
+        endTime: '09:30:00',
+        startDate: Carbon::today()->toDateString(),
+        endDate: null,
+        teacherProfileIds: [(int) $shared->profile_id],
+        excludeTemplateId: (int) ScheduleTemplate::factory()->create([
+            'class_id' => $class->id,
+            'room_id' => $otherRoom->id,
+        ])->id,
+    ));
+
+    // Excluding a schedule the session does not belong to changes nothing either.
+    expect($ownRows?->code())->toBe(ScheduleError::TeacherConflict);
+});
+
+test('two written sessions cannot hold the same room or person at the same time', function (): void {
+    [$class, $room, $shared] = conflictContext();
+    $otherRoom = Room::factory()->create();
+    $checker = app(ScheduleConflictChecker::class);
+
+    $existing = writtenSession(['class_id' => $class->id, 'room_id' => $room->id], $shared);
+
+    $roomClash = refusalFrom(fn () => $checker->assertSessionSlotIsFreeOfWrittenSessions(
+        roomId: (int) $room->id,
+        date: conflictMonday(),
+        startTime: '09:00:00',
+        endTime: '10:30:00',
+        teacherProfileIds: [],
+    ));
+
+    $teacherClash = refusalFrom(fn () => $checker->assertSessionSlotIsFreeOfWrittenSessions(
+        roomId: (int) $otherRoom->id,
+        date: conflictMonday(),
+        startTime: '09:00:00',
+        endTime: '10:30:00',
+        teacherProfileIds: [(int) $shared->profile_id],
+    ));
+
+    $touching = refusalFrom(fn () => $checker->assertSessionSlotIsFreeOfWrittenSessions(
+        roomId: (int) $room->id,
+        date: conflictMonday(),
+        startTime: '09:30:00',
+        endTime: '11:00:00',
+        teacherProfileIds: [(int) $shared->profile_id],
+    ));
+
+    $itself = refusalFrom(fn () => $checker->assertSessionSlotIsFreeOfWrittenSessions(
+        roomId: (int) $room->id,
+        date: conflictMonday(),
+        startTime: '08:00:00',
+        endTime: '09:30:00',
+        teacherProfileIds: [(int) $shared->profile_id],
+        excludeInstanceId: (int) $existing->id,
+    ));
+
+    expect($roomClash?->code())->toBe(ScheduleError::RoomConflict)
+        ->and($teacherClash?->code())->toBe(ScheduleError::TeacherConflict)
+        ->and($touching)->toBeNull()
+        ->and($itself)->toBeNull();
+});
+
+test('a cancelled written session releases its room for another session', function (): void {
+    [$class, $room] = conflictContext();
+    $checker = app(ScheduleConflictChecker::class);
+
+    writtenSession([
+        'class_id' => $class->id,
+        'room_id' => $room->id,
+        'status' => ScheduleStatus::Cancelled,
+    ]);
+
+    $refusal = refusalFrom(fn () => $checker->assertSessionSlotIsFreeOfWrittenSessions(
+        roomId: (int) $room->id,
+        date: conflictMonday(),
+        startTime: '08:00:00',
+        endTime: '09:30:00',
+        teacherProfileIds: [],
+    ));
+
+    expect($refusal)->toBeNull();
+});
+
+test('a projected session holds its room and its people against a written session', function (): void {
+    [$class, $room, $main] = conflictContext();
+    $otherRoom = Room::factory()->create();
+    $actor = (int) $this->admin->id;
+    $checker = app(ScheduleConflictChecker::class);
+
+    app(CreateScheduleTemplateAction::class)->handle(
+        (int) $class->id,
+        conflictSlot($room),
+        conflictRoster($main),
+        $actor,
+    );
+
+    $roomClash = refusalFrom(fn () => $checker->assertSessionSlotIsFreeOfProjectedSessions(
+        roomId: (int) $room->id,
+        date: conflictMonday(),
+        startTime: '09:00:00',
+        endTime: '10:30:00',
+        teacherProfileIds: [],
+    ));
+
+    $teacherClash = refusalFrom(fn () => $checker->assertSessionSlotIsFreeOfProjectedSessions(
+        roomId: (int) $otherRoom->id,
+        date: conflictMonday(),
+        startTime: '09:00:00',
+        endTime: '10:30:00',
+        teacherProfileIds: [(int) $main->profile_id],
+    ));
+
+    $otherWeekday = refusalFrom(fn () => $checker->assertSessionSlotIsFreeOfProjectedSessions(
+        roomId: (int) $room->id,
+        date: Carbon::parse(conflictMonday())->addDay()->toDateString(),
+        startTime: '08:00:00',
+        endTime: '09:30:00',
+        teacherProfileIds: [(int) $main->profile_id],
+    ));
+
+    expect($roomClash?->code())->toBe(ScheduleError::RoomConflict)
+        ->and($roomClash?->getMessage())->toContain('lịch cố định của lớp')
+        ->and($teacherClash?->code())->toBe(ScheduleError::TeacherConflict)
+        ->and($otherWeekday)->toBeNull();
+});
+
+test('a date that already has a written session projects nothing to clash with', function (): void {
+    [$class, $room, $main] = conflictContext();
+    $actor = (int) $this->admin->id;
+    $checker = app(ScheduleConflictChecker::class);
+
+    $template = app(CreateScheduleTemplateAction::class)->handle(
+        (int) $class->id,
+        conflictSlot($room),
+        conflictRoster($main),
+        $actor,
+    )->getData();
+
+    // The written row replaces the projected session, so the projected one is gone and
+    // whatever the written row now says is the business of the written-against-written
+    // comparison. Without this exclusion a session would clash with its own twin.
+    writtenSession([
+        'class_id' => $class->id,
+        'template_id' => $template->id,
+        'room_id' => $room->id,
+    ]);
+
+    $refusal = refusalFrom(fn () => $checker->assertSessionSlotIsFreeOfProjectedSessions(
+        roomId: (int) $room->id,
+        date: conflictMonday(),
+        startTime: '08:00:00',
+        endTime: '09:30:00',
+        teacherProfileIds: [(int) $main->profile_id],
+    ));
+
+    expect($refusal)->toBeNull();
+});
+
+test('a fixed schedule projects nothing past the day its class ends', function (): void {
+    [$class, $room, $main] = conflictContext();
+    $actor = (int) $this->admin->id;
+    $checker = app(ScheduleConflictChecker::class);
+
+    app(CreateScheduleTemplateAction::class)->handle(
+        (int) $class->id,
+        conflictSlot($room),
+        conflictRoster($main),
+        $actor,
+    );
+
+    $class->update(['end_at' => Carbon::parse(conflictMonday())->subDay()->toDateString()]);
+
+    $refusal = refusalFrom(fn () => $checker->assertSessionSlotIsFreeOfProjectedSessions(
+        roomId: (int) $room->id,
+        date: conflictMonday(),
+        startTime: '08:00:00',
+        endTime: '09:30:00',
+        teacherProfileIds: [(int) $main->profile_id],
+    ));
+
+    expect($refusal)->toBeNull();
+});
+
+test('closing a fixed schedule does not release the room for the lessons already written under it', function (): void {
+    [$class, $room, $main] = conflictContext();
+    $actor = (int) $this->admin->id;
+    $monday = conflictMonday();
+
+    $template = app(CreateScheduleTemplateAction::class)
+        ->handle((int) $class->id, conflictSlot($room, ['day_of_week' => DayOfWeek::Monday->value]), conflictRoster($main), $actor)
+        ->getData();
+
+    app(ResolveScheduleSessionAction::class)->handle((int) $template->id, $monday, $actor);
+
+    // The schedule stops applying before the lesson it already produced, so from here on
+    // nothing but the written row knows that Monday is taken.
+    app(CloseScheduleTemplateAction::class)->handle((int) $template->id, Carbon::today()->toDateString(), $actor);
+
+    $result = app(CreateScheduleTemplateAction::class)->handle(
+        (int) SchoolClass::factory()->create(['start_at' => now()->subMonth()->toDateString()])->id,
+        conflictSlot($room, [
+            'day_of_week' => DayOfWeek::Monday->value,
+            'start_date' => Carbon::parse($monday)->toDateString(),
+        ]),
+        conflictRoster(TeacherProfile::factory()->create()),
+        $actor,
+    );
+
+    expect($result->getError())->toBe(ScheduleError::RoomConflict)
+        ->and($result->getMessage())->toContain('Phòng học đã có buổi học của lớp');
+
+    $this->assertDatabaseCount('schedule_templates', 1);
 });
 
 test('the room conflict reaches the caller as a 409 through the endpoint', function (): void {

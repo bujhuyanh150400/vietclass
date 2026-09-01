@@ -68,6 +68,22 @@ final class SetScheduleTemplateTeachersAction
                 excludeTemplateId: (int) $template->id,
             );
 
+            // The same check against written sessions, so somebody cannot be moved onto a
+            // slot where a lesson already has them — this schedule's own sessions excluded,
+            // since those are the ones about to inherit the new list.
+            $this->conflicts->assertTemplateSlotIsFreeOfWrittenSessions(
+                roomId: (int) $template->room_id,
+                dayOfWeek: $template->day_of_week,
+                startTime: (string) $template->start_time,
+                endTime: (string) $template->end_time,
+                startDate: Carbon::parse($template->start_date)->toDateString(),
+                endDate: $template->end_date === null
+                    ? null
+                    : Carbon::parse($template->end_date)->toDateString(),
+                teacherProfileIds: array_column($roster, 'teacher_profile_id'),
+                excludeTemplateId: (int) $template->id,
+            );
+
             DB::transaction(function () use ($template, $roster, $actorId): void {
                 $this->templates->replaceTeachers($template, $roster);
                 $this->templates->update($template, ['updated_by' => $actorId]);

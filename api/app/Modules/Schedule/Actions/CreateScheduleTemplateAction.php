@@ -37,6 +37,11 @@ final class CreateScheduleTemplateAction
      * busy at that time. The schedule and its teacher rows are then written together,
      * because a schedule with no teachers is a state no reader should observe.
      *
+     * Busy is checked twice, against other fixed schedules and against written sessions.
+     * The second check is not redundant: a session materialised from a schedule that has
+     * since been closed sits on a date no schedule covers any more, so only the row itself
+     * still knows the room is taken.
+     *
      * `updated_by` is written as NULL rather than left out: nobody has changed this
      * schedule yet, and stating that is what makes the column trustworthy elsewhere.
      *
@@ -69,6 +74,16 @@ final class CreateScheduleTemplateAction
             $roster = $this->roster->resolve($teachers);
 
             $this->conflicts->assertTemplateSlotIsFree(
+                roomId: (int) $room->id,
+                dayOfWeek: $dayOfWeek,
+                startTime: $startTime,
+                endTime: $endTime,
+                startDate: $startDate,
+                endDate: $endDate,
+                teacherProfileIds: array_column($roster, 'teacher_profile_id'),
+            );
+
+            $this->conflicts->assertTemplateSlotIsFreeOfWrittenSessions(
                 roomId: (int) $room->id,
                 dayOfWeek: $dayOfWeek,
                 startTime: $startTime,

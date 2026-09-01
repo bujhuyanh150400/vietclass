@@ -14,6 +14,7 @@ use App\Modules\Academic\Models\Room;
 use App\Modules\Academic\Repositories\RoomRepository;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\User;
+use App\Modules\Schedule\Models\ScheduleInstance;
 use App\Modules\Schedule\Models\ScheduleTemplate;
 
 beforeEach(function (): void {
@@ -249,6 +250,31 @@ test('the room reference count reads the fixed schedules of that room only', fun
     ScheduleTemplate::factory()->create(['room_id' => $otherRoom->id]);
 
     expect(app(RoomRepository::class)->countScheduleReferences($room))->toBe(2)
+        ->and(app(RoomRepository::class)->countScheduleReferences($otherRoom))->toBe(1);
+});
+
+test('a room a written session references cannot be deleted', function (): void {
+    $room = Room::factory()->create();
+    ScheduleInstance::factory()->create(['room_id' => $room->id]);
+
+    $result = app(DeleteRoomAction::class)->handle($room->id);
+
+    expect($result->isSuccess())->toBeFalse()
+        ->and($result->getError())->toBe(AcademicError::RoomInUse)
+        ->and($result->getMessage())->toBe('Phòng học đang được dùng bởi 1 lịch, không thể xóa.');
+
+    $this->assertDatabaseHas('rooms', ['id' => $room->id]);
+});
+
+test('the room reference count adds written sessions to fixed schedules', function (): void {
+    $room = Room::factory()->create();
+    $otherRoom = Room::factory()->create();
+
+    ScheduleTemplate::factory()->create(['room_id' => $room->id]);
+    ScheduleInstance::factory()->count(2)->create(['room_id' => $room->id]);
+    ScheduleInstance::factory()->create(['room_id' => $otherRoom->id]);
+
+    expect(app(RoomRepository::class)->countScheduleReferences($room))->toBe(3)
         ->and(app(RoomRepository::class)->countScheduleReferences($otherRoom))->toBe(1);
 });
 

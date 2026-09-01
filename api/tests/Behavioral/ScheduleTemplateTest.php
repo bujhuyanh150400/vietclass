@@ -18,6 +18,7 @@ use App\Modules\Schedule\Actions\SetScheduleTemplateTeachersAction;
 use App\Modules\Schedule\Enums\DayOfWeek;
 use App\Modules\Schedule\Enums\ScheduleError;
 use App\Modules\Schedule\Enums\ScheduleTeacherRole;
+use App\Modules\Schedule\Models\ScheduleInstance;
 use App\Modules\Schedule\Models\ScheduleTemplate;
 use App\Modules\Schedule\Models\ScheduleTemplateTeacher;
 use Illuminate\Database\QueryException;
@@ -411,6 +412,33 @@ test('only a schedule still in the future can be deleted', function (): void {
     $this->assertDatabaseHas('schedule_templates', ['id' => $running->id]);
     $this->assertDatabaseMissing('schedule_templates', ['id' => $future->id]);
     $this->assertDatabaseCount('schedule_template_teachers', 1);
+});
+
+test('a future schedule a written session already points at cannot be deleted', function (): void {
+    [$class, $room, $main] = templateContext();
+    $actor = templateActor();
+    $effectiveOn = now()->addWeek()->toDateString();
+
+    $future = app(CreateScheduleTemplateAction::class)
+        ->handle((int) $class->id, templateSlot($room, ['start_date' => $effectiveOn]), templateRoster($main), $actor)
+        ->getData();
+
+    ScheduleInstance::factory()->create([
+        'class_id' => $class->id,
+        'template_id' => $future->id,
+        'subject_id' => $class->subject_id,
+        'date' => $effectiveOn,
+        'room_id' => $room->id,
+        'is_customized' => true,
+    ]);
+
+    $result = app(DeleteScheduleTemplateAction::class)->handle((int) $future->id);
+
+    expect($result->isSuccess())->toBeFalse()
+        ->and($result->getError())->toBe(ScheduleError::ScheduleTemplateHasSessions)
+        ->and($result->getMessage())->toBe('Lịch cố định đã sinh 1 buổi học, không thể xóa.');
+
+    $this->assertDatabaseHas('schedule_templates', ['id' => $future->id]);
 });
 
 test('every operation reports a missing schedule consistently', function (): void {

@@ -105,6 +105,19 @@ final class ReviseScheduleTemplateAction
                 excludeTemplateId: (int) $template->id,
             );
 
+            // Sessions already written under the version being replaced are left out: they
+            // are this schedule's own history, not somebody else holding the room.
+            $this->conflicts->assertTemplateSlotIsFreeOfWrittenSessions(
+                roomId: (int) $room->id,
+                dayOfWeek: $dayOfWeek,
+                startTime: $startTime,
+                endTime: $endTime,
+                startDate: $startDate,
+                endDate: $endDate,
+                teacherProfileIds: array_column($roster, 'teacher_profile_id'),
+                excludeTemplateId: (int) $template->id,
+            );
+
             $revised = DB::transaction(function () use (
                 $template,
                 $class,

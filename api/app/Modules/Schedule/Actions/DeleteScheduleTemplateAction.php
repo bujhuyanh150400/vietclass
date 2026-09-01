@@ -6,6 +6,7 @@ use App\Core\Data\ActionResult;
 use App\Core\Exceptions\ActionError;
 use App\Modules\Schedule\Enums\ScheduleError;
 use App\Modules\Schedule\Models\ScheduleTemplate;
+use App\Modules\Schedule\Repositories\ScheduleInstanceRepository;
 use App\Modules\Schedule\Repositories\ScheduleTemplateRepository;
 use Illuminate\Support\Carbon;
 
@@ -16,6 +17,7 @@ final class DeleteScheduleTemplateAction
      */
     public function __construct(
         private readonly ScheduleTemplateRepository $templates,
+        private readonly ScheduleInstanceRepository $instances,
     ) {}
 
     /**
@@ -27,9 +29,11 @@ final class DeleteScheduleTemplateAction
      * Only a slot booked for a future date can be withdrawn as though it was never
      * booked; its teacher rows go with it through the cascade.
      *
-     * `schedule_instances` does not exist yet, so no reference from a written session
-     * can be checked here. When that table lands, this rule needs a second condition
-     * refusing a schedule any session still points at.
+     * A schedule can also be held by written sessions rather than by the calendar: a
+     * future date can be materialised, and those rows are the record of somebody having
+     * acted on that lesson. They are refused explicitly instead of being left to the
+     * foreign key, which would surface as an unexpected system error carrying a
+     * constraint name no caller can act on.
      *
      * @return ActionResult<null, ScheduleError>
      */
@@ -51,6 +55,15 @@ final class DeleteScheduleTemplateAction
                 throw new ActionError(
                     message: 'Lịch cố định đã có hiệu lực, hãy đóng lịch thay vì xóa.',
                     code: ScheduleError::ScheduleTemplateAlreadyStarted,
+                );
+            }
+
+            $sessions = $this->instances->countForTemplate((int) $template->id);
+
+            if ($sessions > 0) {
+                throw new ActionError(
+                    message: "Lịch cố định đã sinh {$sessions} buổi học, không thể xóa.",
+                    code: ScheduleError::ScheduleTemplateHasSessions,
                 );
             }
 
