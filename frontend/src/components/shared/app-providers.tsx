@@ -8,13 +8,17 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
  * Creates the single browser QueryClient with defaults that keep freshly
  * rendered server data authoritative, so hydration does not trigger an
  * immediate duplicate request for data the page already has.
+ *
+ * `staleTime` alone does that job. Mounting is deliberately left on React
+ * Query's default, because a list screen is unmounted while its create form is
+ * open: suppressing the mount refetch would leave the query the mutation just
+ * invalidated serving its old rows when the form redirects back to the list.
  */
 function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: 60_000,
-        refetchOnMount: false,
         refetchOnWindowFocus: false,
         retry: 1,
       },

@@ -55,11 +55,8 @@ export function useCreateRoom() {
 
   return useMutation({
     mutationFn: (body: unknown) => createRoom(body),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: academicQueryKeys.rooms.root(),
-        refetchType: "all",
-      });
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: academicQueryKeys.rooms.root() });
     },
   });
 }
@@ -72,11 +69,8 @@ export function useUpdateRoom(id: number) {
 
   return useMutation({
     mutationFn: (body: unknown) => updateRoom(id, body),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: academicQueryKeys.rooms.root(),
-        refetchType: "all",
-      });
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: academicQueryKeys.rooms.root() });
     },
   });
 }
@@ -90,11 +84,8 @@ export function useChangeRoomStatus() {
   return useMutation({
     mutationFn: ({ id, status }: { id: number; status: RoomStatus }) =>
       changeRoomStatus(id, status),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: academicQueryKeys.rooms.root(),
-        refetchType: "all",
-      });
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: academicQueryKeys.rooms.root() });
     },
   });
 }
@@ -107,11 +98,8 @@ export function useDeleteRoom() {
 
   return useMutation({
     mutationFn: (id: number) => deleteRoom(id),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: academicQueryKeys.rooms.root(),
-        refetchType: "all",
-      });
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: academicQueryKeys.rooms.root() });
     },
   });
 }
