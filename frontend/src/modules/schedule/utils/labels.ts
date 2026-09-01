@@ -3,8 +3,12 @@ import { format } from "date-fns";
 import type {
   DayOfWeek,
   ScheduleEffectiveState,
+  ScheduleSession,
+  ScheduleStatus,
   ScheduleTeacherRole,
   ScheduleTemplate,
+  ScheduleType,
+  SessionAppearance,
 } from "../types/schedule";
 
 /**
@@ -36,6 +40,27 @@ export const DAYS_OF_WEEK: DayOfWeek[] = [0, 1, 2, 3, 4, 5, 6];
 export const SCHEDULE_TEACHER_ROLE_LABELS: Record<ScheduleTeacherRole, string> = {
   0: "Giáo viên chính",
   1: "Trợ giảng",
+};
+
+/** What kind of occasion a session is. */
+export const SCHEDULE_TYPE_LABELS: Record<ScheduleType, string> = {
+  0: "Lịch chính",
+  1: "Học bù",
+  2: "Tăng cường",
+};
+
+/** Where a session stands in its own life. */
+export const SCHEDULE_STATUS_LABELS: Record<ScheduleStatus, string> = {
+  0: "Chưa diễn ra",
+  1: "Đã diễn ra",
+  2: "Đã huỷ",
+};
+
+/** How each kind of session is described on the calendar's legend. */
+export const SESSION_APPEARANCE_LABELS: Record<SessionAppearance, string> = {
+  projected: "Theo lịch cố định",
+  written: "Đã ghi nhận",
+  cancelled: "Đã huỷ",
 };
 
 /** Where a slot stands relative to today. */
@@ -120,4 +145,129 @@ export function formatAssistantTeachers(template: ScheduleTemplate): string {
     .map((teacher) => teacher.teacher_name ?? `#${teacher.teacher_profile_id}`);
 
   return names.length === 0 ? "Không có" : names.join(", ");
+}
+
+/**
+ * Reports whether a row has been written for this session.
+ *
+ * This is the only sanctioned way to ask: `id` being `null` is what the API reports for
+ * a lesson nobody has touched, and reading that null directly invites treating it as
+ * missing data rather than as the answer it is.
+ */
+export function isWrittenSession(session: ScheduleSession): boolean {
+  return session.id !== null;
+}
+
+/**
+ * Decides how one session should read on the calendar.
+ *
+ * Cancellation is checked first because it outranks everything else a reader needs to
+ * know: a cancelled lesson is still returned, still occupies its slot, and still blocks
+ * its own projection, so it must never be mistaken for one that will be taught.
+ *
+ * Otherwise the question is whether anybody has touched the lesson. `is_customized` is
+ * what the API sets the moment a row is written, and a status past "not held yet" says
+ * the same thing from the other direction, so either mark makes a session "written".
+ * A session with neither is exactly what the fixed schedule projects, and nothing more.
+ */
+export function sessionAppearance(session: ScheduleSession): SessionAppearance {
+  if (session.status === 2) {
+    return "cancelled";
+  }
+
+  return session.is_customized || session.status !== 0 ? "written" : "projected";
+}
+
+/**
+ * Names the class of a session the way a reader identifies it: the code first, because
+ * class names repeat across grades and codes do not.
+ *
+ * A session belonging to no class says so in words rather than showing a blank, which
+ * is what a pooled make-up lesson of a later phase will look like.
+ */
+export function formatSessionClass(session: ScheduleSession): string {
+  if (session.class_code === null && session.class_name === null) {
+    return "Không thuộc lớp nào";
+  }
+
+  if (session.class_code === null) {
+    return session.class_name ?? "Không thuộc lớp nào";
+  }
+
+  return session.class_name === null
+    ? session.class_code
+    : `${session.class_code} — ${session.class_name}`;
+}
+
+/**
+ * Composes the one line a calendar cell has room for: which class, and which subject.
+ */
+export function formatSessionTitle(session: ScheduleSession): string {
+  return `${formatSessionClass(session)} · ${session.subject_name}`;
+}
+
+/** What each active calendar filter is called, when the shown lessons reveal it. */
+export type FilterLabels = {
+  classLabel?: string;
+  teacherLabel?: string;
+  roomLabel?: string;
+};
+
+/**
+ * Names the class, teacher and room a calendar is filtered to, by reading the lessons
+ * that came back rather than by looking the identifiers up.
+ *
+ * A filter arriving in the URL is an identifier with no name attached, and the pickers
+ * search a page at a time, so a restored filter would read `#7` until the chosen value
+ * happened to appear in the current page of results. The sessions on screen already
+ * carry every name, and they carry them for values the pickers cannot even offer — a
+ * room under maintenance, a class that has finished — so this is both the cheaper and
+ * the more complete answer.
+ *
+ * A filter that matched nothing yields no name, and the picker falls back to showing
+ * the identifier, which is honest: there is nothing on screen to read a name from.
+ */
+export function filterLabels(
+  sessions: ScheduleSession[],
+  classId: number | null,
+  teacherId: number | null,
+  roomId: number | null,
+): FilterLabels {
+  const labels: FilterLabels = {};
+
+  for (const session of sessions) {
+    if (labels.classLabel === undefined && classId !== null && session.class_id === classId) {
+      labels.classLabel = formatSessionClass(session);
+    }
+
+    if (labels.roomLabel === undefined && roomId !== null && session.room_id === roomId) {
+      labels.roomLabel = session.room_name;
+    }
+
+    if (labels.teacherLabel === undefined && teacherId !== null) {
+      const teacher = session.teachers.find(
+        (candidate) => candidate.teacher_profile_id === teacherId,
+      );
+
+      if (teacher !== undefined) {
+        labels.teacherLabel = teacher.teacher_name;
+      }
+    }
+  }
+
+  return labels;
+}
+
+/**
+ * Names everybody on a session with the role each holds, for a place with room to
+ * spell it out.
+ */
+export function formatSessionTeachers(session: ScheduleSession): string {
+  if (session.teachers.length === 0) {
+    return "Chưa phân giáo viên";
+  }
+
+  return session.teachers
+    .map((teacher) => `${teacher.teacher_name} (${teacher.role_label})`)
+    .join(", ");
 }

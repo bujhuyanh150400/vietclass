@@ -1,7 +1,9 @@
 <?php
 
+use App\Modules\Academic\Enums\ClassStatus;
 use App\Modules\Academic\Models\Room;
 use App\Modules\Academic\Models\SchoolClass;
+use App\Modules\Academic\Models\Subject;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\TeacherProfile;
 use App\Modules\Identity\Models\User;
@@ -12,6 +14,7 @@ use App\Modules\Schedule\Enums\DayOfWeek;
 use App\Modules\Schedule\Enums\ScheduleTeacherRole;
 use App\Modules\Schedule\Models\ScheduleInstanceTeacher;
 use App\Modules\Schedule\Models\ScheduleTemplate;
+use App\Modules\Schedule\Models\ScheduleTemplateTeacher;
 use App\Modules\Schedule\Support\ProjectedSession;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -238,9 +241,10 @@ test('the calendar endpoint reports a projected session with no identifier and a
         ->assertJsonCount(2, 'data.0.teachers')
         ->assertJsonStructure([
             'data' => [[
-                'id', 'template_id', 'class_id', 'subject_id', 'date', 'start_time', 'end_time',
-                'room_id', 'schedule_type', 'schedule_type_label', 'status', 'status_label',
-                'is_customized', 'note', 'teachers',
+                'id', 'template_id', 'class_id', 'class_code', 'class_name', 'subject_id',
+                'subject_name', 'date', 'start_time', 'end_time', 'room_id', 'room_name',
+                'schedule_type', 'schedule_type_label', 'status', 'status_label',
+                'is_customized', 'note', 'teachers' => [['teacher_profile_id', 'teacher_name', 'role', 'role_label', 'replaces_profile_id']],
             ]],
         ]);
 
@@ -338,6 +342,82 @@ test('the calendar endpoint requires both bounds, refuses a backwards range, and
         ->assertJsonPath('message', 'Khoảng ngày không được rộng hơn 92 ngày.');
 });
 
+test('a session in a room under maintenance and a session of a class already finished still report every name', function (): void {
+    $subject = Subject::factory()->create(['name' => 'Toán nâng cao']);
+    $class = SchoolClass::factory()->create([
+        'code' => 'T9NC-01',
+        'name' => 'Lớp 9A1',
+        'subject_id' => $subject->id,
+        'status' => ClassStatus::Ended,
+        'start_at' => calendarMonday(-6),
+        'end_at' => calendarMonday(-4),
+    ]);
+    $room = Room::factory()->maintenance()->create(['name' => 'Phòng 301']);
+    $teacher = TeacherProfile::factory()->create();
+    $teacher->profile->update(['full_name' => 'Nguyễn Thị Lan']);
+
+    $template = ScheduleTemplate::factory()->create([
+        'class_id' => $class->id,
+        'room_id' => $room->id,
+        'day_of_week' => DayOfWeek::Monday,
+        'start_date' => calendarMonday(-6),
+        'end_date' => null,
+    ]);
+    ScheduleTemplateTeacher::factory()->create([
+        'schedule_template_id' => $template->id,
+        'teacher_profile_id' => $teacher->profile_id,
+    ]);
+
+    $range = ['from' => calendarMonday(-6), 'to' => calendarMonday(-4), 'class_id' => (int) $class->id];
+
+    // This is the case the rejected alternative got wrong. Neither this room nor this class
+    // appears in the options endpoints a client could have joined against — `rooms/options`
+    // lists only active rooms and `classes/options` only running classes — yet the lesson
+    // is an ordinary one to find on a calendar, so it has to arrive named.
+    $this->getJson(calendarUrl($range))
+        ->assertOk()
+        ->assertJsonCount(3, 'data')
+        ->assertJsonPath('data.0.id', null)
+        ->assertJsonPath('data.0.class_code', 'T9NC-01')
+        ->assertJsonPath('data.0.class_name', 'Lớp 9A1')
+        ->assertJsonPath('data.0.subject_name', 'Toán nâng cao')
+        ->assertJsonPath('data.0.room_name', 'Phòng 301')
+        ->assertJsonPath('data.0.teachers.0.teacher_name', 'Nguyễn Thị Lan');
+
+    // Materialising moves where every name is read from — the row's own relations instead
+    // of the schedule it was cast from — so a written session has to be checked separately
+    // or half the contract is untested.
+    $writtenId = $this->postJson('/api/v1/schedule-sessions/resolve', [
+        'template_id' => (int) $template->id,
+        'date' => calendarMonday(-5),
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.class_code', 'T9NC-01')
+        ->assertJsonPath('data.class_name', 'Lớp 9A1')
+        ->assertJsonPath('data.subject_name', 'Toán nâng cao')
+        ->assertJsonPath('data.room_name', 'Phòng 301')
+        ->assertJsonPath('data.teachers.0.teacher_name', 'Nguyễn Thị Lan')
+        ->json('data.id');
+
+    $this->getJson(calendarUrl($range))
+        ->assertOk()
+        ->assertJsonCount(3, 'data')
+        ->assertJsonPath('data.1.id', $writtenId)
+        ->assertJsonPath('data.1.class_code', 'T9NC-01')
+        ->assertJsonPath('data.1.class_name', 'Lớp 9A1')
+        ->assertJsonPath('data.1.subject_name', 'Toán nâng cao')
+        ->assertJsonPath('data.1.room_name', 'Phòng 301')
+        ->assertJsonPath('data.1.teachers.0.teacher_name', 'Nguyễn Thị Lan');
+
+    $this->getJson("/api/v1/schedule-sessions/{$writtenId}")
+        ->assertOk()
+        ->assertJsonPath('data.class_code', 'T9NC-01')
+        ->assertJsonPath('data.class_name', 'Lớp 9A1')
+        ->assertJsonPath('data.subject_name', 'Toán nâng cao')
+        ->assertJsonPath('data.room_name', 'Phòng 301')
+        ->assertJsonPath('data.teachers.0.teacher_name', 'Nguyễn Thị Lan');
+});
+
 // One identity per test from here on. The auth guard memoises the caller it resolved and
 // the test process keeps that guard between requests, so a test that speaks first as one
 // person and then as another is silently answered as the first one throughout. Fixtures
@@ -397,7 +477,7 @@ test('an unauthenticated caller reaches no session endpoint', function (): void 
     $this->getJson('/api/v1/schedule-sessions/1')->assertUnauthorized();
 });
 
-test('the calendar costs the same four queries whether it covers one day or a quarter', function (): void {
+test('the calendar costs the same twelve queries whether it covers one day or a quarter', function (): void {
     [$first] = calendarSchedule($this->admin);
     [$second] = calendarSchedule($this->admin);
     $opensOn = calendarMonday(1);
@@ -424,12 +504,20 @@ test('the calendar costs the same four queries whether it covers one day or a qu
 
     DB::disableQueryLog();
 
-    // Two queries for the written rows with their teachers, two for the fixed schedules
-    // with theirs, and arithmetic for the rest. A count that grew with the range would
-    // mean the day walk had started asking the database questions.
-    expect($oneDay)->toBe(4)
-        ->and($oneWeek)->toBe(4)
-        ->and($quarter)->toBe(4)
+    // Seven for the written rows — the rows themselves, their class, their subject, their
+    // room, their teacher rows, and the two hops from a teacher row to the name on the
+    // shared profile — and five for the fixed schedules, whose class and subject ride the
+    // join they already needed for the projection bounds. Arithmetic for the rest.
+    //
+    // The number itself is not the property under test; it went from four to twelve when
+    // the calendar started reporting names instead of bare identifiers, and it may move
+    // again. What must not move is that all three ranges agree: a count that grew with the
+    // range would mean the day walk had started asking the database questions, and this
+    // test is the only guard against that. Raise the number when a load is added
+    // deliberately; never split the expectation per range to make it pass.
+    expect($oneDay)->toBe(12)
+        ->and($oneWeek)->toBe(12)
+        ->and($quarter)->toBe(12)
         ->and($oneDaySessions)->toBe(2)
         // Constant, and not because the wide range came back empty.
         ->and($quarterSessions)->toBeGreaterThan(20);

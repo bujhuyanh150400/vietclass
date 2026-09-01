@@ -23,10 +23,12 @@ use Illuminate\Support\Carbon;
  * sessions the fixed schedules cast onto it. Where the two describe the same lesson the
  * written row wins, without exception: it is the one that records what somebody decided.
  *
- * The database is asked two questions, whatever the range: one for the fixed schedules
- * overlapping it with their teachers, one for the written rows inside it with theirs.
- * Everything after that is arithmetic. Nothing queries inside the day loop, so a
- * three-month range costs what a one-day range costs.
+ * The database is asked a fixed number of questions, whatever the range: the fixed
+ * schedules overlapping it and the written rows inside it, plus one eager load per name
+ * each side reports — the room, the teachers, and on the written side the class and the
+ * subject. Everything after that is arithmetic. Nothing queries inside the day loop, so a
+ * three-month range costs what a one-day range costs, and that constancy is what
+ * `ScheduleProjectionTest` pins.
  */
 final class ScheduleProjector
 {
@@ -149,6 +151,7 @@ final class ScheduleProjector
                     template: $template,
                     date: $date,
                     subjectId: (int) $template->class_subject_id,
+                    subjectName: (string) $template->class_subject_name,
                 );
             }
 

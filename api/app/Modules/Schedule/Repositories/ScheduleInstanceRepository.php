@@ -26,12 +26,19 @@ final class ScheduleInstanceRepository extends BaseRepository
 
     /**
      * Return every written session falling inside a date range, ordered the way the
-     * calendar reads, with each one's teacher list already loaded.
+     * calendar reads, with each one's teacher list and the names it reports already
+     * loaded.
      *
-     * Both bounds are inclusive. The teacher list is eager-loaded rather than left to be
-     * walked per row because the projection merges these rows with projected ones and
-     * must answer for a whole range in a query count that does not grow with the number
-     * of rows in it.
+     * Both bounds are inclusive. Everything a session names is eager-loaded rather than
+     * left to be walked per row because the projection merges these rows with projected
+     * ones and must answer for a whole range in a query count that does not grow with the
+     * number of rows in it. Each load names its columns: a calendar needs a class code and
+     * two names, not whole rows from four tables.
+     *
+     * The class and the room are loaded whatever state they are in. A lesson in a room
+     * under maintenance, or one belonging to a class that has already finished, is an
+     * ordinary thing to find on a calendar, and it is precisely what a reader resolving
+     * these names from the filtered `options` endpoints would be unable to name.
      *
      * Each filter is applied to the session's own columns, not to the fixed schedule it
      * came from: once a session exists it is the authority on where it happens and who
@@ -47,7 +54,12 @@ final class ScheduleInstanceRepository extends BaseRepository
         ?int $roomId = null,
     ): Collection {
         return $this->modelQuery()
-            ->with('teachers')
+            ->with([
+                'schoolClass:id,code,name',
+                'subject:id,name',
+                'room:id,name',
+                'teachers.teacher.profile:id,full_name',
+            ])
             ->whereBetween('date', [$from, $to])
             ->when(
                 $classId !== null,

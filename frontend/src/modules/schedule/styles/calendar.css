@@ -1,0 +1,52 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Lesson calendar
+   Fits FullCalendar's grid to this product's surface.
+
+   Everything here is a *custom property*, not a rule that restyles FullCalendar's
+   own elements, and that is deliberate. FullCalendar 6 injects its stylesheet from
+   JavaScript at import time, unlayered, so it outranks every Tailwind utility —
+   Tailwind's utilities live in `@layer utilities`, and unlayered CSS beats any
+   layer. Overriding its appearance with classes would therefore lose silently. But
+   its whole theme is read from `--fc-*` variables, so setting those on the wrapper
+   is both the supported route and the one the cascade cannot undo.
+
+   The event boxes are drawn by this module's own markup instead: the three event
+   variables below make FullCalendar's box invisible, and the component renders the
+   visible box inside it with ordinary utilities on its own elements, where nothing
+   competes for the same properties.
+
+   These rules live with the schedule module and are imported by the calendar
+   component, so only the calendar route downloads them.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@layer components {
+  .vc-calendar {
+    /* Grid surface, mapped onto the app's own tokens. */
+    --fc-page-bg-color: var(--card);
+    --fc-border-color: var(--border);
+    --fc-neutral-bg-color: var(--muted);
+    --fc-neutral-text-color: var(--muted-foreground);
+    --fc-small-font-size: 0.75rem;
+
+    /* Today is marked with the brand's warm tint rather than the default yellow. */
+    --fc-today-bg-color: color-mix(in oklab, var(--vc-gold) 10%, transparent);
+    --fc-now-indicator-color: var(--vc-orange-deep);
+
+    /* Nothing on this screen is selectable: it reads the calendar and writes
+       nothing, so the drag-highlight would promise an interaction that does not
+       exist. */
+    --fc-highlight-color: transparent;
+
+    /* FullCalendar's own event chrome is stood down so this module can draw the
+       box itself, where the difference between a projected and a written lesson
+       can be carried by more than a fill colour. */
+    --fc-event-bg-color: transparent;
+    --fc-event-border-color: transparent;
+    --fc-event-text-color: inherit;
+    --fc-event-selected-overlay-color: transparent;
+
+    /* The "+ thêm N" link a crowded day shows in the month grid. */
+    --fc-more-link-bg-color: var(--secondary);
+    --fc-more-link-text-color: var(--secondary-foreground);
+  }
+}

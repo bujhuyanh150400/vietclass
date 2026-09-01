@@ -10,12 +10,16 @@ import { SESSION_COOKIE_NAME } from "@/modules/identity/server";
  * purpose: each module's forwarder stays narrow enough to read in one glance, so
  * widening one never quietly widens the other.
  *
- * `schedule-sessions` is deliberately absent — that endpoint group belongs to the
- * next phase, and a path is added here only once a screen actually calls it.
+ * `schedule-sessions/resolve` is deliberately absent. It is the one write the session
+ * endpoints have, and it materialises a projected lesson into a row — plumbing rather
+ * than something a reader asks for. The calendar screen only reads, so opening that
+ * path here would widen the gate for a call nothing makes.
  */
 const ALLOWED_PATHS: RegExp[] = [
   /^classes\/\d+\/schedule-templates$/,
   /^schedule-templates\/\d+(\/teachers|\/close)?$/,
+  /^schedule-sessions$/,
+  /^schedule-sessions\/\d+$/,
 ];
 
 /** Methods a browser may forward through this route. */

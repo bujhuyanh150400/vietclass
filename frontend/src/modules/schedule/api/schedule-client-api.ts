@@ -3,10 +3,17 @@ import { browserRequest } from "@/lib/api/browser-request";
 
 import {
   optionListSchema,
+  scheduleSessionListSchema,
+  scheduleSessionSchema,
   scheduleTemplateListSchema,
   scheduleTemplateSchema,
 } from "../schemas/schedule-response-schema";
-import type { Option, ScheduleTemplate } from "../types/schedule";
+import type {
+  Option,
+  ScheduleSession,
+  ScheduleSessionQuery,
+  ScheduleTemplate,
+} from "../types/schedule";
 
 /** Every schedule call goes through this same-origin, allowlisted forwarder. */
 const BASE = "/api/schedule";
@@ -112,6 +119,46 @@ export async function deleteScheduleTemplate(id: number): Promise<void> {
   await browserRequest<undefined>(`${BASE}/schedule-templates/${id}`, { method: "DELETE" });
 }
 
+/**
+ * Fetches every session in one date window, projected and written alike.
+ *
+ * Both bounds go on the wire because the API refuses a read without them, and the
+ * window's width is what bounds the work: there is no paging here, so this reads the
+ * unwrapped `data` envelope rather than the paginated helper.
+ *
+ * A filter left undefined is omitted from the query string rather than sent empty,
+ * because the API reads the presence of `class_id` as the filter being applied.
+ */
+export async function fetchScheduleSessions(
+  query: ScheduleSessionQuery,
+): Promise<ScheduleSession[]> {
+  const params: ListParams = {
+    from: query.from,
+    to: query.to,
+    class_id: query.classId,
+    teacher_id: query.teacherId,
+    room_id: query.roomId,
+  };
+
+  return parseOne<ScheduleSession[]>(
+    await browserRequest<unknown>(`${BASE}/schedule-sessions`, { params }),
+    scheduleSessionListSchema,
+  );
+}
+
+/**
+ * Fetches one written session by its identifier.
+ *
+ * Only a written session has this address. A projected one has no row and therefore no
+ * identifier, so it is read through the window above and never here.
+ */
+export async function fetchScheduleSession(id: number): Promise<ScheduleSession> {
+  return parseOne<ScheduleSession>(
+    await browserRequest<unknown>(`${BASE}/schedule-sessions/${id}`),
+    scheduleSessionSchema,
+  );
+}
+
 /** Fetches the active rooms a slot may be placed in. */
 export async function fetchRoomOptions(params: ListParams): Promise<Option[]> {
   return parseOne<Option[]>(
@@ -124,6 +171,21 @@ export async function fetchRoomOptions(params: ListParams): Promise<Option[]> {
 export async function fetchTeacherOptions(params: ListParams): Promise<Option[]> {
   return parseOne<Option[]>(
     await browserRequest<unknown>(`${ACADEMIC_BASE}/teachers/options`, { params }),
+    optionListSchema,
+  );
+}
+
+/**
+ * Fetches the classes the calendar may be narrowed to.
+ *
+ * This endpoint lists only classes still running, so a finished class cannot be picked
+ * as a filter even though the calendar happily shows its past lessons. That is a
+ * limitation of the picker and not of the calendar, and it is why session names come
+ * from the session payload rather than from this list.
+ */
+export async function fetchClassOptions(params: ListParams): Promise<Option[]> {
+  return parseOne<Option[]>(
+    await browserRequest<unknown>(`${ACADEMIC_BASE}/classes/options`, { params }),
     optionListSchema,
   );
 }

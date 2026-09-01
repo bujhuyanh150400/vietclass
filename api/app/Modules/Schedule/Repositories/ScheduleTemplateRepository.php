@@ -64,6 +64,20 @@ final class ScheduleTemplateRepository extends BaseRepository
      * `class_subject_id`, which a projected session reports as its own subject because a
      * fixed schedule has none of its own.
      *
+     * A projected session reports names as well as identifiers, and the ones that come
+     * from the class ride the join already there rather than paying for a second read of
+     * the same rows: `class_code` and `class_name`, plus `class_subject_name` from a join
+     * onto the subject the class teaches. The code travels with the name because class
+     * names repeat across grades and codes do not. Both joins are inner joins because
+     * `schedule_templates.class_id` and `classes.subject_id` are required columns, so
+     * neither can drop a candidate schedule.
+     *
+     * The room and the teachers' names are eager loads instead, each naming its columns,
+     * since neither is one row per schedule. The room is loaded whatever state it is in: a
+     * lesson in a room under maintenance is an ordinary thing to find on a calendar, and
+     * naming it is exactly what a reader working from the filtered `rooms/options` list
+     * could not do.
+     *
      * A schedule is a candidate when its own window and its class's window both reach
      * into the range. A NULL `end_date` or `end_at` means "no upper bound yet", so it is
      * read as an open interval rather than as a missing value.
@@ -83,13 +97,20 @@ final class ScheduleTemplateRepository extends BaseRepository
     ): Collection {
         return $this->modelQuery()
             ->join('classes', 'classes.id', '=', 'schedule_templates.class_id')
+            ->join('subjects', 'subjects.id', '=', 'classes.subject_id')
             ->select([
                 'schedule_templates.*',
                 'classes.start_at as class_start_at',
                 'classes.end_at as class_end_at',
                 'classes.subject_id as class_subject_id',
+                'classes.code as class_code',
+                'classes.name as class_name',
+                'subjects.name as class_subject_name',
             ])
-            ->with('teachers')
+            ->with([
+                'room:id,name',
+                'teachers.teacher.profile:id,full_name',
+            ])
             ->where('schedule_templates.start_date', '<=', $to)
             ->where(
                 fn (Builder $builder): Builder => $builder

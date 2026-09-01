@@ -1,3 +1,5 @@
+import type { ScheduleSessionQuery } from "../types/schedule";
+
 /**
  * The cache keys every schedule query is stored under.
  *
@@ -14,6 +16,28 @@ export const scheduleQueryKeys = {
     root: () => ["schedule", "templates"] as const,
     list: (classId: number) => ["schedule", "templates", "list", classId] as const,
   },
+  sessions: {
+    root: () => ["schedule", "sessions"] as const,
+    /**
+     * One calendar window, keyed by the whole query rather than by the dates alone,
+     * so switching a filter is a different entry and not a silent reuse of the last
+     * answer. `null` stands in for an absent filter because `undefined` is dropped
+     * from a serialised key and would make "every class" and "class 0" collide.
+     */
+    list: (query: ScheduleSessionQuery) =>
+      [
+        "schedule",
+        "sessions",
+        "list",
+        query.from,
+        query.to,
+        query.classId ?? null,
+        query.teacherId ?? null,
+        query.roomId ?? null,
+      ] as const,
+    detail: (id: number) => ["schedule", "sessions", "detail", id] as const,
+  },
   roomOptions: (search: string) => ["schedule", "room-options", search] as const,
   teacherOptions: (search: string) => ["schedule", "teacher-options", search] as const,
+  classOptions: (search: string) => ["schedule", "class-options", search] as const,
 } as const;

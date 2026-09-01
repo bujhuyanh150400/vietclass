@@ -69,6 +69,107 @@ export type Option = {
 };
 
 /**
+ * What kind of occasion a session is: `0` a lesson of the regular schedule, `1` a
+ * make-up lesson, `2` an extra one. Only `0` can occur in this phase, because every
+ * session is still projected from a fixed schedule; the other two are typed now so
+ * the payload never arrives with a value this side refuses.
+ */
+export type ScheduleType = 0 | 1 | 2;
+
+/**
+ * Where a session stands in its own life: `0` not held yet, `1` held, `2` cancelled.
+ *
+ * No clock advances these. A session whose date has passed stays `0` until somebody
+ * records what happened, which is what lets a missed entry be repaired later.
+ */
+export type ScheduleStatus = 0 | 1 | 2;
+
+/**
+ * One teacher on one session, with the role they hold on that day.
+ *
+ * `teacher_name` is not optional here, unlike on a fixed schedule: the calendar read
+ * always loads the person behind the identifier, because a cell reading `#7` where a
+ * teacher belongs is a cell nobody can act on.
+ *
+ * `replaces_profile_id` names who this person stood in for, and is always `null` in
+ * this phase — a fixed schedule cannot express a substitution, and nothing can write
+ * one yet.
+ */
+export type ScheduleSessionTeacher = {
+  teacher_profile_id: number;
+  teacher_name: string;
+  role: ScheduleTeacherRole;
+  role_label: string;
+  replaces_profile_id: number | null;
+};
+
+/**
+ * One session on the calendar, whether or not a row has been written for it.
+ *
+ * The API reports both kinds through this single shape on purpose, because whether a
+ * lesson has been materialised is a storage fact rather than something the reader
+ * asked about. **`id` is the one field that differs**: a projected session — one
+ * nobody has touched — has no row and therefore carries `null`, and its identity is
+ * the `template_id` and `date` pair instead. Reading `id` as a number would be a type
+ * lie that breaks on the majority of a normal week, so it is nullable here and every
+ * consumer works from `isWrittenSession` rather than guessing what a null means.
+ *
+ * `class_code` and `class_name` travel separately rather than pre-joined, so a label
+ * can be composed without losing either half; both are `null` exactly when `class_id`
+ * is. The subject, room and teacher names are always present, and they come from the
+ * API rather than from the option endpoints, which list only what may still be chosen
+ * — a calendar shows lessons in rooms under maintenance and lessons of classes that
+ * have finished, and those would be left nameless.
+ */
+export type ScheduleSession = {
+  id: number | null;
+  template_id: number | null;
+  class_id: number | null;
+  class_code: string | null;
+  class_name: string | null;
+  subject_id: number;
+  subject_name: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  room_id: number;
+  room_name: string;
+  schedule_type: ScheduleType;
+  schedule_type_label: string;
+  status: ScheduleStatus;
+  status_label: string;
+  is_customized: boolean;
+  note: string | null;
+  teachers: ScheduleSessionTeacher[];
+};
+
+/**
+ * The window and the narrowing one calendar read asks for.
+ *
+ * Both bounds are required because the API has no default window: the same request
+ * would mean a different thing on a different day, so nothing guesses one. The three
+ * filters are optional, and `teacherId` is a `teacher_profile_id` matched in both
+ * roles.
+ */
+export type ScheduleSessionQuery = {
+  from: string;
+  to: string;
+  classId?: number;
+  teacherId?: number;
+  roomId?: number;
+};
+
+/**
+ * How a session is drawn on the calendar, worked out from `status` and
+ * `is_customized` rather than from whether it has an `id`.
+ *
+ * - `projected` — nobody has touched this lesson; it is what the fixed schedule says.
+ * - `written` — somebody has edited or recorded it, so it no longer merely repeats.
+ * - `cancelled` — it will not be taught, and it must not read as an ordinary lesson.
+ */
+export type SessionAppearance = "projected" | "written" | "cancelled";
+
+/**
  * Where a fixed schedule stands relative to today, worked out from its own dates.
  *
  * The API reports `is_closed`, which only says whether an `end_date` was set at
