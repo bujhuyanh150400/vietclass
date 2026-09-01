@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 
+import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
-import { ConfirmActionDialog } from "../components/confirm-action-dialog";
 import { SubjectsView } from "../components/subjects-view";
 import { useDeleteSubject, useSetSubjectActive, useSubjectList } from "../hooks/use-subjects";
 import type { Subject } from "../types/academic";

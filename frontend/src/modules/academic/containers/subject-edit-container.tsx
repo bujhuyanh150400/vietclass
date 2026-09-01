@@ -1,6 +1,7 @@
 "use client";
 
-import { ResourceLoader } from "../components/resource-loader";
+import { ResourceLoader } from "@/components/shared/resource-loader";
+
 import { useSubject } from "../hooks/use-subjects";
 import { SubjectFormContainer } from "./subject-form-container";
 

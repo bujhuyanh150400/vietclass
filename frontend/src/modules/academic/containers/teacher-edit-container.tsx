@@ -1,6 +1,7 @@
 "use client";
 
-import { ResourceLoader } from "../components/resource-loader";
+import { ResourceLoader } from "@/components/shared/resource-loader";
+
 import { useTeacher } from "../hooks/use-teachers";
 import { TeacherFormContainer } from "./teacher-form-container";
 

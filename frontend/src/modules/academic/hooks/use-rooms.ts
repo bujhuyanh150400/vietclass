@@ -2,6 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { useResourceList, type ResourceListViewModel } from "@/hooks/use-resource-list";
+
 import {
   changeRoomStatus,
   createRoom,
@@ -12,7 +14,6 @@ import {
   updateRoom,
 } from "../api/academic-client-api";
 import { academicQueryKeys } from "./academic-query-keys";
-import { useResourceList, type ResourceListViewModel } from "./use-resource-list";
 import type { Option, Room, RoomStatus } from "../types/academic";
 
 /**

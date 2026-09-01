@@ -1,6 +1,7 @@
 "use client";
 
-import { ResourceLoader } from "../components/resource-loader";
+import { ResourceLoader } from "@/components/shared/resource-loader";
+
 import { useRoom } from "../hooks/use-rooms";
 import { RoomFormContainer } from "./room-form-container";
 

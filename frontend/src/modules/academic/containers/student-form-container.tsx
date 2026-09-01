@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { Controller } from "react-hook-form";
 
 import { PageHeader } from "@/components/shared/data-table";
+import { DateField } from "@/components/shared/date-field";
+import { Field, fieldAria } from "@/components/shared/field";
+import { FormShell } from "@/components/shared/form-shell";
+import { SelectField } from "@/components/shared/select-field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useResourceForm } from "@/hooks/use-resource-form";
 
-import { DateField } from "../components/date-field";
-import { Field, fieldAria } from "../components/field";
-import { FormShell } from "../components/form-shell";
-import { SelectField } from "../components/select-field";
-import { useResourceForm } from "../hooks/use-resource-form";
 import { useCreateStudent, useUpdateStudent } from "../hooks/use-students";
 import {
   emptyToNull,

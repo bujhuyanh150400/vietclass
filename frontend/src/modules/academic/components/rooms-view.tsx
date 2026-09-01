@@ -11,6 +11,7 @@ import {
   type DataTableColumn,
   type DataTableState,
 } from "@/components/shared/data-table";
+import { SelectField } from "@/components/shared/select-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +23,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { PageMeta } from "@/lib/api/contracts";
 
-import { SelectField } from "./select-field";
 import type { Room, RoomStatus } from "../types/academic";
 import { ROOM_STATUS_LABELS } from "../utils/labels";
 
