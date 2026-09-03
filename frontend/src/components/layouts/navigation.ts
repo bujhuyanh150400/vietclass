@@ -1,6 +1,5 @@
 import {
   BookOpen,
-  CalendarDays,
   DoorOpen,
   GraduationCap,
   LayoutDashboard,
@@ -13,7 +12,6 @@ import {
  */
 export const NAVIGATION_ICONS = {
   dashboard: LayoutDashboard,
-  schedule: CalendarDays,
   subjects: BookOpen,
   rooms: DoorOpen,
   teachers: GraduationCap,
@@ -38,18 +36,11 @@ export type NavigationGroup = {
  * Every destination this build actually ships, in the order they appear in the
  * sidebar. Academic screens follow the dependency order the data has: a class
  * needs a subject and a teacher before it can exist.
- *
- * The lesson calendar sits beside the overview rather than under Học vụ, because it
- * is not a register of one kind of record: it reads across every class, subject, room
- * and teacher at once, which is what the overview does too. The fixed schedule stays
- * where it is — inside a class, since a weekly slot means nothing apart from the class
- * it belongs to — and this is the screen that shows what those slots add up to.
  */
 export const NAVIGATION: NavigationGroup[] = [
   {
     items: [
       { href: "/dashboard", label: "Tổng quan", icon: "dashboard" },
-      { href: "/schedule", label: "Lịch học", icon: "schedule" },
     ],
   },
   {

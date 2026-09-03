@@ -10,5 +10,3 @@
 | Academic | [Quản lý phòng học](academic/phong-hoc.md) | Danh mục phòng, sức chứa, trạng thái sẵn sàng và điều kiện xóa. |
 | Academic | [Quản lý lớp học](academic/lop-hoc.md) | Lớp học gắn môn và giáo viên, sĩ số tối đa, và việc kết thúc lớp. |
 | Academic | [Ghi danh vào lớp](academic/ghi-danh.md) | Thêm học sinh vào lớp, sửa thông tin ghi danh, chuyển lớp và cho nghỉ. |
-| Schedule | [Lịch cố định theo lớp](schedule/lich-co-dinh.md) | Lịch học hằng tuần của một lớp kèm giáo viên chính và trợ giảng, chống trùng phòng và trùng giáo viên, đóng và ra bản mới. |
-| Schedule | [Buổi học theo ngày](schedule/buoi-hoc.md) | Xem lịch học theo khoảng ngày từ buổi ảo chiếu ra lịch cố định, vật thể hoá một buổi ảo thành buổi học có `id`, cùng màn lịch chỉ đọc theo tuần và theo tháng trên trình duyệt. |
