@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { GradeLevel } from "../types/academic";
+
 /**
  * Form validation for every academic screen, mirroring the API's own rules so a
  * mistake is caught before a request is sent. The API stays authoritative: it
@@ -48,6 +50,13 @@ const username = z
 const optionalPassword = password.optional().or(z.literal(""));
 
 const optionalUsername = username.optional().or(z.literal(""));
+
+const gradeLevel = z
+  .number()
+  .int()
+  .min(0)
+  .max(12)
+  .transform((value) => value as GradeLevel);
 
 /** Creating or editing a subject. */
 export const subjectFormSchema = z.object({
@@ -136,7 +145,7 @@ const studentProfileShape = {
   phone: optionalPhone.default(""),
   dob: optionalDate.default(""),
   gender: z.union([z.literal(0), z.literal(1), z.literal(2)]),
-  grade_level: z.number().int().min(0).max(12),
+  grade_level: gradeLevel,
   guardian_name: z
     .string()
     .min(1, { error: "Vui lòng nhập tên phụ huynh." })
@@ -174,7 +183,7 @@ const classShape = {
     .max(50, { error: "Tên lớp không được vượt quá 50 ký tự." }),
   subject_id: z.number().int().min(1, { error: "Vui lòng chọn môn học." }),
   teacher_id: z.number().int().min(1, { error: "Vui lòng chọn giáo viên." }),
-  grade_level: z.number().int().min(0).max(12),
+  grade_level: gradeLevel,
   max_students: z
     .number()
     .int()

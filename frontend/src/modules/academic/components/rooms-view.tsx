@@ -7,7 +7,7 @@ import {
   DataTable,
   DataTablePagination,
   DataTableToolbar,
-  PageHeader,
+  EmptyState,
   type DataTableColumn,
   type DataTableState,
 } from "@/components/shared/data-table";
@@ -132,20 +132,65 @@ export function RoomsView({
     },
   ];
 
-  return (
-    <div className="grid gap-6">
-      <PageHeader
-        title="Phòng học"
-        description="Danh mục phòng, sức chứa và trạng thái sẵn sàng."
+  const hasQuery = search !== "" || status !== undefined;
+
+  // Nothing has ever been added yet, and no search or filter is even in play — the
+  // toolbar and table would only frame an empty table, so the empty state takes
+  // over the whole screen instead of sitting inside it.
+  if (state.kind === "empty" && !hasQuery) {
+    return (
+      <EmptyState
+        title="Chưa có phòng học nào."
+        description="Thêm phòng học đầu tiên để xếp lịch."
+        image="/images/empty_1.png"
         action={
-          <Button asChild>
+          <Button asChild size="sm">
             <Link href="/academic/rooms/new">
               <Plus aria-hidden="true" />
               Thêm phòng học
             </Link>
           </Button>
         }
+        className="min-h-[50svh] content-center"
       />
+    );
+  }
+
+  // Past that point, an empty result means the current search or filter rules
+  // everything out — the toolbar stays, since clearing a condition is the way out.
+  const listState: DataTableState<Room> =
+    state.kind === "empty"
+      ? {
+          kind: "empty",
+          message: "Không tìm thấy phòng học nào khớp.",
+          description: "Thử đổi từ khóa hoặc bỏ bộ lọc trạng thái.",
+          image: "/images/empty_2.png",
+          action: (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onSearchChange("");
+                onStatusChange(undefined);
+              }}
+            >
+              Xóa điều kiện
+            </Button>
+          ),
+        }
+      : state;
+
+  return (
+    <div className="grid gap-6">
+      <div className="flex justify-end">
+        <Button asChild>
+          <Link href="/academic/rooms/new">
+            <Plus aria-hidden="true" />
+            Thêm phòng học
+          </Link>
+        </Button>
+      </div>
 
       <DataTableToolbar
         search={search}
@@ -163,7 +208,7 @@ export function RoomsView({
         }
       />
 
-      <DataTable columns={columns} state={state} rowKey={(room) => room.id} />
+      <DataTable columns={columns} state={listState} rowKey={(room) => room.id} />
 
       <DataTablePagination meta={meta} onPageChange={onPageChange} />
     </div>

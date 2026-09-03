@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 
-import { PageHeader } from "@/components/shared/data-table";
+import { BackLink } from "@/components/shared/back-link";
 import { Field, fieldAria } from "@/components/shared/field";
 import { FormShell } from "@/components/shared/form-shell";
 import { Input } from "@/components/ui/input";
@@ -69,16 +69,7 @@ export function SubjectFormContainer({ subject }: { subject?: Subject }) {
 
   return (
     <div className="grid max-w-3xl gap-6">
-      <PageHeader
-        backHref={LIST_HREF}
-        backLabel="Danh sách môn học"
-        title={subject === undefined ? "Thêm môn học" : "Sửa môn học"}
-        description={
-          subject === undefined
-            ? "Môn học mới sẽ ở trạng thái đang mở và chọn được ngay khi tạo lớp."
-            : "Việc khóa hoặc mở môn học được thực hiện ở danh sách môn học."
-        }
-      />
+      <BackLink href={LIST_HREF} label="Danh sách môn học" />
 
       <FormShell
         onSubmit={onSubmit}

@@ -4,7 +4,14 @@ import { ApiClientError } from "./api-client-error";
 import type { Page } from "./contracts";
 import { parseApiListResponse, parseApiResponse } from "./parse-api-response";
 
-/** Request options accepted by the same-origin browser request helper. */
+/**
+ * Origin the API is served from, without a trailing slash. The API lives on its own
+ * subdomain, so the browser needs an absolute origin; an empty value leaves every
+ * path relative for a deployment that puts the API behind this app's own origin.
+ */
+const API_ORIGIN = (process.env.NEXT_PUBLIC_API_ORIGIN ?? "").replace(/\/+$/, "");
+
+/** Request options accepted by the browser request helper. */
 type BrowserRequestInit = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
@@ -12,9 +19,9 @@ type BrowserRequestInit = {
 };
 
 /**
- * Calls a same-origin BFF route and returns its unwrapped payload. The helper
- * knows nothing about tokens, credentials, or environment configuration; the
- * browser attaches the session cookie itself because the request is same-origin.
+ * Calls the API and returns its unwrapped payload. The helper knows nothing about
+ * tokens; the browser attaches the HttpOnly session cookie itself, which it will do
+ * cross-origin only because the API allows credentials for this exact origin.
  */
 export async function browserRequest<T>(
   path: string,
@@ -26,8 +33,8 @@ export async function browserRequest<T>(
 }
 
 /**
- * Calls a same-origin BFF route that answers with a paginated list, returning the
- * rows together with the paging state the list screen needs to render its pager.
+ * Calls an API endpoint that answers with a paginated list, returning the rows
+ * together with the paging state the list screen needs for its pager.
  */
 export async function browserRequestList<T>(
   path: string,
@@ -48,17 +55,22 @@ async function sendBrowserRequest(
 ): Promise<AxiosResponse<unknown>> {
   try {
     return await axios.request<unknown>({
+      baseURL: API_ORIGIN,
       url: path,
       method: init.method ?? "GET",
       data: init.body,
       params: init.params,
       headers: { Accept: "application/json" },
+      // XHR omits cookies unless credentials are requested, and the session cookie
+      // is the only thing authenticating this call. Cross-origin this also makes the
+      // browser require the API to name this origin and allow credentials.
+      withCredentials: true,
       // Every status resolves here instead of axios throwing, so failure
       // handling can reuse the same envelope parsing as a success.
       validateStatus: () => true,
     });
   } catch {
-    // A rejected request means the route was never reached; report it as a
+    // A rejected request means the API was never reached; report it as a
     // service failure without echoing the request or its body.
     throw ApiClientError.serviceUnavailable();
   }

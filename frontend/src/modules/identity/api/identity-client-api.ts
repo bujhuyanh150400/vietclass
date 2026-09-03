@@ -1,40 +1,45 @@
 import { ApiClientError } from "@/lib/api/api-client-error";
 import { browserRequest } from "@/lib/api/browser-request";
 
-import type { CurrentUser, LoginCredentials } from "../types/auth";
+import type { CurrentUser, LoginCredentials, LoginResponse } from "../types/auth";
+
+/** Every identity call goes straight to the Laravel API on this app's own origin. */
+const BASE = "/api/v1/auth";
 
 /**
- * Submits credentials to the same-origin login route and returns the resulting
- * identity. The bearer token stays in the HttpOnly cookie the route sets, so it
- * never becomes part of this result.
+ * Submits credentials to Laravel and returns the resulting identity. Laravel puts
+ * the bearer token in an HttpOnly cookie the browser cannot read; the copy it also
+ * returns in the body is there for non-browser clients and is dropped here.
  */
-export function login(credentials: LoginCredentials): Promise<CurrentUser> {
-  return browserRequest<CurrentUser>("/api/auth/login", {
+export async function login(credentials: LoginCredentials): Promise<CurrentUser> {
+  const payload = await browserRequest<LoginResponse>(`${BASE}/login`, {
     method: "POST",
     body: credentials,
   });
+
+  return payload.user;
 }
 
 /**
  * Recovers the identity behind the existing session cookie, which is how the
  * browser learns whether a stored session is still usable.
  */
-export function getCurrentUser(): Promise<CurrentUser> {
-  return browserRequest<CurrentUser>("/api/auth/session", { method: "GET" });
+export async function getCurrentUser(): Promise<CurrentUser> {
+  return browserRequest<CurrentUser>(`${BASE}/me`, { method: "GET" });
 }
 
 /**
- * Ends the browser session through the same-origin logout route, which revokes
- * the Laravel token and clears the session cookie. Only a no-content success
- * counts, so an unexpected response body is not mistaken for a completed logout.
+ * Ends the browser session: Laravel revokes the token behind the cookie and clears
+ * the cookie itself. Only a no-content success counts, so an unexpected response
+ * body is not mistaken for a completed logout.
  */
 export async function logout(): Promise<void> {
-  const result = await browserRequest<undefined>("/api/auth/logout", {
-    method: "POST",
+  const result = await browserRequest<undefined>(`${BASE}/logout`, {
+    method: "DELETE",
   });
 
   // Response parsing yields `undefined` only for a `204`; any other success
-  // shape means the route did not complete the logout it promised.
+  // shape means Laravel did not complete the logout it promised.
   if (result !== undefined) {
     throw ApiClientError.upstreamFailure();
   }

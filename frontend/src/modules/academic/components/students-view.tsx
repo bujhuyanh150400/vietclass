@@ -6,8 +6,7 @@ import { MoreHorizontal, Plus } from "lucide-react";
 import {
   DataTable,
   DataTablePagination,
-  DataTableToolbar,
-  PageHeader,
+  EmptyState,
   type DataTableColumn,
   type DataTableState,
 } from "@/components/shared/data-table";
@@ -19,10 +18,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { PageMeta } from "@/lib/api/contracts";
 
 import type { Student, StudentStatus } from "../types/academic";
 import { GRADE_LEVEL_LABELS, STUDENT_STATUS_LABELS } from "../utils/labels";
+import { STUDENT_TABLE_PAGE_SIZES, type StudentFilterState, type StudentListSort, type StudentListView } from "../utils/student-list-controls";
+import { StudentGrid } from "./student-grid";
+import { StudentListToolbar } from "./student-list-toolbar";
 
 /** How each study status is coloured, so the list reads at a glance. */
 const STATUS_VARIANT: Record<StudentStatus, "default" | "secondary" | "destructive"> = {
@@ -36,7 +45,20 @@ export type StudentsViewProps = {
   state: DataTableState<Student>;
   meta: PageMeta;
   search: string;
+  filters: StudentFilterState;
+  filterCount: number;
+  sort: StudentListSort;
+  view: StudentListView;
+  tablePageSize: number;
   onSearchChange: (value: string) => void;
+  onToggleGradeLevel: (gradeLevel: Student["grade_level"]) => void;
+  onToggleStatus: (status: StudentStatus) => void;
+  onAccountActiveChange: (isActive: boolean | null) => void;
+  onClearFilters: () => void;
+  onSortChange: (sort: StudentListSort) => void;
+  onViewChange: (view: StudentListView) => void;
+  onTablePageSizeChange: (pageSize: number) => void;
+  onClearConditions: () => void;
   onPageChange: (page: number) => void;
   onToggleAccount: (student: Student) => void;
   onChangePassword: (student: Student) => void;
@@ -54,7 +76,20 @@ export function StudentsView({
   state,
   meta,
   search,
+  filters,
+  filterCount,
+  sort,
+  view,
+  tablePageSize,
   onSearchChange,
+  onToggleGradeLevel,
+  onToggleStatus,
+  onAccountActiveChange,
+  onClearFilters,
+  onSortChange,
+  onViewChange,
+  onTablePageSizeChange,
+  onClearConditions,
   onPageChange,
   onToggleAccount,
   onChangePassword,
@@ -140,31 +175,97 @@ export function StudentsView({
     },
   ];
 
-  return (
-    <div className="grid gap-6">
-      <PageHeader
-        title="Học sinh"
-        description="Hồ sơ học sinh, thông tin phụ huynh và tài khoản đăng nhập."
+  const hasQuery = search !== "" || filterCount > 0;
+
+  // Nothing has ever been added yet, and no search or filter is even in play — the
+  // toolbar and table would only frame an empty table, so the empty state takes
+  // over the whole screen instead of sitting inside it.
+  if (state.kind === "empty" && !hasQuery) {
+    return (
+      <EmptyState
+        title="Chưa có học sinh nào."
+        description="Thêm học sinh đầu tiên để bắt đầu quản lý lớp học."
+        image="/images/empty_1.png"
         action={
-          <Button asChild>
+          <Button asChild size="sm">
             <Link href="/academic/students/new">
               <Plus aria-hidden="true" />
               Thêm học sinh
             </Link>
           </Button>
         }
+        className="min-h-[50svh] content-center"
       />
+    );
+  }
 
-      <DataTableToolbar
+  // Past that point, an empty result means the current search or filters rule
+  // everything out — the toolbar stays, since clearing a condition is the way out.
+  const listState: DataTableState<Student> =
+    state.kind === "empty"
+      ? {
+          kind: "empty",
+          message: "Không tìm thấy học sinh nào khớp.",
+          description: "Thử đổi từ khóa hoặc bỏ bớt điều kiện đang áp dụng.",
+          image: "/images/empty_2.png",
+          action: (
+            <Button type="button" variant="outline" size="sm" onClick={onClearConditions}>
+              Xóa điều kiện
+            </Button>
+          ),
+        }
+      : state;
+
+  return (
+    <div className="grid gap-4">
+      <div className="flex justify-end">
+        <Button asChild>
+          <Link href="/academic/students/new">
+            <Plus aria-hidden="true" />
+            Thêm học sinh
+          </Link>
+        </Button>
+      </div>
+
+      <StudentListToolbar
         search={search}
         onSearchChange={onSearchChange}
-        searchLabel="Tìm kiếm"
-        searchPlaceholder="Tên học sinh, phụ huynh, số điện thoại hoặc tên đăng nhập"
+        filters={filters}
+        filterCount={filterCount}
+        sort={sort}
+        view={view}
+        onToggleGradeLevel={onToggleGradeLevel}
+        onToggleStatus={onToggleStatus}
+        onAccountActiveChange={onAccountActiveChange}
+        onClearFilters={onClearFilters}
+        onSortChange={onSortChange}
+        onViewChange={onViewChange}
+        onClearConditions={onClearConditions}
       />
 
-      <DataTable columns={columns} state={state} rowKey={(student) => student.id} />
+      {view === "table" ? (
+        <DataTable columns={columns} state={listState} rowKey={(student) => student.id} />
+      ) : (
+        <StudentGrid state={listState} onToggleAccount={onToggleAccount} onChangePassword={onChangePassword} />
+      )}
 
-      <DataTablePagination meta={meta} onPageChange={onPageChange} />
+      <div className="grid gap-3">
+        {view === "table" ? (
+          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+            <span>Hiển thị</span>
+            <Select value={String(tablePageSize)} onValueChange={(value) => onTablePageSizeChange(Number(value))}>
+              <SelectTrigger size="sm" className="w-[76px]"><SelectValue /></SelectTrigger>
+              <SelectContent align="end">
+                {STUDENT_TABLE_PAGE_SIZES.map((pageSize) => (
+                  <SelectItem key={pageSize} value={String(pageSize)}>{pageSize}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span>mục / trang</span>
+          </div>
+        ) : null}
+        <DataTablePagination meta={meta} onPageChange={onPageChange} />
+      </div>
     </div>
   );
 }

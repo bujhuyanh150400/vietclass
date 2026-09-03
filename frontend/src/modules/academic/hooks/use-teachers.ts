@@ -12,15 +12,20 @@ import {
   fetchTeachers,
   setTeacherAccountActive,
   updateTeacher,
-} from "../api/academic-client-api";
+  type TeacherListParams,
+} from "../api";
 import { academicQueryKeys } from "./academic-query-keys";
 import type { Option, Teacher } from "../types/academic";
+import type {
+  CreateTeacherRequest,
+  UpdateTeacherRequest,
+} from "../types/academic-requests";
 
 /**
  * Loads the teacher list for the current search and page.
  */
 export function useTeacherList(): ResourceListViewModel<Teacher> {
-  return useResourceList<Teacher>({
+  return useResourceList<Teacher, TeacherListParams>({
     queryKey: academicQueryKeys.teachers.list,
     fetcher: fetchTeachers,
     emptyMessage: "Chưa có giáo viên nào khớp với tìm kiếm.",
@@ -57,7 +62,7 @@ export function useCreateTeacher() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: unknown) => createTeacher(body),
+    mutationFn: (body: CreateTeacherRequest) => createTeacher(body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.teachers.root() });
     },
@@ -71,7 +76,7 @@ export function useUpdateTeacher(id: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: unknown) => updateTeacher(id, body),
+    mutationFn: (body: UpdateTeacherRequest) => updateTeacher(id, body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.teachers.root() });
     },

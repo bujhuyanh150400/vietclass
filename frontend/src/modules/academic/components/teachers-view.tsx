@@ -7,7 +7,7 @@ import {
   DataTable,
   DataTablePagination,
   DataTableToolbar,
-  PageHeader,
+  EmptyState,
   type DataTableColumn,
   type DataTableState,
 } from "@/components/shared/data-table";
@@ -133,20 +133,57 @@ export function TeachersView({
     },
   ];
 
-  return (
-    <div className="grid gap-6">
-      <PageHeader
-        title="Giáo viên"
-        description="Hồ sơ giáo viên và tài khoản đăng nhập đi kèm."
+  const hasQuery = search !== "";
+
+  // Nothing has ever been added yet, and no search is even in play — the toolbar
+  // and table would only frame an empty table, so the empty state takes over the
+  // whole screen instead of sitting inside it.
+  if (state.kind === "empty" && !hasQuery) {
+    return (
+      <EmptyState
+        title="Chưa có giáo viên nào."
+        description="Thêm giáo viên đầu tiên để phân công lớp."
+        image="/images/empty_1.png"
         action={
-          <Button asChild>
+          <Button asChild size="sm">
             <Link href="/academic/teachers/new">
               <Plus aria-hidden="true" />
               Thêm giáo viên
             </Link>
           </Button>
         }
+        className="min-h-[50svh] content-center"
       />
+    );
+  }
+
+  // Past that point, an empty result means the current search rules everything
+  // out — the toolbar stays, since clearing it is the way out.
+  const listState: DataTableState<Teacher> =
+    state.kind === "empty"
+      ? {
+          kind: "empty",
+          message: "Không tìm thấy giáo viên nào khớp.",
+          description: "Thử đổi từ khóa tìm kiếm.",
+          image: "/images/empty_2.png",
+          action: (
+            <Button type="button" variant="outline" size="sm" onClick={() => onSearchChange("")}>
+              Xóa tìm kiếm
+            </Button>
+          ),
+        }
+      : state;
+
+  return (
+    <div className="grid gap-6">
+      <div className="flex justify-end">
+        <Button asChild>
+          <Link href="/academic/teachers/new">
+            <Plus aria-hidden="true" />
+            Thêm giáo viên
+          </Link>
+        </Button>
+      </div>
 
       <DataTableToolbar
         search={search}
@@ -155,7 +192,7 @@ export function TeachersView({
         searchPlaceholder="Tên, số điện thoại, email hoặc tên đăng nhập"
       />
 
-      <DataTable columns={columns} state={state} rowKey={(teacher) => teacher.id} />
+      <DataTable columns={columns} state={listState} rowKey={(teacher) => teacher.id} />
 
       <DataTablePagination meta={meta} onPageChange={onPageChange} />
     </div>

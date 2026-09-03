@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Controller } from "react-hook-form";
 
 import { AsyncSelectField } from "@/components/shared/async-select-field";
-import { PageHeader } from "@/components/shared/data-table";
+import { BackLink } from "@/components/shared/back-link";
 import { DateField } from "@/components/shared/date-field";
 import { Field, fieldAria } from "@/components/shared/field";
 import { FormShell } from "@/components/shared/form-shell";
@@ -114,16 +114,7 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
 
   return (
     <div className="grid max-w-3xl gap-6">
-      <PageHeader
-        backHref={LIST_HREF}
-        backLabel="Danh sách lớp học"
-        title={isEditing ? "Sửa lớp học" : "Thêm lớp học"}
-        description={
-          isEditing
-            ? "Mã lớp và ngày khai giảng không đổi được sau khi tạo."
-            : "Chỉ chọn được môn học đang mở và giáo viên đang làm việc."
-        }
-      />
+      <BackLink href={LIST_HREF} label="Danh sách lớp học" />
 
       <FormShell
         onSubmit={onSubmit}

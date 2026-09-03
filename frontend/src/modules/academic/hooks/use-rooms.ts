@@ -12,15 +12,17 @@ import {
   fetchRoomOptions,
   fetchRooms,
   updateRoom,
-} from "../api/academic-client-api";
+  type RoomListParams,
+} from "../api";
 import { academicQueryKeys } from "./academic-query-keys";
 import type { Option, Room, RoomStatus } from "../types/academic";
+import type { RoomRequest } from "../types/academic-requests";
 
 /**
  * Loads the room list for the current search, page, and optional availability filter.
  */
 export function useRoomList(status?: RoomStatus): ResourceListViewModel<Room> {
-  return useResourceList<Room>({
+  return useResourceList<Room, RoomListParams>({
     queryKey: academicQueryKeys.rooms.list,
     fetcher: fetchRooms,
     emptyMessage: "Chưa có phòng học nào khớp với tìm kiếm.",
@@ -55,7 +57,7 @@ export function useCreateRoom() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: unknown) => createRoom(body),
+    mutationFn: (body: RoomRequest) => createRoom(body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.rooms.root() });
     },
@@ -69,7 +71,7 @@ export function useUpdateRoom(id: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: unknown) => updateRoom(id, body),
+    mutationFn: (body: RoomRequest) => updateRoom(id, body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.rooms.root() });
     },

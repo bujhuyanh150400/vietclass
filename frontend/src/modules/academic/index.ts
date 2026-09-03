@@ -15,6 +15,21 @@ export type {
   TeacherStatus,
 } from "./types/academic";
 
+export type {
+  CreateClassRequest,
+  CreateStudentRequest,
+  CreateTeacherRequest,
+  EnrolStudentsRequest,
+  LeaveClassRequest,
+  RoomRequest,
+  SubjectRequest,
+  TransferEnrollmentRequest,
+  UpdateClassRequest,
+  UpdateEnrollmentRequest,
+  UpdateStudentRequest,
+  UpdateTeacherRequest,
+} from "./types/academic-requests";
+
 export {
   CLASS_STATUS_LABELS,
   GENDER_LABELS,

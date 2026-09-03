@@ -147,6 +147,15 @@ test('the student list is paginated and searchable across profile and guardian',
     $this->getJson('/api/v1/students?q=hs_chau')->assertOk()->assertJsonPath('meta.total', 1);
 });
 
+test('the student list accepts the table page sizes exposed by the interface', function () {
+    $this->getJson('/api/v1/students?per_page=200')
+        ->assertOk()
+        ->assertJsonPath('meta.per_page', 200);
+
+    $this->getJson('/api/v1/students?per_page=201')
+        ->assertJsonValidationErrorFor('per_page');
+});
+
 test('the student list filters by study status, grade, and account state', function () {
     // `grade_level` is pinned on every student here, not just the one the grade
     // filter targets: `StudentProfileFactory` randomises it across 13 grades, and an

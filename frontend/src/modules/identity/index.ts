@@ -1,7 +1,6 @@
 export type {
   CurrentUser,
   LoginCredentials,
-  LoginResult,
   UserRole,
 } from "./types/auth";
 

@@ -33,6 +33,11 @@ import {
   type TransferValues,
 } from "../schemas/academic-form-schema";
 import type { Enrollment } from "../types/academic";
+import type {
+  LeaveClassRequest,
+  TransferEnrollmentRequest,
+  UpdateEnrollmentRequest,
+} from "../types/academic-requests";
 
 /** Today, as the API writes dates. */
 function today(): string {
@@ -53,7 +58,7 @@ export function EditEnrollmentDialog({
 }: {
   enrollment: Enrollment;
   onClose: () => void;
-  submit: (body: unknown) => Promise<unknown>;
+  submit: (body: UpdateEnrollmentRequest) => Promise<Enrollment>;
 }) {
   const { form, onSubmit, alertMessage, isSubmitting } = useResourceForm<
     EnrollmentUpdateInput,
@@ -143,7 +148,7 @@ export function TransferEnrollmentDialog({
 }: {
   enrollment: Enrollment;
   onClose: () => void;
-  submit: (body: unknown) => Promise<unknown>;
+  submit: (body: TransferEnrollmentRequest) => Promise<Enrollment>;
 }) {
   const { form, onSubmit, alertMessage, isSubmitting } = useResourceForm<
     TransferInput,
@@ -233,7 +238,7 @@ export function LeaveClassDialog({
 }: {
   enrollment: Enrollment;
   onClose: () => void;
-  submit: (body: unknown) => Promise<unknown>;
+  submit: (body: LeaveClassRequest) => Promise<Enrollment>;
 }) {
   const { form, onSubmit, alertMessage, isSubmitting } = useResourceForm<
     LeaveInput,

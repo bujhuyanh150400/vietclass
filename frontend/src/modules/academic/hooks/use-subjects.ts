@@ -12,15 +12,17 @@ import {
   fetchSubjects,
   setSubjectActive,
   updateSubject,
-} from "../api/academic-client-api";
+  type SubjectListParams,
+} from "../api";
 import { academicQueryKeys } from "./academic-query-keys";
 import type { Option, Subject } from "../types/academic";
+import type { SubjectRequest } from "../types/academic-requests";
 
 /**
  * Loads the subject list for the current search and page.
  */
 export function useSubjectList(): ResourceListViewModel<Subject> {
-  return useResourceList<Subject>({
+  return useResourceList<Subject, SubjectListParams>({
     queryKey: academicQueryKeys.subjects.list,
     fetcher: fetchSubjects,
     emptyMessage: "Chưa có môn học nào khớp với tìm kiếm.",
@@ -57,7 +59,7 @@ export function useCreateSubject() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: unknown) => createSubject(body),
+    mutationFn: (body: SubjectRequest) => createSubject(body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.subjects.root() });
     },
@@ -71,7 +73,7 @@ export function useUpdateSubject(id: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: unknown) => updateSubject(id, body),
+    mutationFn: (body: SubjectRequest) => updateSubject(id, body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.subjects.root() });
     },

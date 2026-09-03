@@ -11,16 +11,24 @@ import {
   leaveClass,
   transferEnrollment,
   updateEnrollment,
-} from "../api/academic-client-api";
+  type EnrollmentListParams,
+  type StudentListParams,
+} from "../api";
 import { academicQueryKeys } from "./academic-query-keys";
 import type { Enrollment, Student } from "../types/academic";
+import type {
+  EnrolStudentsRequest,
+  LeaveClassRequest,
+  TransferEnrollmentRequest,
+  UpdateEnrollmentRequest,
+} from "../types/academic-requests";
 
 /**
  * Loads one class roster for the current search and page, including the periods
  * students have already left.
  */
 export function useEnrollmentList(classId: number): ResourceListViewModel<Enrollment> {
-  return useResourceList<Enrollment>({
+  return useResourceList<Enrollment, EnrollmentListParams>({
     queryKey: (params) => academicQueryKeys.enrollments.list(classId, params),
     fetcher: (params) => fetchEnrollments(classId, params),
     emptyMessage: "Lớp chưa có học sinh nào.",
@@ -34,7 +42,7 @@ export function useEnrollmentList(classId: number): ResourceListViewModel<Enroll
  * a dialog while the roster stays where it was underneath.
  */
 export function useAvailableStudents(classId: number, search: string, page: number) {
-  const params = { q: search, page, per_page: 10 };
+  const params: StudentListParams = { q: search, page, per_page: 10 };
 
   return useQuery({
     queryKey: academicQueryKeys.enrollments.available(classId, params),
@@ -60,8 +68,8 @@ function useEnrollmentInvalidation() {
 export function useEnrolStudents(classId: number) {
   const invalidate = useEnrollmentInvalidation();
 
-  return useMutation<Enrollment[], unknown, unknown>({
-    mutationFn: (body: unknown) => enrolStudents(classId, body),
+  return useMutation({
+    mutationFn: (body: EnrolStudentsRequest) => enrolStudents(classId, body),
     onSuccess: invalidate,
   });
 }
@@ -73,7 +81,8 @@ export function useUpdateEnrollment() {
   const invalidate = useEnrollmentInvalidation();
 
   return useMutation({
-    mutationFn: ({ id, body }: { id: number; body: unknown }) => updateEnrollment(id, body),
+    mutationFn: ({ id, body }: { id: number; body: UpdateEnrollmentRequest }) =>
+      updateEnrollment(id, body),
     onSuccess: invalidate,
   });
 }
@@ -85,7 +94,8 @@ export function useTransferEnrollment() {
   const invalidate = useEnrollmentInvalidation();
 
   return useMutation({
-    mutationFn: ({ id, body }: { id: number; body: unknown }) => transferEnrollment(id, body),
+    mutationFn: ({ id, body }: { id: number; body: TransferEnrollmentRequest }) =>
+      transferEnrollment(id, body),
     onSuccess: invalidate,
   });
 }
@@ -97,7 +107,7 @@ export function useLeaveClass() {
   const invalidate = useEnrollmentInvalidation();
 
   return useMutation({
-    mutationFn: ({ id, body }: { id: number; body: unknown }) => leaveClass(id, body),
+    mutationFn: ({ id, body }: { id: number; body: LeaveClassRequest }) => leaveClass(id, body),
     onSuccess: invalidate,
   });
 }

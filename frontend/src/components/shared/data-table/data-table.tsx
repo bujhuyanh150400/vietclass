@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils/index";
+
+import { EmptyState } from "./empty-state";
 
 /** One column of a data table: how to head it and how to render a row's cell. */
 export type DataTableColumn<TRow> = {
@@ -26,7 +29,14 @@ export type DataTableColumn<TRow> = {
 export type DataTableState<TRow> =
   | { kind: "loading" }
   | { kind: "error"; message: string; onRetry?: () => void }
-  | { kind: "empty"; message: string }
+  | {
+      kind: "empty";
+      message: string;
+      description?: string;
+      icon?: LucideIcon;
+      image?: string;
+      action?: ReactNode;
+    }
   | { kind: "content"; rows: TRow[] };
 
 /**
@@ -49,6 +59,24 @@ export function DataTable<TRow>({
   onRowClick?: (row: TRow) => void;
   skeletonRows?: number;
 }) {
+  // Empty has no row shape to preserve, so it replaces the table outright — the
+  // header would only repeat the "there's nothing here" message the row used to
+  // carry, taking up space without saying anything new.
+  if (state.kind === "empty") {
+    return (
+      <div className="rounded-lg border bg-card">
+        <EmptyState
+          title={state.message}
+          description={state.description}
+          icon={state.icon}
+          image={state.image}
+          action={state.action}
+          className="py-16"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-lg border bg-card">
       <Table>
@@ -69,7 +97,7 @@ export function DataTable<TRow>({
             <DataTableSkeletonRows columns={columns} rows={skeletonRows} />
           ) : null}
 
-          {state.kind !== "loading" && state.kind !== "content" ? (
+          {state.kind === "error" ? (
             <TableRow className="hover:bg-transparent">
               <TableCell colSpan={columns.length} className="h-40 text-center align-middle">
                 <DataTableMessage state={state} />
@@ -130,19 +158,12 @@ function DataTableSkeletonRows<TRow>({
   );
 }
 
-/**
- * Explains why a table has no rows: either nothing matched, or the request failed
- * and can be tried again.
- */
+/** Explains why the request failed and offers a retry, when one is available. */
 function DataTableMessage<TRow>({
   state,
 }: {
-  state: Exclude<DataTableState<TRow>, { kind: "loading" } | { kind: "content" }>;
+  state: Extract<DataTableState<TRow>, { kind: "error" }>;
 }) {
-  if (state.kind === "empty") {
-    return <p className="text-sm text-muted-foreground">{state.message}</p>;
-  }
-
   return (
     <div className="grid justify-items-center gap-3">
       <p className="text-sm text-muted-foreground">{state.message}</p>

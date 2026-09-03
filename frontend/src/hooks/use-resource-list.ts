@@ -29,19 +29,21 @@ export type ResourceListViewModel<TRow> = {
  * A previous page stays on screen while the next one loads, which stops the table
  * from collapsing to a skeleton every time a filter changes.
  */
-export function useResourceList<TRow>({
+export function useResourceList<TRow, TParams extends object = Record<string, string | number>>({
   queryKey,
   fetcher,
   emptyMessage,
   extraParams,
+  perPage,
 }: {
-  queryKey: (params: Record<string, string | number>) => readonly unknown[];
-  fetcher: (params: Record<string, string | number>) => Promise<Page<TRow>>;
+  queryKey: (params: TParams) => readonly unknown[];
+  fetcher: (params: TParams) => Promise<Page<TRow>>;
   emptyMessage: string;
-  extraParams?: Record<string, string | number>;
+  extraParams?: Partial<TParams>;
+  perPage?: number;
 }): ResourceListViewModel<TRow> {
-  const listQuery = useListQuery();
-  const params = { ...listQuery.params, ...extraParams };
+  const listQuery = useListQuery(perPage);
+  const params = { ...listQuery.params, ...extraParams } as TParams;
 
   const query = useQuery({
     queryKey: queryKey(params),

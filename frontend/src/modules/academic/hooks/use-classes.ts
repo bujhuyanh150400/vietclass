@@ -11,15 +11,20 @@ import {
   fetchClassOptions,
   fetchClasses,
   updateClass,
-} from "../api/academic-client-api";
+  type ClassListParams,
+} from "../api";
 import { academicQueryKeys } from "./academic-query-keys";
-import type { Option, SchoolClass } from "../types/academic";
+import type { ClassStatus, Option, SchoolClass } from "../types/academic";
+import type {
+  CreateClassRequest,
+  UpdateClassRequest,
+} from "../types/academic-requests";
 
 /**
  * Loads the class list for the current search and page.
  */
 export function useClassList(): ResourceListViewModel<SchoolClass> {
-  return useResourceList<SchoolClass>({
+  return useResourceList<SchoolClass, ClassListParams>({
     queryKey: academicQueryKeys.classes.list,
     fetcher: fetchClasses,
     emptyMessage: "Chưa có lớp học nào khớp với tìm kiếm.",
@@ -56,7 +61,7 @@ export function useCreateClass() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: unknown) => createClass(body),
+    mutationFn: (body: CreateClassRequest) => createClass(body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.classes.root() });
       // A new class changes how many running classes teach its subject, which is
@@ -73,7 +78,7 @@ export function useUpdateClass(id: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: unknown) => updateClass(id, body),
+    mutationFn: (body: UpdateClassRequest) => updateClass(id, body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.classes.root() });
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.subjects.root() });
@@ -92,7 +97,7 @@ export function useChangeClassStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, status }: { id: number; status: number }) =>
+    mutationFn: ({ id, status }: { id: number; status: ClassStatus }) =>
       changeClassStatus(id, status),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.classes.root() });

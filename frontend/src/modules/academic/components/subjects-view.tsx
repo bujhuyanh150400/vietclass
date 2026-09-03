@@ -7,7 +7,7 @@ import {
   DataTable,
   DataTablePagination,
   DataTableToolbar,
-  PageHeader,
+  EmptyState,
   type DataTableColumn,
   type DataTableState,
 } from "@/components/shared/data-table";
@@ -112,20 +112,57 @@ export function SubjectsView({
     },
   ];
 
-  return (
-    <div className="grid gap-6">
-      <PageHeader
-        title="Môn học"
-        description="Danh mục môn học dùng để mở lớp."
+  const hasQuery = search !== "";
+
+  // Nothing has ever been added yet, and no search is even in play — the toolbar
+  // and table would only frame an empty table, so the empty state takes over the
+  // whole screen instead of sitting inside it.
+  if (state.kind === "empty" && !hasQuery) {
+    return (
+      <EmptyState
+        title="Chưa có môn học nào."
+        description="Thêm môn học đầu tiên để mở lớp."
+        image="/images/empty_1.png"
         action={
-          <Button asChild>
+          <Button asChild size="sm">
             <Link href="/academic/subjects/new">
               <Plus aria-hidden="true" />
               Thêm môn học
             </Link>
           </Button>
         }
+        className="min-h-[50svh] content-center"
       />
+    );
+  }
+
+  // Past that point, an empty result means the current search rules everything
+  // out — the toolbar stays, since clearing it is the way out.
+  const listState: DataTableState<Subject> =
+    state.kind === "empty"
+      ? {
+          kind: "empty",
+          message: "Không tìm thấy môn học nào khớp.",
+          description: "Thử đổi từ khóa tìm kiếm.",
+          image: "/images/empty_2.png",
+          action: (
+            <Button type="button" variant="outline" size="sm" onClick={() => onSearchChange("")}>
+              Xóa tìm kiếm
+            </Button>
+          ),
+        }
+      : state;
+
+  return (
+    <div className="grid gap-6">
+      <div className="flex justify-end">
+        <Button asChild>
+          <Link href="/academic/subjects/new">
+            <Plus aria-hidden="true" />
+            Thêm môn học
+          </Link>
+        </Button>
+      </div>
 
       <DataTableToolbar
         search={search}
@@ -134,7 +171,7 @@ export function SubjectsView({
         searchPlaceholder="Tên môn học"
       />
 
-      <DataTable columns={columns} state={state} rowKey={(subject) => subject.id} />
+      <DataTable columns={columns} state={listState} rowKey={(subject) => subject.id} />
 
       <DataTablePagination meta={meta} onPageChange={onPageChange} />
     </div>

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Controller } from "react-hook-form";
 
-import { PageHeader } from "@/components/shared/data-table";
+import { BackLink } from "@/components/shared/back-link";
 import { DateField } from "@/components/shared/date-field";
 import { Field, fieldAria } from "@/components/shared/field";
 import { FormShell } from "@/components/shared/form-shell";
@@ -124,16 +124,7 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
 
   return (
     <div className="grid max-w-3xl gap-6">
-      <PageHeader
-        backHref={LIST_HREF}
-        backLabel="Danh sách giáo viên"
-        title={isEditing ? "Sửa hồ sơ giáo viên" : "Thêm giáo viên"}
-        description={
-          isEditing
-            ? "Tên đăng nhập không đổi được. Đổi mật khẩu ở danh sách giáo viên."
-            : "Tạo hồ sơ giáo viên và tài khoản đăng nhập đi kèm."
-        }
-      />
+      <BackLink href={LIST_HREF} label="Danh sách giáo viên" />
 
       <FormShell
         onSubmit={onSubmit}

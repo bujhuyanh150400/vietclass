@@ -15,6 +15,10 @@ import { Card, CardContent } from "@/components/ui/card";
  * The message is announced politely so a refusal reaches a screen reader without
  * interrupting whatever it is reading.
  *
+ * `bare` skips the single default Card and its two-column grid, for a form that
+ * groups its own fields into several — the children sit directly in the form's
+ * own gap, ahead of the same submit and cancel row every screen gets.
+ *
  * Presentational: it holds no form state of its own.
  */
 export function FormShell({
@@ -23,6 +27,7 @@ export function FormShell({
   isSubmitting,
   submitLabel,
   cancelHref,
+  bare = false,
   children,
 }: {
   onSubmit: (event?: BaseSyntheticEvent) => Promise<void>;
@@ -30,6 +35,7 @@ export function FormShell({
   isSubmitting: boolean;
   submitLabel: string;
   cancelHref: string;
+  bare?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -40,9 +46,13 @@ export function FormShell({
         </Alert>
       )}
 
-      <Card>
-        <CardContent className="grid gap-5 sm:grid-cols-2">{children}</CardContent>
-      </Card>
+      {bare ? (
+        children
+      ) : (
+        <Card>
+          <CardContent className="grid gap-5 sm:grid-cols-2">{children}</CardContent>
+        </Card>
+      )}
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={isSubmitting}>

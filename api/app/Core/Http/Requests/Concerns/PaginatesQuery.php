@@ -28,7 +28,7 @@ trait PaginatesQuery
         return [
             'q' => ['sometimes', 'nullable', 'string', 'max:100'],
             'page' => ['sometimes', 'integer', 'min:1'],
-            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:200'],
             'sort' => ['sometimes', 'string', Rule::in($this->sortableColumns())],
             'direction' => ['sometimes', 'string', Rule::in(['asc', 'desc'])],
         ];

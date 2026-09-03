@@ -71,7 +71,20 @@ export function StudentsContainer() {
         state={list.state}
         meta={list.meta}
         search={list.query.q}
+        filters={list.filters}
+        filterCount={list.filterCount}
+        sort={list.sort}
+        view={list.view}
+        tablePageSize={list.tablePageSize}
         onSearchChange={list.query.setSearch}
+        onToggleGradeLevel={list.toggleGradeLevel}
+        onToggleStatus={list.toggleStatus}
+        onAccountActiveChange={list.setAccountActive}
+        onClearFilters={list.clearFilters}
+        onSortChange={list.setSort}
+        onViewChange={list.setView}
+        onTablePageSizeChange={list.setTablePageSize}
+        onClearConditions={list.clearConditions}
         onPageChange={list.query.setPage}
         onToggleAccount={(student) => {
           setActionError(null);
