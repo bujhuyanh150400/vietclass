@@ -3,11 +3,17 @@
 namespace App\Modules\Identity\Actions;
 
 use App\Core\Data\ActionResult;
+use App\Core\Exceptions\ActionError;
+use App\Modules\FileManagement\Enums\FileError;
+use App\Modules\FileManagement\Enums\FileLinkType;
+use App\Modules\FileManagement\Repositories\FileLinkRepository;
+use App\Modules\FileManagement\Services\FileUploader;
 use App\Modules\Identity\Enums\GuardianRelationship;
 use App\Modules\Identity\Enums\IdentityError;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\Profile;
 use App\Modules\Identity\Models\StudentProfile;
+use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Repositories\ProfileRepository;
 use App\Modules\Identity\Repositories\StudentGuardianRepository;
 use App\Modules\Identity\Repositories\StudentRepository;
@@ -31,6 +37,8 @@ final class CreateStudentAction
         private readonly ProfileRepository $profiles,
         private readonly StudentGuardianRepository $guardians,
         private readonly UserRepository $users,
+        private readonly FileUploader $fileUploader,
+        private readonly FileLinkRepository $fileLinks,
     ) {}
 
     /**
@@ -44,39 +52,77 @@ final class CreateStudentAction
      * entered from two forms resolve to one guardian profile instead of two.
      *
      * @param  array<string, mixed>  $attributes
-     * @return ActionResult<StudentProfile, IdentityError>
+     * @return ActionResult<StudentProfile, IdentityError|FileError>
      */
     public function handle(array $attributes): ActionResult
     {
-        $student = DB::transaction(function () use ($attributes): StudentProfile {
-            $user = $this->users->createAccount(
-                username: (string) $attributes['username'],
-                password: (string) $attributes['password'],
-                role: UserRole::Student,
+        try {
+            $student = DB::transaction(function () use ($attributes): StudentProfile {
+                $user = $this->users->createAccount(
+                    username: (string) $attributes['username'],
+                    password: (string) $attributes['password'],
+                    role: UserRole::Student,
+                );
+
+                $guardianProfile = $this->resolveGuardianProfile($attributes);
+
+                $profile = $this->profiles->create([
+                    ...Arr::only($attributes, self::PROFILE_KEYS),
+                    'user_id' => $user->id,
+                ]);
+
+                $this->storeAvatar(attributes: $attributes, user: $user, profile: $profile);
+
+                $student = $this->students->create([
+                    ...Arr::only($attributes, self::STUDENT_KEYS),
+                    'profile_id' => $profile->id,
+                ]);
+
+                $this->guardians->linkPrimary(
+                    studentProfileId: $student->profile_id,
+                    guardianProfileId: $guardianProfile->id,
+                    relationship: GuardianRelationship::from((int) $attributes['guardian_relationship']),
+                );
+
+                return $student;
+            });
+
+            return ActionResult::success($this->students->findById((int) $student->profile_id));
+        } catch (ActionError $error) {
+            return ActionResult::error(
+                error: $error->code(),
+                message: $error->getMessage(),
+            );
+        }
+    }
+
+    /** Store the selected avatar inside the surrounding account-creation transaction.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function storeAvatar(array $attributes, User $user, Profile $profile): void
+    {
+        $avatar = $attributes['avatar'] ?? ['type' => 'none'];
+
+        if (($avatar['type'] ?? 'none') === 'file') {
+            $file = $this->fileUploader->store(
+                owner: $user,
+                upload: $attributes['avatar_file'],
+                displayName: null,
+            );
+            $profile->forceFill(['avatar_config' => ['type' => 'file']])->save();
+            $this->fileLinks->create(
+                fileId: $file->id,
+                type: FileLinkType::ProfileAvatar,
+                foreignId: $profile->id,
             );
 
-            $guardianProfile = $this->resolveGuardianProfile($attributes);
+            return;
+        }
 
-            $profile = $this->profiles->create([
-                ...Arr::only($attributes, self::PROFILE_KEYS),
-                'user_id' => $user->id,
-            ]);
-
-            $student = $this->students->create([
-                ...Arr::only($attributes, self::STUDENT_KEYS),
-                'profile_id' => $profile->id,
-            ]);
-
-            $this->guardians->linkPrimary(
-                studentProfileId: $student->profile_id,
-                guardianProfileId: $guardianProfile->id,
-                relationship: GuardianRelationship::from((int) $attributes['guardian_relationship']),
-            );
-
-            return $student;
-        });
-
-        return ActionResult::success($this->students->findById((int) $student->profile_id));
+        if (($avatar['type'] ?? 'none') === 'dicebear') {
+            $profile->forceFill(['avatar_config' => $avatar])->save();
+        }
     }
 
     /**

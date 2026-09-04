@@ -71,7 +71,7 @@ test('it allows credentialed CORS only for an allowlisted origin', function () {
 });
 
 test('it rejects expired tokens and never exposes passwords or token hashes', function () {
-    $user = User::factory()->create([
+    $user = User::factory()->withProfile()->create([
         'password' => 'password',
     ]);
     $expiredToken = $user->createToken('expired', ['*'], now()->subMinute());
@@ -93,7 +93,7 @@ test('it rejects expired tokens and never exposes passwords or token hashes', fu
 });
 
 test('it issues an HttpOnly session cookie that authenticates without the Authorization header', function () {
-    User::factory()->create([
+    User::factory()->withProfile()->create([
         'username' => 'cookie_user',
         'password' => 'password',
     ]);
@@ -123,7 +123,7 @@ test('it issues an HttpOnly session cookie that authenticates without the Author
 });
 
 test('it clears the session cookie on logout and the revoked token stops working', function () {
-    User::factory()->create([
+    User::factory()->withProfile()->create([
         'username' => 'logout_user',
         'password' => 'password',
     ]);
@@ -152,8 +152,8 @@ test('it clears the session cookie on logout and the revoked token stops working
 });
 
 test('it prefers the Authorization header over the session cookie', function () {
-    $headerUser = User::factory()->create(['username' => 'header_user']);
-    $cookieUser = User::factory()->create(['username' => 'cookie_owner']);
+    $headerUser = User::factory()->withProfile()->create(['username' => 'header_user']);
+    $cookieUser = User::factory()->withProfile()->create(['username' => 'cookie_owner']);
 
     $this->withCredentials()
         ->withUnencryptedCookie(

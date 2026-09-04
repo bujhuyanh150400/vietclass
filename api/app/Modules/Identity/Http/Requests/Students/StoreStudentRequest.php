@@ -2,15 +2,20 @@
 
 namespace App\Modules\Identity\Http\Requests\Students;
 
+use App\Modules\FileManagement\Rules\ManagedFileUpload;
 use App\Modules\Identity\Enums\Gender;
 use App\Modules\Identity\Enums\GradeLevel;
 use App\Modules\Identity\Enums\GuardianRelationship;
 use App\Modules\Identity\Enums\StudentStatus;
+use App\Modules\Identity\Http\Requests\Concerns\DecodesMultipartPayload;
+use App\Modules\Identity\Rules\AvatarSelection;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 final class StoreStudentRequest extends FormRequest
 {
+    use DecodesMultipartPayload;
+
     /**
      * Allow the request; route middleware already decided who may create a student.
      */
@@ -42,6 +47,14 @@ final class StoreStudentRequest extends FormRequest
             'address' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'note' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'status' => ['sometimes', 'integer', Rule::in(StudentStatus::values())],
+            'payload' => ['nullable', 'array'],
+            'avatar' => ['sometimes', 'array', new AvatarSelection(usesUploadedFile: true)],
+            'avatar_file' => [
+                'nullable',
+                Rule::requiredIf($this->input('avatar.type') === 'file'),
+                Rule::prohibitedIf($this->input('avatar.type') !== 'file'),
+                new ManagedFileUpload(imagesOnly: true),
+            ],
         ];
     }
 

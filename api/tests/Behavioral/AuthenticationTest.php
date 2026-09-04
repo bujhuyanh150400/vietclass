@@ -59,7 +59,7 @@ test('login action does not convert unexpected exceptions into business failures
 });
 
 test('login action returns a success result with its application data', function () {
-    $user = User::factory()->create([
+    $user = User::factory()->withProfile()->create([
         'username' => 'teacher_action',
         'password' => 'password',
     ]);
@@ -93,7 +93,7 @@ test('logout action returns a success result after revoking the current token', 
 });
 
 test('it logs in with a bearer token and returns the current user', function () {
-    $user = User::factory()->create([
+    $user = User::factory()->withProfile()->create([
         'username' => 'teacher_one',
         'password' => 'password',
         'role' => UserRole::Teacher,
@@ -122,7 +122,7 @@ test('it issues normal and remembered tokens with their configured lifetimes', f
     Carbon::setTestNow('2026-08-25 10:00:00 UTC');
 
     try {
-        User::factory()->create([
+        User::factory()->withProfile()->create([
             'username' => 'admin_one',
             'password' => 'password',
         ]);
@@ -146,7 +146,7 @@ test('it issues normal and remembered tokens with their configured lifetimes', f
 });
 
 test('it revokes only the bearer token used to log out', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->withProfile()->create();
     $firstToken = $user->createToken('first');
     $secondToken = $user->createToken('second');
 

@@ -25,7 +25,7 @@ final class GetCurrentUserAction
                 );
             }
 
-            return ActionResult::success(data: $user);
+            return ActionResult::success(data: $user->load('profile.avatarFileLink.file'));
         } catch (ActionError $error) {
             return ActionResult::error(
                 error: $error->code(),

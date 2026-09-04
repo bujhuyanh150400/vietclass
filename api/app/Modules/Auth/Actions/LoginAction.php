@@ -40,7 +40,7 @@ final class LoginAction
             }
 
             return ActionResult::success([
-                'user' => $user,
+                'user' => $user->load('profile.avatarFileLink.file'),
                 'token' => $this->tokens->issue($user, $credentials['remember'] ?? false),
             ]);
         } catch (ActionError $error) {

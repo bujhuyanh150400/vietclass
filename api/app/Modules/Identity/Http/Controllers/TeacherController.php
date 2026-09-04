@@ -62,6 +62,10 @@ final class TeacherController extends BaseController
     {
         $result = $create->handle(attributes: $request->validated());
 
+        if (! $result->isSuccess()) {
+            return $this->actionFailure(result: $result);
+        }
+
         /** @var TeacherProfile $teacher */
         $teacher = $result->getData();
 

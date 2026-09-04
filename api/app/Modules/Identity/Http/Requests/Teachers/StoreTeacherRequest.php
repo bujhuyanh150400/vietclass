@@ -2,13 +2,18 @@
 
 namespace App\Modules\Identity\Http\Requests\Teachers;
 
+use App\Modules\FileManagement\Rules\ManagedFileUpload;
 use App\Modules\Identity\Enums\Gender;
 use App\Modules\Identity\Enums\TeacherStatus;
+use App\Modules\Identity\Http\Requests\Concerns\DecodesMultipartPayload;
+use App\Modules\Identity\Rules\AvatarSelection;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 final class StoreTeacherRequest extends FormRequest
 {
+    use DecodesMultipartPayload;
+
     /**
      * Allow the request; route middleware already decided who may create a teacher.
      */
@@ -36,6 +41,14 @@ final class StoreTeacherRequest extends FormRequest
             'status' => ['required', 'integer', Rule::in(TeacherStatus::values())],
             'color_identification' => ['sometimes', 'nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'joined_at' => ['required', 'date_format:Y-m-d'],
+            'payload' => ['nullable', 'array'],
+            'avatar' => ['sometimes', 'array', new AvatarSelection(usesUploadedFile: true)],
+            'avatar_file' => [
+                'nullable',
+                Rule::requiredIf($this->input('avatar.type') === 'file'),
+                Rule::prohibitedIf($this->input('avatar.type') !== 'file'),
+                new ManagedFileUpload(imagesOnly: true),
+            ],
         ];
     }
 

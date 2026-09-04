@@ -34,7 +34,7 @@ final class TeacherRepository extends BaseRepository
     public function paginateList(ListQuery $query): LengthAwarePaginator
     {
         $builder = $this->modelQuery()
-            ->with('profile.user:id,username,is_active')
+            ->with(['profile.user:id,username,is_active', 'profile.avatarFileLink.file'])
             ->when(
                 $query->hasSearch(),
                 fn (Builder $builder): Builder => $builder->whereHas(
@@ -101,7 +101,7 @@ final class TeacherRepository extends BaseRepository
     public function findById(int $teacherId): ?TeacherProfile
     {
         return $this->modelQuery()
-            ->with('profile.user:id,username,is_active')
+            ->with(['profile.user:id,username,is_active', 'profile.avatarFileLink.file'])
             ->find($teacherId);
     }
 

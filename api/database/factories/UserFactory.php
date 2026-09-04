@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Modules\Identity\Enums\UserRole;
+use App\Modules\Identity\Models\Profile;
 use App\Modules\Identity\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -35,5 +36,13 @@ class UserFactory extends Factory
             'is_active' => true,
             'remember_token' => Str::random(10),
         ];
+    }
+
+    /** Create one opt-in personal profile after the account exists without factory recursion. */
+    public function withProfile(): static
+    {
+        return $this->afterCreating(fn (User $user) => Profile::factory()->create([
+            'user_id' => $user->id,
+        ]));
     }
 }
