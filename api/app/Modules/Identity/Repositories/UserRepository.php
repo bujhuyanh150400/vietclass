@@ -2,9 +2,12 @@
 
 namespace App\Modules\Identity\Repositories;
 
+use App\Core\Data\ListQuery;
 use App\Core\Repositories\BaseRepository;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 final class UserRepository extends BaseRepository
 {
@@ -29,6 +32,33 @@ final class UserRepository extends BaseRepository
             ->where('username', $username)
             ->where('is_active', true)
             ->first();
+    }
+
+    /** Find one non-deleted account by its identifier. */
+    public function findById(int $userId): ?User
+    {
+        return $this->modelQuery()->find($userId);
+    }
+
+    /** Return accounts searchable by username or profile name for the owner picker. */
+    public function options(ListQuery $query): Collection
+    {
+        return $this->modelQuery()
+            ->with('profile:id,user_id,full_name')
+            ->when(
+                $query->hasSearch(),
+                fn (Builder $builder): Builder => $builder->where(
+                    fn (Builder $scoped): Builder => $scoped
+                        ->where('username', 'ilike', $query->searchLike())
+                        ->orWhereHas(
+                            'profile',
+                            fn (Builder $profile): Builder => $profile->where('full_name', 'ilike', $query->searchLike()),
+                        ),
+                ),
+            )
+            ->orderBy('username')
+            ->limit($query->perPage)
+            ->get();
     }
 
     /**
