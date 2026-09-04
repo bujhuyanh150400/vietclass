@@ -1,18 +1,63 @@
 <?php
 
 use App\Modules\Academic\Models\Subject;
+use App\Modules\FileManagement\Enums\FileLinkType;
+use App\Modules\FileManagement\Models\FileLink;
+use App\Modules\FileManagement\Models\ManagedFile;
 use App\Modules\Identity\Enums\GuardianRelationship;
 use App\Modules\Identity\Models\Profile;
 use App\Modules\Identity\Models\StudentGuardian;
 use App\Modules\Identity\Models\StudentProfile;
+use App\Modules\Identity\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 test('a profile may exist without a login account', function () {
     $profile = Profile::factory()->create();
 
     expect($profile->user_id)->toBeNull()
         ->and($profile->metadata)->toBe([]);
+});
+
+test('a profile has nullable avatar configuration', function () {
+    $profile = Profile::factory()->create();
+
+    expect(Schema::hasColumn('profiles', 'avatar_config'))->toBeTrue()
+        ->and($profile->fresh()->avatar_config)->toBeNull();
+});
+
+test('the profile backfill is idempotent', function () {
+    $user = User::factory()->create(['username' => 'missing-profile']);
+    $migration = require database_path('migrations/2026_09_04_000005_backfill_missing_user_profiles.php');
+
+    $migration->up();
+    $migration->up();
+
+    expect(Profile::query()->where('user_id', $user->id)->count())->toBe(1)
+        ->and($user->profile()->value('full_name'))->toBe('missing-profile');
+});
+
+test('the seeded administrator has exactly one profile', function () {
+    $this->seed();
+    $this->seed();
+
+    $user = User::query()->where('username', 'admin@admin.com')->firstOrFail();
+
+    expect($user->profile)->not->toBeNull()
+        ->and(Profile::query()->where('user_id', $user->id)->count())->toBe(1);
+});
+
+test('a profile resolves its avatar through the profile-avatar file link', function () {
+    $profile = Profile::factory()->create();
+    $file = ManagedFile::factory()->create();
+
+    FileLink::factory()->for($file, 'file')->create([
+        'type' => FileLinkType::ProfileAvatar,
+        'foreign_id' => $profile->id,
+    ]);
+
+    expect($profile->avatarFileLink->file->is($file))->toBeTrue();
 });
 
 test('a class cannot be assigned to a profile that is not a teacher', function () {

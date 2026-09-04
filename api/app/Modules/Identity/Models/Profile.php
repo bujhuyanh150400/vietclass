@@ -2,6 +2,8 @@
 
 namespace App\Modules\Identity\Models;
 
+use App\Modules\FileManagement\Enums\FileLinkType;
+use App\Modules\FileManagement\Models\FileLink;
 use App\Modules\Identity\Enums\Gender;
 use Database\Factories\ProfileFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -20,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'address',
     'note',
     'metadata',
+    'avatar_config',
 ])]
 final class Profile extends Model
 {
@@ -50,6 +53,7 @@ final class Profile extends Model
             'dob' => 'date',
             'gender' => Gender::class,
             'metadata' => 'array',
+            'avatar_config' => 'array',
         ];
     }
 
@@ -81,5 +85,16 @@ final class Profile extends Model
     public function studentProfile(): HasOne
     {
         return $this->hasOne(StudentProfile::class, 'profile_id');
+    }
+
+    /**
+     * Return the link that identifies this profile's avatar file.
+     *
+     * @return HasOne<FileLink, $this>
+     */
+    public function avatarFileLink(): HasOne
+    {
+        return $this->hasOne(FileLink::class, 'foreign_id')
+            ->where('type', FileLinkType::ProfileAvatar);
     }
 }

@@ -38,6 +38,7 @@ class ProfileFactory extends Factory
             'gender' => fake()->randomElement(Gender::cases()),
             'address' => fake()->optional()->address(),
             'note' => null,
+            'avatar_config' => null,
         ];
     }
 
