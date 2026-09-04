@@ -39,7 +39,7 @@ test('an administrator can upload for another existing owner', function (): void
     $this->withToken($admin->createToken('test')->plainTextToken)->post('/api/v1/files', [
         'file' => UploadedFile::fake()->image('avatar.jpg'),
         'owner_user_id' => $this->student->id,
-    ])->assertCreated()->assertJsonPath('data.owner_id', $this->student->id);
+    ])->assertCreated()->assertJsonPath('data.owner.id', $this->student->id);
 
     expect(ManagedFile::query()->sole()->owner_user_id)->toBe($this->student->id);
 });

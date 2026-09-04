@@ -3,18 +3,28 @@
 namespace App\Modules\FileManagement\Http\Controllers;
 
 use App\Core\Http\BaseController;
+use App\Modules\FileManagement\Actions\GetFileAction;
+use App\Modules\FileManagement\Actions\GetFileContentAction;
 use App\Modules\FileManagement\Actions\GetFileUsageAction;
 use App\Modules\FileManagement\Actions\ListFileOwnerOptionsAction;
+use App\Modules\FileManagement\Actions\ListFilesAction;
+use App\Modules\FileManagement\Actions\UpdateFileAction;
 use App\Modules\FileManagement\Actions\UploadFileAction;
 use App\Modules\FileManagement\Http\Requests\FileOwnerOptionsRequest;
 use App\Modules\FileManagement\Http\Requests\FileUsageRequest;
+use App\Modules\FileManagement\Http\Requests\GetFileContentRequest;
+use App\Modules\FileManagement\Http\Requests\IndexFileRequest;
 use App\Modules\FileManagement\Http\Requests\StoreFileRequest;
+use App\Modules\FileManagement\Http\Requests\UpdateFileRequest;
 use App\Modules\FileManagement\Http\Resources\FileOwnerOptionResource;
 use App\Modules\FileManagement\Http\Resources\FileResource;
 use App\Modules\FileManagement\Models\ManagedFile;
 use App\Modules\Identity\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 final class FileController extends BaseController
 {
@@ -36,6 +46,7 @@ final class FileController extends BaseController
 
         /** @var ManagedFile $file */
         $file = $result->getData();
+        $file->load(['owner.profile', 'links']);
 
         return $this->success(
             data: FileResource::make($file)->resolve($request),
@@ -71,5 +82,77 @@ final class FileController extends BaseController
         $users = $result->getData();
 
         return $this->success(data: FileOwnerOptionResource::collection($users)->resolve($request));
+    }
+
+    /** Return one page of files visible to the authenticated caller. */
+    public function index(IndexFileRequest $request, ListFilesAction $files): JsonResponse
+    {
+        /** @var User $actor */
+        $actor = $request->user();
+        $result = $files->handle(actor: $actor, query: $request->toListQuery());
+
+        /** @var LengthAwarePaginator<int, ManagedFile> $page */
+        $page = $result->getData();
+
+        return $this->paginated($request, $page, FileResource::class);
+    }
+
+    /** Return safe metadata for one file visible to the caller. */
+    public function show(Request $request, GetFileAction $file, int $fileId): JsonResponse
+    {
+        /** @var User $actor */
+        $actor = $request->user();
+        $result = $file->handle(actor: $actor, fileId: $fileId);
+
+        if (! $result->isSuccess()) {
+            return $this->actionFailure(result: $result);
+        }
+
+        /** @var ManagedFile $found */
+        $found = $result->getData();
+
+        return $this->success(data: FileResource::make($found)->resolve($request));
+    }
+
+    /** Rename one file visible to the caller without accepting storage coordinates. */
+    public function update(UpdateFileRequest $request, UpdateFileAction $update, int $fileId): JsonResponse
+    {
+        /** @var User $actor */
+        $actor = $request->user();
+        $result = $update->handle(
+            actor: $actor,
+            fileId: $fileId,
+            displayName: $request->validated('display_name'),
+        );
+
+        if (! $result->isSuccess()) {
+            return $this->actionFailure(result: $result);
+        }
+
+        /** @var ManagedFile $file */
+        $file = $result->getData();
+
+        return $this->success(data: FileResource::make($file)->resolve($request));
+    }
+
+    /** Redirect authorized content requests to a short-lived private-storage URL. */
+    public function content(
+        GetFileContentRequest $request,
+        GetFileContentAction $content,
+        int $fileId,
+    ): RedirectResponse|JsonResponse {
+        /** @var User $actor */
+        $actor = $request->user();
+        $result = $content->handle(
+            actor: $actor,
+            fileId: $fileId,
+            download: $request->boolean('download'),
+        );
+
+        if (! $result->isSuccess()) {
+            return $this->actionFailure(result: $result);
+        }
+
+        return redirect()->away((string) $result->getData())->header('Cache-Control', 'no-store');
     }
 }

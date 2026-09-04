@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\FileManagement\Models\ManagedFile;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\Profile;
 use Illuminate\Http\UploadedFile;
@@ -16,6 +17,10 @@ test('file endpoints require authentication', function (): void {
         ->assertUnauthorized();
     $this->getJson('/api/v1/files/usage')->assertUnauthorized();
     $this->getJson('/api/v1/files/owner-options')->assertUnauthorized();
+    $this->getJson('/api/v1/files')->assertUnauthorized();
+    $this->getJson('/api/v1/files/1')->assertUnauthorized();
+    $this->putJson('/api/v1/files/1', ['display_name' => 'Renamed'])->assertUnauthorized();
+    $this->getJson('/api/v1/files/1/content')->assertUnauthorized();
 });
 
 test('a non administrator cannot submit an owner and always uses their own library', function (UserRole $role): void {
@@ -30,6 +35,25 @@ test('a non administrator cannot submit an owner and always uses their own libra
     $this->withToken($actor->createToken('usage')->plainTextToken)->getJson("/api/v1/files/usage?owner_user_id={$other->id}")
         ->assertUnprocessable()
         ->assertJsonValidationErrorFor('owner_user_id');
+
+    $this->withToken($actor->createToken('list')->plainTextToken)->getJson("/api/v1/files?owner_user_id={$other->id}")
+        ->assertUnprocessable()
+        ->assertJsonValidationErrorFor('owner_user_id');
+})->with('non-admin file owners');
+
+test('cross-owner file access is always indistinguishable from a missing file', function (UserRole $role): void {
+    $actor = Profile::factory()->forRole($role)->create()->user;
+    $other = Profile::factory()->forRole(UserRole::Student)->create()->user;
+    $file = ManagedFile::factory()->for($other, 'owner')->create();
+
+    $token = $actor->createToken('test')->plainTextToken;
+    $this->withToken($token)->getJson("/api/v1/files/{$file->id}")->assertNotFound();
+    $this->withToken($token)->putJson("/api/v1/files/{$file->id}", [
+        'display_name' => 'Forbidden rename',
+    ])->assertNotFound();
+    $this->withToken($token)->getJson("/api/v1/files/{$file->id}/content")->assertNotFound();
+
+    expect($file->fresh()->display_name)->not->toBe('Forbidden rename');
 })->with('non-admin file owners');
 
 test('owner options are restricted to administrators by the request', function (UserRole $role): void {

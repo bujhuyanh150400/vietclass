@@ -6,6 +6,15 @@ use Illuminate\Support\Str;
 
 final class FileTypeMap
 {
+    private const CATEGORIES = [
+        'image' => ['jpg', 'jpeg', 'png', 'webp'],
+        'pdf' => ['pdf'],
+        'document' => ['doc', 'docx'],
+        'spreadsheet' => ['xls', 'xlsx'],
+        'presentation' => ['ppt', 'pptx'],
+        'text' => ['csv', 'txt'],
+    ];
+
     private const TYPES = [
         'jpg' => ['image/jpeg'],
         'jpeg' => ['image/jpeg'],
@@ -36,16 +45,27 @@ final class FileTypeMap
         }
 
         return [
-            'category' => match ($extension) {
-                'jpg', 'jpeg', 'png', 'webp' => 'image',
-                'pdf' => 'pdf',
-                'doc', 'docx' => 'document',
-                'xls', 'xlsx' => 'spreadsheet',
-                'ppt', 'pptx' => 'presentation',
-                default => 'text',
-            },
+            'category' => self::category($extension),
             'extension' => $extension,
             'mime_type' => $mimeType,
         ];
+    }
+
+    /** Return the file-library category for one validated extension. */
+    public static function category(string $extension): string
+    {
+        foreach (self::CATEGORIES as $category => $extensions) {
+            if (in_array(Str::lower($extension), $extensions, true)) {
+                return $category;
+            }
+        }
+
+        return 'text';
+    }
+
+    /** Return the validated extensions belonging to one exact library category. */
+    public static function extensionsForCategory(string $category): array
+    {
+        return self::CATEGORIES[$category] ?? [];
     }
 }

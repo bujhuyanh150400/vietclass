@@ -14,7 +14,26 @@ Route::middleware('auth:sanctum')->prefix('files')->name('files.')->group(functi
         ->middleware(Authorize::using(FileManagementFeature::List))
         ->name('usage');
 
+    Route::get('/', [FileController::class, 'index'])
+        ->middleware(Authorize::using(FileManagementFeature::List))
+        ->name('index');
+
     Route::post('/', [FileController::class, 'store'])
         ->middleware(Authorize::using(FileManagementFeature::Upload))
         ->name('store');
+
+    Route::get('{file}', [FileController::class, 'show'])
+        ->whereNumber('file')
+        ->middleware(Authorize::using(FileManagementFeature::List))
+        ->name('show');
+
+    Route::put('{file}', [FileController::class, 'update'])
+        ->whereNumber('file')
+        ->middleware(Authorize::using(FileManagementFeature::Update))
+        ->name('update');
+
+    Route::get('{file}/content', [FileController::class, 'content'])
+        ->whereNumber('file')
+        ->middleware(Authorize::using(FileManagementFeature::List))
+        ->name('content');
 });
