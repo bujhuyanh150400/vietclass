@@ -6,6 +6,9 @@ use App\Modules\Academic\Actions\UpdateEnrollmentAction;
 use App\Modules\Academic\Enums\AcademicError;
 use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Academic\Models\SchoolClass;
+use App\Modules\FileManagement\Enums\FileLinkType;
+use App\Modules\FileManagement\Models\FileLink;
+use App\Modules\FileManagement\Models\ManagedFile;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\StudentProfile;
 use App\Modules\Identity\Models\User;
@@ -145,6 +148,29 @@ test('the available student list hides those already studying in the class', fun
     expect($ids)->toContain($fresh->profile_id, $returning->student_id)
         ->and($ids)->not->toContain($enrolled->student_id)
         ->and($ids)->not->toContain($locked->profile_id);
+});
+
+test('the available student list includes a file avatar without resource queries', function (): void {
+    $class = SchoolClass::factory()->create();
+    $student = StudentProfile::factory()->create();
+    $file = ManagedFile::factory()->for($student->profile->user, 'owner')->create();
+    FileLink::factory()->for($file, 'file')->create([
+        'type' => FileLinkType::ProfileAvatar,
+        'foreign_id' => $student->profile_id,
+    ]);
+    $student->profile->forceFill(['avatar_config' => ['type' => 'file']])->save();
+
+    $available = collect($this->getJson("/api/v1/classes/{$class->id}/available-students")
+        ->assertOk()
+        ->json('data'))
+        ->firstWhere('id', $student->profile_id);
+
+    expect($available['avatar'])
+        ->toMatchArray([
+            'type' => 'file',
+            'file_id' => $file->id,
+            'content_url' => "/api/v1/files/{$file->id}/content",
+        ]);
 });
 
 test('an enrolment date may be corrected on a closed period', function () {

@@ -70,7 +70,7 @@ final class ClassEnrollmentRepository extends BaseRepository
             ->pluck('student_id');
 
         return StudentProfile::query()
-            ->with(['profile.user:id,username,is_active', 'primaryGuardian.guardian'])
+            ->with(['profile.user:id,username,is_active', 'profile.avatarFileLink.file', 'primaryGuardian.guardian'])
             ->whereHas('profile.user', fn (Builder $user): Builder => $user->where('is_active', true))
             ->whereNotIn('profile_id', $activeStudentIds)
             ->when(
