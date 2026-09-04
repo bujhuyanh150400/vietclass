@@ -18,14 +18,21 @@ enum IdentityError: string implements ErrorDeclarationEnum
     /** No account carries the given identifier. */
     case UserNotFound = 'IDENTITY-004';
 
+    /** No profile carries the given identifier. */
+    case ProfileNotFound = 'IDENTITY-005';
+
+    /** The authenticated account may not update this profile. */
+    case ProfileForbidden = 'IDENTITY-006';
+
     /**
      * Return the HTTP status this business failure reaches the API boundary with.
      */
     public function httpStatus(): int
     {
         return match ($this) {
-            self::TeacherNotFound, self::StudentNotFound, self::UserNotFound => 404,
+            self::TeacherNotFound, self::StudentNotFound, self::UserNotFound, self::ProfileNotFound => 404,
             self::AccountNotProvisioned => 409,
+            self::ProfileForbidden => 403,
         };
     }
 }

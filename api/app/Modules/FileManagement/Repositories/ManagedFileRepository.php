@@ -111,6 +111,12 @@ final class ManagedFileRepository extends BaseRepository
             ->find($fileId);
     }
 
+    /** Lock one active file for a domain link without applying actor-library visibility. */
+    public function findActiveForUpdate(int $fileId): ?ManagedFile
+    {
+        return $this->modelQuery()->lockForUpdate()->find($fileId);
+    }
+
     /** Lock one trashed file for a scheduled lifecycle transition. */
     public function findTrashedForUpdate(int $fileId): ?ManagedFile
     {

@@ -1,12 +1,18 @@
 <?php
 
 use App\Modules\Identity\Enums\IdentityFeature;
+use App\Modules\Identity\Http\Controllers\ProfileAvatarController;
 use App\Modules\Identity\Http\Controllers\StudentController;
 use App\Modules\Identity\Http\Controllers\TeacherController;
 use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function (): void {
+    Route::put('profiles/{profile}/avatar', ProfileAvatarController::class)
+        ->whereNumber('profile')
+        ->middleware(Authorize::using(IdentityFeature::ProfileAvatarUpdate))
+        ->name('profiles.avatar.update');
+
     Route::prefix('teachers')->name('teachers.')->group(function (): void {
         Route::get('/', [TeacherController::class, 'index'])
             ->middleware(Authorize::using(IdentityFeature::TeacherList))

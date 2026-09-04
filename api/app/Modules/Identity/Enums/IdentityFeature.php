@@ -43,6 +43,9 @@ enum IdentityFeature: string implements FeatureEnum
     /** Lock or unlock a student's login account. */
     case StudentToggleActive = 'student.toggle_active';
 
+    /** Change a profile's independently persisted avatar. */
+    case ProfileAvatarUpdate = 'profile.avatar_update';
+
     /**
      * Return the caller-facing name shown for this permission in the catalogue.
      */
@@ -59,6 +62,7 @@ enum IdentityFeature: string implements FeatureEnum
             self::StudentCreate => 'Tạo hồ sơ học sinh',
             self::StudentUpdate => 'Sửa hồ sơ học sinh',
             self::StudentToggleActive => 'Khóa hoặc mở tài khoản học sinh',
+            self::ProfileAvatarUpdate => 'Đổi ảnh đại diện hồ sơ',
         };
     }
 
@@ -73,13 +77,16 @@ enum IdentityFeature: string implements FeatureEnum
     /**
      * Return the roles that hold this permission before any per-user override.
      *
-     * This release grants the Identity module's teacher and student administration to
-     * administrators only, matching the Academic module's own scope this round.
+     * Teacher and student administration remains administrator-only, while every account
+     * may update its own avatar; the Action applies the profile-specific ownership check.
      *
      * @return list<UserRole>
      */
     public function defaultRoles(): array
     {
-        return [UserRole::Admin];
+        return match ($this) {
+            self::ProfileAvatarUpdate => UserRole::cases(),
+            default => [UserRole::Admin],
+        };
     }
 }

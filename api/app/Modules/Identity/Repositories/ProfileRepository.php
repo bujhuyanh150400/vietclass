@@ -41,6 +41,12 @@ final class ProfileRepository extends BaseRepository
         return $profile;
     }
 
+    /** Lock one profile before atomically replacing its avatar configuration and link. */
+    public function findForUpdate(int $profileId): ?Profile
+    {
+        return $this->modelQuery()->lockForUpdate()->find($profileId);
+    }
+
     /**
      * Find the oldest existing profile that may be reused as a guardian: one that
      * already carries the exact same phone number and full name, and does not itself
