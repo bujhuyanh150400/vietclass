@@ -51,6 +51,8 @@ export function FileManagerContainer() {
     }
   }, [controls.owner_user_id, isAdmin, ownerDefaulted, setControls, user]);
 
+  const ownerResolutionPending = !currentUser.isSuccess || (isAdmin && controls.owner_user_id === null && !ownerDefaulted);
+  const ownerIsAll = isAdmin && controls.owner_user_id === null && ownerDefaulted;
   const listParams = useMemo(() => ({
     search: controls.search || undefined,
     category: controls.category ?? undefined,
@@ -58,10 +60,9 @@ export function FileManagerContainer() {
     owner_user_id: isAdmin ? controls.owner_user_id ?? undefined : undefined,
     page: controls.page,
   }), [controls, isAdmin]);
-  const list = useFileList(listParams);
-  const ownerIsAll = isAdmin && controls.owner_user_id === null && ownerDefaulted;
-  const owners = useFileOwnerOptions({}, isAdmin);
-  const usage = useFileUsage(isAdmin && controls.owner_user_id !== null ? { owner_user_id: controls.owner_user_id } : {}, !ownerIsAll && user !== undefined);
+  const list = useFileList(listParams, !ownerResolutionPending);
+  const owners = useFileOwnerOptions({}, isAdmin && !ownerResolutionPending);
+  const usage = useFileUsage(isAdmin && controls.owner_user_id !== null ? { owner_user_id: controls.owner_user_id } : {}, !ownerResolutionPending && !ownerIsAll);
   const quotas = useFileQuotas(isAdmin);
   const upload = useUploadFile();
   const rename = useRenameFile();
@@ -79,6 +80,12 @@ export function FileManagerContainer() {
   const changeControls = useCallback((next: { search?: string; category?: FileCategory | null; trash?: "active" | "trashed"; owner_user_id?: number | null }) => {
     void setControls({ ...next, page: 1 });
   }, [setControls]);
+
+  /** Marks an intentional owner choice so the initial default never overwrites all-owner browsing. */
+  function changeOwner(owner_user_id: number | null) {
+    setOwnerDefaulted(true);
+    changeControls({ owner_user_id });
+  }
 
   /** Connects one FilePond item to one cancellable Laravel multipart upload. */
   const processUpload: FilePondProcess = useCallback((file, handlers) => {
@@ -117,11 +124,11 @@ export function FileManagerContainer() {
   }
 
   const actionPending = rename.isPending || trash.isPending || restore.isPending || permanentDelete.isPending;
-  const canUpload = user !== undefined && !ownerIsAll;
-  const uploadDisabledReason = user === undefined ? "Đang xác minh quyền tải tệp." : ownerIsAll ? "Chọn một chủ sở hữu để tải tệp lên." : undefined;
+  const canUpload = !ownerResolutionPending && !ownerIsAll;
+  const uploadDisabledReason = ownerResolutionPending ? "Đang xác định chủ sở hữu tệp." : ownerIsAll ? "Chọn một chủ sở hữu để tải tệp lên." : undefined;
 
   return <>
-    <FileManagerView state={state} meta={list.data?.meta ?? EMPTY_META} search={controls.search} category={controls.category} trash={controls.trash} ownerUserId={controls.owner_user_id} owners={owners.data ?? []} isAdmin={isAdmin} usage={usage.data} canUpload={canUpload} uploadDisabledReason={uploadDisabledReason} processUpload={processUpload} onSearchChange={(search) => changeControls({ search })} onCategoryChange={(category) => changeControls({ category })} onTrashChange={(trashValue) => changeControls({ trash: trashValue })} onOwnerChange={(owner_user_id) => changeControls({ owner_user_id })} onPageChange={(page) => { void setControls({ page }); }} onPreview={setPreviewFile} onAction={openAction} onOpenQuota={() => { setQuotaError(null); setQuotaOpen(true); }} />
+    <FileManagerView state={state} meta={list.data?.meta ?? EMPTY_META} search={controls.search} category={controls.category} trash={controls.trash} ownerUserId={controls.owner_user_id} owners={owners.data ?? []} isAdmin={isAdmin} usage={usage.data} canUpload={canUpload} uploadDisabledReason={uploadDisabledReason} processUpload={processUpload} onSearchChange={(search) => changeControls({ search })} onCategoryChange={(category) => changeControls({ category })} onTrashChange={(trashValue) => changeControls({ trash: trashValue })} onOwnerChange={changeOwner} onPageChange={(page) => { void setControls({ page }); }} onPreview={setPreviewFile} onAction={openAction} onOpenQuota={() => { setQuotaError(null); setQuotaOpen(true); }} />
     <FilePreviewDialog file={previewFile} onOpenChange={(open) => { if (!open) setPreviewFile(null); }} />
     <FileActionDialogs dialog={dialog} renameValue={renameValue} errorMessage={actionError} isPending={actionPending} onOpenChange={(open) => { if (!open) setDialog(null); }} onRenameValueChange={setRenameValue} onConfirm={() => { void confirmAction(); }} />
     {isAdmin ? <FileQuotaDialog open={quotaOpen} quotas={quotas.data} isPending={updateQuotas.isPending} errorMessage={quotaError} onOpenChange={setQuotaOpen} onSubmit={(nextQuotas) => { void saveQuotas(nextQuotas); }} /> : null}

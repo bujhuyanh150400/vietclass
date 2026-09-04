@@ -31,10 +31,11 @@ export type UploadFileMutation = {
 };
 
 /** Fetches one filtered page of visible files. */
-export function useFileList(params: FileListParams) {
+export function useFileList(params: FileListParams, enabled = true) {
   return useQuery({
     queryKey: fileQueryKeys.list(params),
     queryFn: () => fetchFiles(params),
+    enabled,
   });
 }
 
