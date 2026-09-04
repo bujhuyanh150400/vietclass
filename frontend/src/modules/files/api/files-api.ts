@@ -1,4 +1,4 @@
-import { browserRequest, browserRequestList } from "@/lib/api/browser-request";
+import { browserApiUrl, browserRequest, browserRequestList } from "@/lib/api/browser-request";
 import type { Page } from "@/lib/api/contracts";
 
 import type {
@@ -86,7 +86,7 @@ export async function permanentlyDeleteFile(id: number): Promise<void> {
 
 /** Builds the authorized content endpoint URL; the API redirects it to a short-lived storage URL. */
 export function fileContentUrl(id: number, download = false): string {
-  return `/api/v1/files/${id}/content${download ? "?download=1" : ""}`;
+  return browserApiUrl(`/api/v1/files/${id}/content${download ? "?download=1" : ""}`);
 }
 
 /** Replaces one profile's avatar selection independently from profile details. */
@@ -96,6 +96,6 @@ export async function updateProfileAvatar(
 ): Promise<AvatarValue> {
   return browserRequest<AvatarValue>(`/api/v1/profiles/${profileId}/avatar`, {
     method: "PUT",
-    body: avatar,
+    body: { avatar },
   });
 }

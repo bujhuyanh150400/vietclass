@@ -11,6 +11,11 @@ import { parseApiListResponse, parseApiResponse } from "./parse-api-response";
  */
 const API_ORIGIN = (process.env.NEXT_PUBLIC_API_ORIGIN ?? "").replace(/\/+$/, "");
 
+/** Resolves an API path against the configured browser API origin without exposing storage URLs. */
+export function browserApiUrl(path: string): string {
+  return `${API_ORIGIN}${path}`;
+}
+
 /** Request options accepted by the browser request helper. */
 type BrowserRequestInit = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
