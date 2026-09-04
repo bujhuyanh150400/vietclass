@@ -5,6 +5,8 @@ use App\Modules\FileManagement\Models\FileLink;
 use App\Modules\FileManagement\Models\ManagedFile;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\Profile;
+use App\Modules\Identity\Rules\AvatarSelection;
+use Illuminate\Support\Facades\Validator;
 
 beforeEach(function (): void {
     $this->profile = Profile::factory()->forRole(UserRole::Student)->create();
@@ -78,6 +80,38 @@ test('each supported DiceBear style replaces a file link with safe configuration
             ->exists())->toBeFalse();
 })->with(['lorelei', 'notionists', 'thumbs']);
 
+test('the avatar union accepts reordered JSON fields', function (): void {
+    $file = ManagedFile::factory()->for($this->owner, 'owner')->create();
+    $path = "/api/v1/profiles/{$this->profile->id}/avatar";
+
+    $this->withToken($this->token)->putJson($path, [
+        'file_id' => $file->id,
+        'type' => 'file',
+    ])->assertOk();
+
+    $this->withToken($this->token)->putJson($path, [
+        'options' => ['hairVariant' => 'variant01'],
+        'seed' => 'stableSeed',
+        'type' => 'dicebear',
+        'style' => 'lorelei',
+    ])->assertOk();
+});
+
+test('uploaded avatar mode accepts the file marker without a persisted file identifier', function (): void {
+    $validator = Validator::make(
+        ['avatar' => ['type' => 'file']],
+        ['avatar' => [new AvatarSelection(usesUploadedFile: true)]],
+    );
+
+    $withPersistedId = Validator::make(
+        ['avatar' => ['type' => 'file', 'file_id' => 1]],
+        ['avatar' => [new AvatarSelection(usesUploadedFile: true)]],
+    );
+
+    expect($validator->fails())->toBeFalse()
+        ->and($withPersistedId->fails())->toBeTrue();
+});
+
 test('a replacement leaves exactly one avatar link', function (): void {
     $first = ManagedFile::factory()->for($this->owner, 'owner')->create();
     $second = ManagedFile::factory()->for($this->owner, 'owner')->create();
@@ -132,6 +166,13 @@ test('the avatar request rejects unknown, invalid, and oversized DiceBear input'
         'style' => 'lorelei',
         'seed' => 'seed',
         'options' => ['title' => 'unsafe'],
+    ])->assertUnprocessable()->assertJsonValidationErrorFor('avatar');
+
+    $this->withToken($this->token)->putJson($path, [
+        'type' => 'dicebear',
+        'style' => 'lorelei',
+        'seed' => 'seed',
+        'options' => ['hairVariant' => 'madeUpVariant'],
     ])->assertUnprocessable()->assertJsonValidationErrorFor('avatar');
 
     $this->withToken($this->token)->putJson($path, [

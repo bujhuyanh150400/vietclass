@@ -32,7 +32,7 @@ final class AvatarSelection implements ValidationRule
     /** Ensure none has no hidden shape fields. */
     private function validateNone(string $attribute, array $value, Closure $fail): void
     {
-        if (array_keys($value) !== ['type']) {
+        if (! $this->hasExactKeys($value, ['type'])) {
             $fail('The :attribute is invalid.');
         }
     }
@@ -40,8 +40,10 @@ final class AvatarSelection implements ValidationRule
     /** Ensure file selection carries only a positive existing-file identifier. */
     private function validateFile(string $attribute, array $value, Closure $fail): void
     {
-        if ($this->usesUploadedFile || array_keys($value) !== ['type', 'file_id']
-            || ! is_int($value['file_id'] ?? null) || $value['file_id'] < 1) {
+        $keys = $this->usesUploadedFile ? ['type'] : ['type', 'file_id'];
+
+        if (! $this->hasExactKeys($value, $keys)
+            || (! $this->usesUploadedFile && (! is_int($value['file_id'] ?? null) || $value['file_id'] < 1))) {
             $fail('The :attribute is invalid.');
         }
     }
@@ -49,7 +51,7 @@ final class AvatarSelection implements ValidationRule
     /** Validate the pinned DiceBear style, seed, and scalar-only option surface. */
     private function validateDiceBear(string $attribute, array $value, Closure $fail): void
     {
-        if (array_keys($value) !== ['type', 'style', 'seed', 'options']
+        if (! $this->hasExactKeys($value, ['type', 'style', 'seed', 'options'])
             || ! is_string($value['style'] ?? null)
             || ! is_string($value['seed'] ?? null)
             || mb_strlen($value['seed']) > 128
@@ -98,7 +100,7 @@ final class AvatarSelection implements ValidationRule
                 continue;
             }
 
-            if ($this->componentOption($key, $value, $style['components'] ?? [])) {
+            if ($this->componentOption($key, $value, $style['components'] ?? [], $style['variants'] ?? [])) {
                 continue;
             }
 
@@ -113,7 +115,7 @@ final class AvatarSelection implements ValidationRule
     }
 
     /** Validate one component probability or a local style-definition variant name. */
-    private function componentOption(string $key, mixed $value, array $components): bool
+    private function componentOption(string $key, mixed $value, array $components, array $variants): bool
     {
         foreach ($components as $component) {
             if ($key === "{$component}Probability") {
@@ -123,7 +125,8 @@ final class AvatarSelection implements ValidationRule
             if ($key === "{$component}Variant") {
                 return is_string($value)
                     && mb_strlen($value) <= 64
-                    && preg_match('/^[a-z]+(?:[A-Z][a-z0-9]*)*$/', $value) === 1;
+                    && preg_match('/^[a-z][A-Za-z0-9]*$/', $value) === 1
+                    && in_array($value, $variants[$component] ?? [], true);
             }
         }
 
@@ -176,5 +179,15 @@ final class AvatarSelection implements ValidationRule
         $json = json_encode($value);
 
         return is_string($json) ? strlen($json) : PHP_INT_MAX;
+    }
+
+    /** Compare union fields as a set so client JSON property order is irrelevant. */
+    private function hasExactKeys(array $value, array $expected): bool
+    {
+        $keys = array_keys($value);
+        sort($keys);
+        sort($expected);
+
+        return $keys === $expected;
     }
 }
