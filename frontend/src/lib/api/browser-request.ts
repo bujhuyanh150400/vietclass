@@ -16,6 +16,8 @@ type BrowserRequestInit = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   params?: Record<string, unknown>;
+  signal?: AbortSignal;
+  onUploadProgress?: (loaded: number, total: number | undefined) => void;
 };
 
 /**
@@ -60,6 +62,10 @@ async function sendBrowserRequest(
       method: init.method ?? "GET",
       data: init.body,
       params: init.params,
+      signal: init.signal,
+      onUploadProgress: init.onUploadProgress
+        ? (event) => init.onUploadProgress?.(event.loaded, event.total)
+        : undefined,
       headers: { Accept: "application/json" },
       // XHR omits cookies unless credentials are requested, and the session cookie
       // is the only thing authenticating this call. Cross-origin this also makes the
