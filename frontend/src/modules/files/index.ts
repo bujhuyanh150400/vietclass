@@ -1,5 +1,6 @@
 export * from "./api";
 export { FilePondInput } from "./components/filepond-input";
+export { FileManagerContainer } from "./containers/file-manager-container";
 export type {
   FilePondClientProps,
   FilePondProcess,

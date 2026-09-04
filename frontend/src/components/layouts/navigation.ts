@@ -1,6 +1,7 @@
 import {
   BookOpen,
   DoorOpen,
+  FolderOpen,
   GraduationCap,
   LayoutDashboard,
   School,
@@ -17,6 +18,7 @@ export const NAVIGATION_ICONS = {
   teachers: GraduationCap,
   classes: School,
   students: Users,
+  files: FolderOpen,
 } as const;
 
 /** One destination in the application navigation. */
@@ -41,6 +43,12 @@ export const NAVIGATION: NavigationGroup[] = [
   {
     items: [
       { href: "/dashboard", label: "Tổng quan", icon: "dashboard" },
+    ],
+  },
+  {
+    label: "Thư viện",
+    items: [
+      { href: "/files", label: "Tệp", icon: "files" },
     ],
   },
   {

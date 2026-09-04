@@ -60,6 +60,7 @@ export type FilePondClientProps = {
   mode: "files" | "avatar";
   disabled?: boolean;
   labelIdle?: string;
+  maxFiles?: number;
   process?: FilePondProcess;
   onFilesChange?: (files: File[]) => void;
 };
@@ -69,6 +70,7 @@ export function FilePondClient({
   mode,
   disabled = false,
   labelIdle,
+  maxFiles,
   process,
   onFilesChange,
 }: FilePondClientProps) {
@@ -89,7 +91,7 @@ export function FilePondClient({
       imageTransformOutputMimeType={avatar ? "image/webp" : undefined}
       labelIdle={labelIdle}
       maxFileSize={MAX_FILE_SIZE}
-      maxFiles={avatar ? 1 : 30}
+      maxFiles={avatar ? 1 : (maxFiles ?? 30)}
       name="file"
       onupdatefiles={(items: FilePondFile[]) => {
         onFilesChange?.(items.map((item) => item.file as File));

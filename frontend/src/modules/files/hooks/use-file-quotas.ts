@@ -7,10 +7,11 @@ import { fileQueryKeys, fileQuotaQueryKeys } from "./file-query-keys";
 import type { UpdateFileQuotasRequest } from "../types/file-requests";
 
 /** Fetches System's role quota map. */
-export function useFileQuotas() {
+export function useFileQuotas(enabled = true) {
   return useQuery({
     queryKey: fileQuotaQueryKeys.root(),
     queryFn: fetchFileQuotas,
+    enabled,
   });
 }
 

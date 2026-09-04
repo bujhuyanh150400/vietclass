@@ -48,18 +48,20 @@ export function useFile(id: number) {
 }
 
 /** Fetches one owner-specific usage record. */
-export function useFileUsage(params: FileUsageRequest = {}) {
+export function useFileUsage(params: FileUsageRequest = {}, enabled = true) {
   return useQuery({
     queryKey: fileQueryKeys.usage(params),
     queryFn: () => fetchFileUsage(params),
+    enabled,
   });
 }
 
 /** Fetches the administrator owner picker values. */
-export function useFileOwnerOptions(params: FileOwnerOptionsRequest = {}) {
+export function useFileOwnerOptions(params: FileOwnerOptionsRequest = {}, enabled = true) {
   return useQuery({
     queryKey: fileQueryKeys.owners(params),
     queryFn: () => fetchFileOwnerOptions(params),
+    enabled,
   });
 }
 
