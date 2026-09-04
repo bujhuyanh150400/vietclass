@@ -94,8 +94,9 @@ export async function updateProfileAvatar(
   profileId: number,
   avatar: AvatarSelection,
 ): Promise<AvatarValue> {
+  // UpdateProfileAvatarRequest maps the direct JSON body into its `avatar` rule.
   return browserRequest<AvatarValue>(`/api/v1/profiles/${profileId}/avatar`, {
     method: "PUT",
-    body: { avatar },
+    body: avatar,
   });
 }
