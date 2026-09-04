@@ -10,6 +10,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use League\Flysystem\UnableToCreateDirectory;
 
 beforeEach(function (): void {
     Storage::fake('managed-files');
@@ -77,6 +78,23 @@ test('a second upload cannot enter while the owner lock is held', function (): v
 test('a failed storage write becomes a storage-unavailable result without file metadata', function (): void {
     $disk = Mockery::mock();
     $disk->shouldReceive('putFileAs')->once()->andReturnFalse();
+    $disk->shouldReceive('delete')->once()->andReturnTrue();
+    Storage::shouldReceive('disk')->twice()->with('managed-files')->andReturn($disk);
+
+    $result = app(UploadFileAction::class)->handle(
+        actor: $this->student,
+        upload: UploadedFile::fake()->createWithContent('notes.txt', 'content'),
+        displayName: null,
+        ownerUserId: null,
+    );
+
+    expect($result->getError())->toBe(FileError::StorageUnavailable);
+    $this->assertDatabaseCount('files', 0);
+});
+
+test('a storage directory exception becomes a storage-unavailable result without file metadata', function (): void {
+    $disk = Mockery::mock();
+    $disk->shouldReceive('putFileAs')->once()->andThrow(UnableToCreateDirectory::atLocation('users'));
     $disk->shouldReceive('delete')->once()->andReturnTrue();
     Storage::shouldReceive('disk')->twice()->with('managed-files')->andReturn($disk);
 

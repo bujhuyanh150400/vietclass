@@ -16,8 +16,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use League\Flysystem\FilesystemException;
 use League\Flysystem\UnableToDeleteFile;
-use League\Flysystem\UnableToWriteFile;
 use LogicException;
 
 final class FileUploader
@@ -55,7 +55,7 @@ final class FileUploader
 
         try {
             $written = Storage::disk($disk)->putFileAs(dirname($path), $upload, basename($path));
-        } catch (UnableToWriteFile) {
+        } catch (FilesystemException) {
             throw new ActionError(
                 message: 'Không thể lưu tệp.',
                 code: FileError::StorageUnavailable,
