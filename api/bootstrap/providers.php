@@ -4,6 +4,7 @@ use App\Modules\Academic\Providers\AcademicServiceProvider;
 use App\Modules\Auth\Providers\AuthServiceProvider;
 use App\Modules\FileManagement\Providers\FileManagementServiceProvider;
 use App\Modules\Identity\Providers\IdentityServiceProvider;
+use App\Modules\System\Providers\SystemServiceProvider;
 use App\Providers\AppServiceProvider;
 
 /*
@@ -14,6 +15,7 @@ return [
     AppServiceProvider::class,
     AuthServiceProvider::class,
     IdentityServiceProvider::class,
+    SystemServiceProvider::class,
     FileManagementServiceProvider::class,
     AcademicServiceProvider::class,
 ];
