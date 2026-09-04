@@ -10,6 +10,8 @@ export type CurrentUser = {
   username: string;
   role: UserRole;
   is_active: boolean;
+  profile_id: number | null;
+  avatar: AvatarValue;
 };
 
 /** Login response returned by Laravel before the token is stored in a cookie. */
@@ -25,3 +27,4 @@ export type LoginCredentials = {
   password: string;
   remember: boolean;
 };
+import type { AvatarValue } from "@/modules/avatar";

@@ -1,6 +1,7 @@
-import { ChevronsUpDown, Loader2, LogOut } from "lucide-react";
+import Link from "next/link";
+import { ChevronsUpDown, Image as ImageIcon, Loader2, LogOut } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/modules/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,17 +22,6 @@ import { getRoleLabel } from "../utils/get-role-label";
 
 /** Shown when the browser cannot complete the same-origin logout request. */
 const LOGOUT_RETRY_MESSAGE = "Không đăng xuất được. Vui lòng thử lại.";
-
-/**
- * Derives the avatar's single-letter fallback from the first visible character of
- * a username, so an unusual or whitespace-padded name still produces a stable
- * initial instead of an empty circle.
- */
-function getAvatarInitial(username: string): string {
-  const [initial] = Array.from(username.trim());
-
-  return (initial ?? "?").toUpperCase();
-}
 
 /**
  * Renders the account menu from user data and callback state supplied by its
@@ -63,11 +53,7 @@ export function CurrentUserMenu({
               aria-label={`Tài khoản của ${user.username}`}
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar size="sm" className="rounded-lg">
-                <AvatarFallback className="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  {getAvatarInitial(user.username)}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar value={user.avatar} name={user.username} alt={`Ảnh đại diện của ${user.username}`} size="sm" className="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground" />
               <span className="grid flex-1 text-left leading-tight">
                 <span className="truncate text-sm font-medium">{user.username}</span>
                 <span className="truncate text-xs text-sidebar-foreground/70">
@@ -90,6 +76,12 @@ export function CurrentUserMenu({
                 {getRoleLabel(user.role)}
               </span>
             </DropdownMenuLabel>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem asChild>
+              <Link href="/account/avatar"><ImageIcon aria-hidden="true" />Đổi ảnh đại diện</Link>
+            </DropdownMenuItem>
 
             <DropdownMenuSeparator />
 
