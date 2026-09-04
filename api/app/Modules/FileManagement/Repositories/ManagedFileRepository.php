@@ -8,8 +8,10 @@ use App\Modules\FileManagement\Models\ManagedFile;
 use App\Modules\FileManagement\Support\FileTypeMap;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 final class ManagedFileRepository extends BaseRepository
 {
@@ -93,6 +95,42 @@ final class ManagedFileRepository extends BaseRepository
         return $this->visibleQuery(actor: $actor, trashed: $trashed)
             ->with(['owner.profile', 'links'])
             ->find($fileId);
+    }
+
+    /** Lock one visible file so a lifecycle transition can re-check its current state. */
+    public function findVisibleForUpdate(User $actor, int $fileId, bool $withTrashed = false): ?ManagedFile
+    {
+        return $this->modelQuery()
+            ->when($withTrashed, fn (Builder $files): Builder => $files->withTrashed())
+            ->when(
+                $actor->role !== UserRole::Admin,
+                fn (Builder $files): Builder => $files->where('owner_user_id', $actor->id),
+            )
+            ->with(['owner.profile', 'links'])
+            ->lockForUpdate()
+            ->find($fileId);
+    }
+
+    /** Lock one trashed file for a scheduled lifecycle transition. */
+    public function findTrashedForUpdate(int $fileId): ?ManagedFile
+    {
+        return $this->modelQuery()
+            ->onlyTrashed()
+            ->with(['owner.profile', 'links'])
+            ->lockForUpdate()
+            ->find($fileId);
+    }
+
+    /** Visit expired trashed files in bounded batches without exposing storage coordinates. */
+    public function eachExpiredTrashed(CarbonInterface $cutoff, callable $callback): void
+    {
+        $this->modelQuery()
+            ->onlyTrashed()
+            ->where('deleted_at', '<=', $cutoff)
+            ->orderBy('id')
+            ->chunkById(100, function (Collection $files) use ($callback): void {
+                $files->each($callback);
+            });
     }
 
     /** Persist a user-facing rename while leaving immutable storage metadata untouched. */

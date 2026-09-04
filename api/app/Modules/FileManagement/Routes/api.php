@@ -22,6 +22,16 @@ Route::middleware('auth:sanctum')->prefix('files')->name('files.')->group(functi
         ->middleware(Authorize::using(FileManagementFeature::Upload))
         ->name('store');
 
+    Route::post('{file}/restore', [FileController::class, 'restore'])
+        ->whereNumber('file')
+        ->middleware(Authorize::using(FileManagementFeature::Update))
+        ->name('restore');
+
+    Route::delete('{file}/permanent', [FileController::class, 'permanent'])
+        ->whereNumber('file')
+        ->middleware(Authorize::using(FileManagementFeature::Delete))
+        ->name('permanent');
+
     Route::get('{file}', [FileController::class, 'show'])
         ->whereNumber('file')
         ->middleware(Authorize::using(FileManagementFeature::List))
@@ -31,6 +41,11 @@ Route::middleware('auth:sanctum')->prefix('files')->name('files.')->group(functi
         ->whereNumber('file')
         ->middleware(Authorize::using(FileManagementFeature::Update))
         ->name('update');
+
+    Route::delete('{file}', [FileController::class, 'destroy'])
+        ->whereNumber('file')
+        ->middleware(Authorize::using(FileManagementFeature::Delete))
+        ->name('destroy');
 
     Route::get('{file}/content', [FileController::class, 'content'])
         ->whereNumber('file')

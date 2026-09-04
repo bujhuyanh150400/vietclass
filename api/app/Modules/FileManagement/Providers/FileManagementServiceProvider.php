@@ -3,6 +3,7 @@
 namespace App\Modules\FileManagement\Providers;
 
 use App\Modules\Auth\Support\FeatureRegistry;
+use App\Modules\FileManagement\Console\Commands\PurgeTrashedFilesCommand;
 use App\Modules\FileManagement\Enums\FileManagementFeature;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -39,6 +40,7 @@ final class FileManagementServiceProvider extends ServiceProvider
     private function loadConsoleRoutes(): void
     {
         if ($this->app->runningInConsole()) {
+            $this->commands([PurgeTrashedFilesCommand::class]);
             require __DIR__.'/../Routes/console.php';
         }
     }

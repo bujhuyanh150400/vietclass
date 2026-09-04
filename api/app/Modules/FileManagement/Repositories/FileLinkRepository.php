@@ -18,4 +18,10 @@ final class FileLinkRepository extends BaseRepository
     {
         return null;
     }
+
+    /** Determine whether any domain record still uses the managed file. */
+    public function existsForFile(int $fileId): bool
+    {
+        return $this->modelQuery()->where('file_id', $fileId)->exists();
+    }
 }

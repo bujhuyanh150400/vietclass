@@ -8,6 +8,9 @@ use App\Modules\FileManagement\Actions\GetFileContentAction;
 use App\Modules\FileManagement\Actions\GetFileUsageAction;
 use App\Modules\FileManagement\Actions\ListFileOwnerOptionsAction;
 use App\Modules\FileManagement\Actions\ListFilesAction;
+use App\Modules\FileManagement\Actions\PermanentlyDeleteFileAction;
+use App\Modules\FileManagement\Actions\RestoreFileAction;
+use App\Modules\FileManagement\Actions\TrashFileAction;
 use App\Modules\FileManagement\Actions\UpdateFileAction;
 use App\Modules\FileManagement\Actions\UploadFileAction;
 use App\Modules\FileManagement\Http\Requests\FileOwnerOptionsRequest;
@@ -25,6 +28,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 final class FileController extends BaseController
 {
@@ -154,5 +158,53 @@ final class FileController extends BaseController
         }
 
         return redirect()->away((string) $result->getData())->header('Cache-Control', 'no-store');
+    }
+
+    /** Move one active, unlinked visible file into trash while retaining its private object. */
+    public function destroy(TrashFileAction $trash, Request $request, int $fileId): Response|JsonResponse
+    {
+        /** @var User $actor */
+        $actor = $request->user();
+        $result = $trash->handle(actor: $actor, fileId: $fileId);
+
+        if (! $result->isSuccess()) {
+            return $this->actionFailure(result: $result);
+        }
+
+        return $this->noContent();
+    }
+
+    /** Restore one trashed visible file without changing its owner or storage coordinates. */
+    public function restore(RestoreFileAction $restore, Request $request, int $fileId): JsonResponse
+    {
+        /** @var User $actor */
+        $actor = $request->user();
+        $result = $restore->handle(actor: $actor, fileId: $fileId);
+
+        if (! $result->isSuccess()) {
+            return $this->actionFailure(result: $result);
+        }
+
+        /** @var ManagedFile $file */
+        $file = $result->getData();
+
+        return $this->success(data: FileResource::make($file)->resolve($request));
+    }
+
+    /** Delete a trashed, unlinked visible file's object before removing its metadata. */
+    public function permanent(
+        PermanentlyDeleteFileAction $delete,
+        Request $request,
+        int $fileId,
+    ): Response|JsonResponse {
+        /** @var User $actor */
+        $actor = $request->user();
+        $result = $delete->handle(actor: $actor, fileId: $fileId);
+
+        if (! $result->isSuccess()) {
+            return $this->actionFailure(result: $result);
+        }
+
+        return $this->noContent();
     }
 }
