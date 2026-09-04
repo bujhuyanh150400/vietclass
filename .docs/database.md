@@ -1,8 +1,8 @@
 # Database reference
 
-Last verified: 2026-09-03
+Last verified: 2026-09-04
 
-Database engine: PostgreSQL. Migrations under `api/database/migrations/` are the executable source of truth. Framework runtime, Identity, Auth, and Academic tables exist. No Schedule table exists: the module was removed and its schema is being redesigned. The Academic schema is a deliberate adaptation of the fork's, not a copy; each divergence is noted where it occurs.
+Database engine: PostgreSQL. Migrations under `api/database/migrations/` are the executable source of truth. Framework runtime, Identity, Auth, Academic, System, and File Management tables exist. No Schedule table exists: the module was removed and its schema is being redesigned. The Academic schema is a deliberate adaptation of the fork's, not a copy; each divergence is noted where it occurs.
 
 ## Identity
 

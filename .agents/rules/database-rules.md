@@ -14,7 +14,7 @@ Apply this rule to backend database work in API, Admin, and any future backend a
 
 ## Database Overview and Reference
 
-- Read [`docs/database.md`](../../docs/database.md) before changing a backend schema. It is the in-context database schema reference.
+- Read [`.docs/database.md`](../../.docs/database.md) before changing a backend schema. It is the in-context database schema reference.
 - Migrations remain the executable source of truth. Keep the reference accurate enough to understand the current schema without reverse-engineering migrations.
 - Follow any repository-specific persistence rule in addition to this rule. For example, API model, factory, repository, and migration placement rules remain in `api/database-rule.md`.
 
@@ -22,7 +22,7 @@ Apply this rule to backend database work in API, Admin, and any future backend a
 
 Whenever you add, remove, or modify a column, table, index, constraint, or enum in a migration, you must also update:
 
-- [`docs/database.md`](../../docs/database.md) — the in-context schema reference.
+- [`.docs/database.md`](../../.docs/database.md) — the in-context schema reference.
 - The **Module-to-schema mapping** in this file when the change adds, removes, or changes a module's schema ownership.
 
 Make those documentation changes in the same commit as the migration.
@@ -45,7 +45,7 @@ Make those documentation changes in the same commit as the migration.
 
 ## Module-to-Schema Mapping
 
-Keep this mapping current whenever schema ownership changes. Detailed columns, constraints, and indexes belong in [`docs/database.md`](../../docs/database.md).
+Keep this mapping current whenever schema ownership changes. Detailed columns, constraints, and indexes belong in [`.docs/database.md`](../../.docs/database.md).
 
 | Backend scope | Schema responsibility | Current tables | Migration location |
 | --- | --- | --- | --- |
@@ -54,7 +54,7 @@ Keep this mapping current whenever schema ownership changes. Detailed columns, c
 | API / System | Mutable system-wide configuration and the account that last changed it. | `system_settings` | `api/database/migrations/` |
 | API / FileManagement | Private file metadata, immutable ownership, and typed domain usage links. | `files`, `file_links` | `api/database/migrations/` |
 | API / Academic | Academic-process data that references Identity's `teacher_profiles` and `student_profiles`: subjects, classes, class enrolment, and the teaching rooms classes are scheduled into. | `subjects`, `classes`, `class_enrollments`, `rooms` | `api/database/migrations/` |
-| API / Schedule | Each class's weekly fixed schedule, the individual sessions projected from it, and who teaches and attends each one. Rooms belong to Academic. | `schedule_templates`, `schedule_template_teachers`, `schedule_instances`, `schedule_instance_teachers`; `schedule_instance_participants` planned | `api/database/migrations/` |
+| API / Schedule | No Schedule schema is registered: the module was removed and its schema is being redesigned. Rooms belong to Academic. | — | — |
 | API / framework runtime | Laravel session, cache, and queue tables. | `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs` | `api/database/migrations/` |
 | API / future modules | Each module owns its schema mapping, but all migrations remain centralized. | — | `api/database/migrations/` |
 | Admin | No Admin schema is registered yet. | — | — |

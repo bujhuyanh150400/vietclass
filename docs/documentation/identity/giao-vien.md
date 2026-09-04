@@ -1,6 +1,6 @@
 # Quản lý giáo viên
 
-Last Verified: 2026-09-01
+Last Verified: 2026-09-04
 
 ## Tổng quan
 
@@ -25,6 +25,7 @@ Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/a
 - Không có thao tác xóa giáo viên. Ngừng cộng tác bằng cách đổi trạng thái làm việc hoặc khóa tài khoản; bản ghi hồ sơ luôn được giữ để các lớp và lịch sử trỏ tới nó không bị hỏng.
 - Khóa tài khoản chỉ chặn đăng nhập, không đụng tới hồ sơ.
 - Đổi mật khẩu không thu hồi các token đang có. Giáo viên không bị đăng xuất khỏi các thiết bị khác.
+- Hồ sơ giáo viên có ảnh đại diện riêng. Tạo giáo viên gửi được ảnh kèm theo; sau khi tạo, ảnh đại diện đổi bằng endpoint và nút lưu riêng của nó, xem [Ảnh đại diện hồ sơ](avatar.md).
 
 ## Hướng dẫn thao tác
 
@@ -40,7 +41,7 @@ Mọi endpoint nằm dưới tiền tố `/api/v1` và cần header `Authorizati
 | Khóa hoặc mở tài khoản | `PATCH /teachers/{id}/account` với `is_active` |
 | Đổi mật khẩu | `PATCH /teachers/{id}/password` với `password` |
 
-Trường tùy chọn khi tạo và sửa: `address`, `color_identification`.
+Trường tùy chọn khi tạo và sửa: `address`, `color_identification`. Khi tạo còn nhận `avatar` — xem [Ảnh đại diện hồ sơ](avatar.md) cho cả hai dạng JSON và multipart.
 
 Giới tính: `0` Nam, `1` Nữ, `2` Khác.
 
@@ -50,6 +51,7 @@ Danh sách nhận thêm `q` để tìm theo họ tên, số điện thoại, ema
 
 - Danh sách trả về envelope `data` kèm `meta` gồm `current_page`, `per_page`, `total`, `last_page`.
 - Mỗi hồ sơ kèm `username` và `is_account_active` của tài khoản, không kèm bất kỳ thông tin xác thực nào.
+- Mỗi hồ sơ kèm `profile_id` và `avatar`; `avatar` là `null` khi giáo viên chưa chọn ảnh.
 - Tạo thành công trả `201`; giáo viên đăng nhập được ngay bằng tên đăng nhập và mật khẩu vừa đặt.
 - Sửa hồ sơ, khóa và mở tài khoản trả `200` cùng bản ghi sau khi cập nhật.
 - Đổi mật khẩu trả `204`; mật khẩu mới dùng được, mật khẩu cũ thì không.
@@ -82,6 +84,7 @@ Trên trình duyệt:
 | [Phân quyền theo chức năng](../auth/phan-quyen.md) | Tiên quyết | Quyết định ai gọi được các endpoint giáo viên. | Không đủ quyền thì nhận `403`. |
 | [Xác thực bearer token](../auth/authentication.md) | Trạng thái dùng chung | Hồ sơ giáo viên sở hữu một bản ghi tài khoản đăng nhập. | Khóa tài khoản giáo viên khiến người đó không đăng nhập được. |
 | Lớp học | Hạ nguồn | Lớp học phải có giáo viên đang làm việc phụ trách. | Giáo viên đã nghỉ không xuất hiện khi chọn giáo viên cho lớp. |
+| [Ảnh đại diện hồ sơ](avatar.md) | Trạng thái dùng chung | Hồ sơ giáo viên mang ảnh đại diện của chính nó, lưu độc lập với các trường hồ sơ. | Ảnh hiện trong danh sách và biểu mẫu giáo viên; đổi ảnh không cần lưu lại hồ sơ. |
 
 ## Giới hạn hiện tại
 
@@ -94,5 +97,5 @@ Trên trình duyệt:
 ## Tham chiếu kỹ thuật
 
 - Route: `api/app/Modules/Identity/Routes/api.php`
-- Kiểm thử xác định: `api/tests/Behavioral/IdentityTeacherTest.php`, `api/tests/Security/AcademicAuthorizationTest.php`
+- Kiểm thử xác định: `api/tests/Behavioral/IdentityTeacherTest.php`, `api/tests/Behavioral/IdentityAvatarResourceTest.php`, `api/tests/Security/AcademicAuthorizationTest.php`
 - Schema: `.docs/database.md`
