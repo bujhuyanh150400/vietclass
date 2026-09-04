@@ -1,3 +1,5 @@
+import type { AvatarValue } from "@/modules/avatar";
+
 /**
  * Wire types for the academic API.
  *
@@ -58,7 +60,9 @@ export type Room = {
 /** A teacher profile together with the state of its login account. */
 export type Teacher = {
   id: number;
+  profile_id: number;
   user_id: number | null;
+  avatar: AvatarValue;
   full_name: string;
   phone: string | null;
   email: string | null;
@@ -95,7 +99,9 @@ export type SchoolClass = {
 /** A student profile together with the state of its login account. */
 export type Student = {
   id: number;
+  profile_id: number;
   user_id: number | null;
+  avatar: AvatarValue;
   full_name: string;
   phone: string | null;
   dob: string | null;

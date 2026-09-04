@@ -1,3 +1,5 @@
+import type { AvatarCreateSelection } from "@/modules/avatar";
+
 import type {
   Gender,
   GradeLevel,
@@ -34,6 +36,7 @@ type TeacherProfileRequest = {
 export type CreateTeacherRequest = TeacherProfileRequest & {
   username: string;
   password: string;
+  avatar?: AvatarCreateSelection;
 };
 
 /** Payload accepted by the teacher update endpoint. */
@@ -58,6 +61,16 @@ type StudentProfileRequest = {
 export type CreateStudentRequest = StudentProfileRequest & {
   username: string;
   password: string;
+  avatar?: AvatarCreateSelection;
+};
+
+/**
+ * One profile create request together with the image a `file` avatar uploads. The
+ * request is sent as JSON unless the file is there, which turns it into multipart.
+ */
+export type CreateProfileSubmission<TPayload> = {
+  payload: TPayload;
+  avatar_file?: File;
 };
 
 /** Payload accepted by the student update endpoint. */

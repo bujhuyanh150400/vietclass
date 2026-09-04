@@ -26,3 +26,21 @@ export type AvatarSelection =
   | { type: "none" }
   | { type: "file"; file_id: number }
   | DiceBearAvatar;
+
+/**
+ * The avatar field a profile create endpoint accepts. A file has no id yet, so the
+ * request only declares the choice and carries the image as a multipart part.
+ */
+export type AvatarCreateSelection =
+  | { type: "none" }
+  | DiceBearAvatar
+  | { type: "file" };
+
+/**
+ * The avatar chosen while creating a profile. Its file is still a local upload,
+ * because the account that will own the stored file does not exist yet.
+ */
+export type AvatarDraft =
+  | { type: "none" }
+  | DiceBearAvatar
+  | { type: "file"; file: File };

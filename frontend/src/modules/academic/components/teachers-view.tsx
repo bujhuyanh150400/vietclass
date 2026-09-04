@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { PageMeta } from "@/lib/api/contracts";
+import { UserAvatar } from "@/modules/avatar";
 
 import type { Teacher } from "../types/academic";
 import { TEACHER_STATUS_LABELS, formatDate } from "../utils/labels";
@@ -58,9 +59,16 @@ export function TeachersView({
       key: "teacher",
       header: "Giáo viên",
       cell: (teacher) => (
-        <div className="grid gap-0.5">
-          <span className="font-medium">{teacher.full_name}</span>
-          <span className="text-xs text-muted-foreground">{teacher.username ?? "—"}</span>
+        <div className="flex items-center gap-2.5">
+          <UserAvatar
+            value={teacher.avatar}
+            name={teacher.full_name}
+            alt={`Ảnh đại diện của ${teacher.full_name}`}
+          />
+          <div className="grid gap-0.5">
+            <span className="font-medium">{teacher.full_name}</span>
+            <span className="text-xs text-muted-foreground">{teacher.username ?? "—"}</span>
+          </div>
         </div>
       ),
     },

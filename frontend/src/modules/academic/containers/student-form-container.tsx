@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { IdCard, KeyRound, UserRound, type LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Controller } from "react-hook-form";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { BackLink } from "@/components/shared/back-link";
 import { DateField } from "@/components/shared/date-field";
@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useResourceForm } from "@/hooks/use-resource-form";
 import { cn } from "@/lib/utils/index";
+import { AvatarDraftField, ProfileAvatarEditorContainer, type AvatarDraft } from "@/modules/avatar";
 
 import { useCreateStudent, useUpdateStudent } from "../hooks/use-students";
 import {
@@ -133,6 +134,8 @@ export function StudentFormContainer({ student }: { student?: Student }) {
   const isEditing = student !== undefined;
   const create = useCreateStudent();
   const update = useUpdateStudent(student?.id ?? 0);
+  // Only creating carries the avatar with the profile; editing saves it on its own.
+  const [avatar, setAvatar] = useState<AvatarDraft>({ type: "none" });
 
   const { form, onSubmit, alertMessage, isSubmitting } = useResourceForm<
     StudentFormInput,
@@ -180,9 +183,13 @@ export function StudentFormContainer({ student }: { student?: Student }) {
       // The create resolver already required both; the fallbacks only satisfy the
       // shared form type, whose credentials are optional for the edit mode.
       return create.mutateAsync({
-        ...profile,
-        username: values.username ?? "",
-        password: values.password ?? "",
+        payload: {
+          ...profile,
+          username: values.username ?? "",
+          password: values.password ?? "",
+          avatar: avatar.type === "file" ? { type: "file" } : avatar,
+        },
+        avatar_file: avatar.type === "file" ? avatar.file : undefined,
       });
     },
     onSuccess: () => {
@@ -417,6 +424,10 @@ export function StudentFormContainer({ student }: { student?: Student }) {
           </FormSection>
 
           {isEditing ? null : (
+            <AvatarDraftField value={avatar} onChange={setAvatar} disabled={isSubmitting} />
+          )}
+
+          {isEditing ? null : (
             <FormSection
               icon={KeyRound}
               accent="account"
@@ -458,6 +469,16 @@ export function StudentFormContainer({ student }: { student?: Student }) {
           )}
         </div>
       </FormShell>
+
+      {/* Editing saves the avatar through its own endpoint, so it sits outside the
+          profile form rather than inside a form it must never submit. */}
+      {isEditing ? (
+        <ProfileAvatarEditorContainer
+          profileId={student.profile_id}
+          ownerUserId={student.user_id}
+          initialAvatar={student.avatar}
+        />
+      ) : null}
     </div>
   );
 }

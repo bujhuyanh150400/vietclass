@@ -19,26 +19,20 @@ function avatarSource(value: AvatarValue): string | null {
   return value?.type === "dicebear" ? renderDiceBear(value) : null;
 }
 
-type UserAvatarValueProp =
-  | { value: AvatarValue; avatar?: never }
-  | { avatar: AvatarValue; value?: never };
-
 /** Renders a file, local DiceBear, or initials avatar with an image-error fallback. */
 export function UserAvatar({
   value,
-  avatar,
   name,
   alt,
   loading = "lazy",
   ...props
-}: Omit<ComponentProps<typeof Avatar>, "children"> & UserAvatarValueProp & {
+}: Omit<ComponentProps<typeof Avatar>, "children"> & {
   value: AvatarValue;
   name: string;
   alt: string;
   loading?: ComponentProps<"img">["loading"];
 }) {
-  const avatarValue: AvatarValue = value === undefined ? avatar ?? null : value;
-  const source = useMemo(() => avatarSource(avatarValue), [avatarValue]);
+  const source = useMemo(() => avatarSource(value), [value]);
   const [failedSource, setFailedSource] = useState<string | null>(null);
   const failed = failedSource === source;
 

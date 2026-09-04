@@ -7,9 +7,11 @@ import type {
   StudentStatus,
 } from "../types/academic";
 import type {
+  CreateProfileSubmission,
   CreateStudentRequest,
   UpdateStudentRequest,
 } from "../types/academic-requests";
+import { profileCreateBody } from "./profile-create-body";
 
 /** Query parameters accepted by the student list endpoint. */
 export type StudentListParams = {
@@ -34,8 +36,13 @@ export async function fetchStudent(id: number): Promise<Student> {
 }
 
 /** Creates a student profile together with its login account. */
-export async function createStudent(body: CreateStudentRequest): Promise<Student> {
-  return browserRequest<Student>("/api/v1/students", { method: "POST", body });
+export async function createStudent(
+  submission: CreateProfileSubmission<CreateStudentRequest>,
+): Promise<Student> {
+  return browserRequest<Student>("/api/v1/students", {
+    method: "POST",
+    body: profileCreateBody(submission),
+  });
 }
 
 /** Changes a student profile. */

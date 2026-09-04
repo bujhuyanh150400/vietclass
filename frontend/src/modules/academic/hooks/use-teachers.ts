@@ -17,6 +17,7 @@ import {
 import { academicQueryKeys } from "./academic-query-keys";
 import type { Option, Teacher } from "../types/academic";
 import type {
+  CreateProfileSubmission,
   CreateTeacherRequest,
   UpdateTeacherRequest,
 } from "../types/academic-requests";
@@ -62,7 +63,7 @@ export function useCreateTeacher() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: CreateTeacherRequest) => createTeacher(body),
+    mutationFn: (submission: CreateProfileSubmission<CreateTeacherRequest>) => createTeacher(submission),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.teachers.root() });
     },

@@ -24,6 +24,7 @@ import {
 import { academicQueryKeys } from "./academic-query-keys";
 import type { GradeLevel, Student, StudentStatus } from "../types/academic";
 import type {
+  CreateProfileSubmission,
   CreateStudentRequest,
   UpdateStudentRequest,
 } from "../types/academic-requests";
@@ -205,7 +206,7 @@ export function useCreateStudent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: CreateStudentRequest) => createStudent(body),
+    mutationFn: (submission: CreateProfileSubmission<CreateStudentRequest>) => createStudent(submission),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.students.root() });
     },

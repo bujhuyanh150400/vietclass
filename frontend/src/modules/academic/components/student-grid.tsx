@@ -7,6 +7,7 @@ import { EmptyState, type DataTableState } from "@/components/shared/data-table"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { UserAvatar } from "@/modules/avatar";
 
 import type { Student, StudentStatus } from "../types/academic";
 import { GRADE_LEVEL_LABELS, STUDENT_STATUS_LABELS } from "../utils/labels";
@@ -17,11 +18,6 @@ const STATUS_VARIANT: Record<StudentStatus, "default" | "secondary" | "destructi
   1: "secondary",
   2: "destructive",
 };
-
-/** Returns a compact fallback avatar label from a student's name. */
-function initials(name: string): string {
-  return name.trim().split(/\s+/).slice(-2).map((part) => part[0]).join("").toUpperCase();
-}
 
 /** Renders student records as compact cards while preserving list states and actions. */
 export function StudentGrid({
@@ -65,9 +61,12 @@ export function StudentGrid({
       {state.rows.map((student) => (
         <article key={student.id} className="rounded-xl border bg-card p-4 shadow-xs transition-shadow hover:shadow-sm">
           <div className="flex items-start gap-3">
-            <div className="grid size-10 shrink-0 place-items-center rounded-full bg-orange-50 text-xs font-semibold text-vc-orange-deep">
-              {initials(student.full_name)}
-            </div>
+            <UserAvatar
+              value={student.avatar}
+              name={student.full_name}
+              alt={`Ảnh đại diện của ${student.full_name}`}
+              size="lg"
+            />
             <div className="min-w-0 grow">
               <Link href={`/academic/students/${student.id}`} className="block truncate text-sm font-semibold hover:text-vc-orange-deep">
                 {student.full_name}

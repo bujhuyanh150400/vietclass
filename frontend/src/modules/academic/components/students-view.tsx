@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { PageMeta } from "@/lib/api/contracts";
+import { UserAvatar } from "@/modules/avatar";
 
 import type { Student, StudentStatus } from "../types/academic";
 import { GRADE_LEVEL_LABELS, STUDENT_STATUS_LABELS } from "../utils/labels";
@@ -99,11 +100,18 @@ export function StudentsView({
       key: "student",
       header: "Học sinh",
       cell: (student) => (
-        <div className="grid gap-0.5">
-          <span className="font-medium">{student.full_name}</span>
-          <span className="text-xs text-muted-foreground">
-            {student.phone ?? "Chưa có số điện thoại"}
-          </span>
+        <div className="flex items-center gap-2.5">
+          <UserAvatar
+            value={student.avatar}
+            name={student.full_name}
+            alt={`Ảnh đại diện của ${student.full_name}`}
+          />
+          <div className="grid gap-0.5">
+            <span className="font-medium">{student.full_name}</span>
+            <span className="text-xs text-muted-foreground">
+              {student.phone ?? "Chưa có số điện thoại"}
+            </span>
+          </div>
         </div>
       ),
     },

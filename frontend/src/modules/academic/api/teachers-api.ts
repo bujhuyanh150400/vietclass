@@ -3,9 +3,11 @@ import type { Page } from "@/lib/api/contracts";
 
 import type { Option, Teacher, TeacherStatus } from "../types/academic";
 import type {
+  CreateProfileSubmission,
   CreateTeacherRequest,
   UpdateTeacherRequest,
 } from "../types/academic-requests";
+import { profileCreateBody } from "./profile-create-body";
 
 /** Query parameters accepted by the teacher list endpoint. */
 export type TeacherListParams = {
@@ -40,8 +42,13 @@ export async function fetchTeacher(id: number): Promise<Teacher> {
 }
 
 /** Creates a teacher profile together with its login account. */
-export async function createTeacher(body: CreateTeacherRequest): Promise<Teacher> {
-  return browserRequest<Teacher>("/api/v1/teachers", { method: "POST", body });
+export async function createTeacher(
+  submission: CreateProfileSubmission<CreateTeacherRequest>,
+): Promise<Teacher> {
+  return browserRequest<Teacher>("/api/v1/teachers", {
+    method: "POST",
+    body: profileCreateBody(submission),
+  });
 }
 
 /** Changes a teacher profile. */

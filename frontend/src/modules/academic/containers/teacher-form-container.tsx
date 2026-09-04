@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Controller } from "react-hook-form";
+import { useState } from "react";
 
 import { BackLink } from "@/components/shared/back-link";
 import { DateField } from "@/components/shared/date-field";
@@ -12,6 +13,7 @@ import { SelectField } from "@/components/shared/select-field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useResourceForm } from "@/hooks/use-resource-form";
+import { AvatarDraftField, ProfileAvatarEditorContainer, type AvatarDraft } from "@/modules/avatar";
 
 import { useCreateTeacher, useUpdateTeacher } from "../hooks/use-teachers";
 import {
@@ -66,6 +68,8 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
   const isEditing = teacher !== undefined;
   const create = useCreateTeacher();
   const update = useUpdateTeacher(teacher?.id ?? 0);
+  // Only creating carries the avatar with the profile; editing saves it on its own.
+  const [avatar, setAvatar] = useState<AvatarDraft>({ type: "none" });
 
   const { form, onSubmit, alertMessage, isSubmitting } = useResourceForm<
     TeacherFormInput,
@@ -106,9 +110,13 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
       // The create resolver already required both; the fallbacks only satisfy the
       // shared form type, whose credentials are optional for the edit mode.
       return create.mutateAsync({
-        ...profile,
-        username: values.username ?? "",
-        password: values.password ?? "",
+        payload: {
+          ...profile,
+          username: values.username ?? "",
+          password: values.password ?? "",
+          avatar: avatar.type === "file" ? { type: "file" } : avatar,
+        },
+        avatar_file: avatar.type === "file" ? avatar.file : undefined,
       });
     },
     onSuccess: () => {
@@ -125,6 +133,18 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
   return (
     <div className="grid max-w-3xl gap-6">
       <BackLink href={LIST_HREF} label="Danh sách giáo viên" />
+
+      {/* The avatar sits beside the profile form, not inside it: creating submits it
+          with the account request, and editing saves it through its own endpoint. */}
+      {isEditing ? (
+        <ProfileAvatarEditorContainer
+          profileId={teacher.profile_id}
+          ownerUserId={teacher.user_id}
+          initialAvatar={teacher.avatar}
+        />
+      ) : (
+        <AvatarDraftField value={avatar} onChange={setAvatar} disabled={isSubmitting} />
+      )}
 
       <FormShell
         onSubmit={onSubmit}
