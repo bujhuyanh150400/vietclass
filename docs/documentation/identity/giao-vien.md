@@ -98,4 +98,4 @@ Trên trình duyệt:
 
 - Route: `api/app/Modules/Identity/Routes/api.php`
 - Kiểm thử xác định: `api/tests/Behavioral/IdentityTeacherTest.php`, `api/tests/Behavioral/IdentityAvatarResourceTest.php`, `api/tests/Security/AcademicAuthorizationTest.php`
-- Schema: `.docs/database.md`
+- Schema: `docs/database.md`

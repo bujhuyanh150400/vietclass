@@ -17,7 +17,6 @@ __pycache__/
 docs/
 !api/docs/
 !api/docs/**
-.docs/
 .issues/
 .tasks/
 .task/
@@ -47,8 +46,6 @@ CLAUDE.md
 # Agent brainstorming and design-spec working artifacts stay local.
 docs/superpowers/
 docs/superpowers/**
-.docs/superpowers/
-.docs/superpowers/**
 
 # Local frontend environment overrides stay local.
 frontend/.env.local

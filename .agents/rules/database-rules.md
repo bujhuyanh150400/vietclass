@@ -14,7 +14,7 @@ Apply this rule to backend database work in API, Admin, and any future backend a
 
 ## Database Overview and Reference
 
-- Read [`.docs/database.md`](../../.docs/database.md) before changing a backend schema. It is the in-context database schema reference.
+- Read [`docs/database.md`](../../docs/database.md) before changing a backend schema. It is the in-context database schema reference.
 - Migrations remain the executable source of truth. Keep the reference accurate enough to understand the current schema without reverse-engineering migrations.
 - Follow any repository-specific persistence rule in addition to this rule. For example, API model, factory, repository, and migration placement rules remain in `api/database-rule.md`.
 
@@ -22,7 +22,7 @@ Apply this rule to backend database work in API, Admin, and any future backend a
 
 Whenever you add, remove, or modify a column, table, index, constraint, or enum in a migration, you must also update:
 
-- [`.docs/database.md`](../../.docs/database.md) — the in-context schema reference.
+- [`docs/database.md`](../../docs/database.md) — the in-context schema reference.
 - The **Module-to-schema mapping** in this file when the change adds, removes, or changes a module's schema ownership.
 
 Make those documentation changes in the same commit as the migration.
@@ -45,7 +45,7 @@ Make those documentation changes in the same commit as the migration.
 
 ## Module-to-Schema Mapping
 
-Keep this mapping current whenever schema ownership changes. Detailed columns, constraints, and indexes belong in [`.docs/database.md`](../../.docs/database.md).
+Keep this mapping current whenever schema ownership changes. Detailed columns, constraints, and indexes belong in [`docs/database.md`](../../docs/database.md).
 
 | Backend scope | Schema responsibility | Current tables | Migration location |
 | --- | --- | --- | --- |

@@ -89,4 +89,4 @@ Trên trình duyệt:
 - Route: `api/app/Modules/Academic/Routes/api.php`
 - Kiểm thử xác định: `api/tests/Behavioral/AcademicRoomTest.php`, `api/tests/Behavioral/AcademicPersistenceTest.php`
 - Màn hình: `frontend/app/(protected)/academic/rooms/`
-- Schema: `.docs/database.md`
+- Schema: `docs/database.md`

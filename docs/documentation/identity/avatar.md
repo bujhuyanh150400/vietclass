@@ -96,4 +96,4 @@ Khi tạo học sinh hoặc giáo viên, khung ảnh đại diện nằm trong b
 - Danh sách tùy chọn DiceBear được phép: `api/config/avatar.php`
 - Kiểm thử xác định: `api/tests/Behavioral/ProfileAvatarTest.php`, `api/tests/Behavioral/IdentityAvatarResourceTest.php`, `api/tests/Security/ProfileAvatarAuthorizationTest.php`
 - Tài liệu liên quan: [Quản lý tệp](../files/quan-ly-tep.md)
-- Schema: `.docs/database.md`
+- Schema: `docs/database.md`

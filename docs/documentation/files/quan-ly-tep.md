@@ -105,4 +105,4 @@ Trên trình duyệt tại `/files`:
 - Tác vụ định kỳ: `api/app/Modules/FileManagement/Routes/console.php` (`files:purge-trash`, chạy hằng ngày)
 - Cấu hình kho lưu trữ: `api/config/file-management.php`, `api/config/filesystems.php`
 - Kiểm thử xác định: `api/tests/Behavioral/FileUploadTest.php`, `api/tests/Behavioral/FileLibraryTest.php`, `api/tests/Behavioral/FileLifecycleTest.php`, `api/tests/Behavioral/SystemFileQuotaTest.php`, `api/tests/Security/FileManagementAuthorizationTest.php`
-- Schema: `.docs/database.md`
+- Schema: `docs/database.md`

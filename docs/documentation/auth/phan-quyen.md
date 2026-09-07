@@ -76,4 +76,4 @@ Lệnh in số quyền đã đồng bộ. Nếu cơ sở dữ liệu còn quyề
 - Module: `api/app/Modules/Auth/`
 - Khai báo quyền của từng module: `api/app/Modules/Academic/Enums/AcademicFeature.php`, `api/app/Modules/Identity/Enums/IdentityFeature.php`
 - Kiểm thử xác định: `api/tests/Behavioral/AuthFeatureResolutionTest.php`, `api/tests/Security/AcademicAuthorizationTest.php`
-- Schema: `.docs/database.md`
+- Schema: `docs/database.md`

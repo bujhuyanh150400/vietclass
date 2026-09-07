@@ -80,4 +80,4 @@ Ký tự `%` và `_` gõ trong `q` được so khớp đúng như ký tự thư�
 
 - Route: `api/app/Modules/Academic/Routes/api.php`
 - Kiểm thử xác định: `api/tests/Behavioral/AcademicSubjectTest.php`, `api/tests/Security/AcademicAuthorizationTest.php`
-- Schema: `.docs/database.md`
+- Schema: `docs/database.md`

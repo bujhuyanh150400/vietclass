@@ -100,7 +100,7 @@ Lỗi nghiệp vụ của thao tác đăng nhập được throw dưới dạng 
 
 - Route module Laravel: `api/app/Modules/Auth/Routes/api.php`
 - Kiểm thử xác định: `api/tests/Behavioral/AuthenticationTest.php`, `api/tests/Security/AuthenticationSecurityTest.php`
-- Schema: `.docs/database.md`
+- Schema: `docs/database.md`
 - Module Identity của frontend: `frontend/src/modules/identity/` (`index.ts` cho client, `server.ts` chỉ cho server)
 - Endpoint cùng nguồn của frontend: `frontend/app/api/auth/`
 - Bảo vệ đường dẫn: `frontend/proxy.ts` và `frontend/app/(protected)/layout.tsx`
