@@ -212,6 +212,3 @@ Ranh giới: `EmptyState` dành cho ô bảng hoặc lưới, không phải toà
 - Vỏ ứng dụng: `frontend/src/components/layouts/`
 - Cấu hình shadcn/ui: `frontend/components.json`
 - Tài liệu chức năng: `docs/documentation/README.md`
-- Quy trình redesign màn hình đã có qua Google Stitch: [`docs/stitch-redesign-workflow.md`](stitch-redesign-workflow.md)
-- Quy trình thiết kế màn hình mới qua Google Stitch: [`docs/stitch-new-screen-workflow.md`](stitch-new-screen-workflow.md)
-- Bản rút gọn của hệ thống này gửi cho Stitch: `frontend/.stitch/DESIGN.md` — sinh lại từ tài liệu này mỗi khi token đổi

@@ -52,9 +52,3 @@ frontend/.env.local
 
 #ignore fork
 fork/
-
-# Stitch design sandbox: the design contract and approved references are shared,
-# but the static HTML snapshots are regenerated tooling output.
-!frontend/.stitch/
-!frontend/.stitch/**
-frontend/.stitch/**/*.html
