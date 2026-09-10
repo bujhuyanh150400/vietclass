@@ -425,9 +425,13 @@
   /* ── Focus ───────────────────────────────────────────────────────────────
      One visible treatment for every shell control, replacing the primitive's
      ring so the outline reads against both paper and the orange active row. */
+  /* The account row is matched by its own class, not the menu-button slot: it is
+     a `DropdownMenuTrigger asChild`, and that wrapper replaces the child's
+     `data-slot`, so the slot selector never reaches it. */
   .vc-app-sidebar [data-slot="sidebar-menu-button"]:focus-visible,
   .vc-app-sidebar [data-slot="sheet-close"]:focus-visible,
-  .vc-app-shell .vc-app-header [data-slot="sidebar-trigger"]:focus-visible {
+  .vc-app-shell .vc-app-header [data-slot="sidebar-trigger"]:focus-visible,
+  .vc-app-sidebar .vc-app-account-button:focus-visible {
     outline: 2px solid var(--vc-orange-deep);
     outline-offset: 2px;
     --tw-ring-shadow: 0 0 #0000;
