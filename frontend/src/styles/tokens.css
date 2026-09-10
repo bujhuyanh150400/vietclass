@@ -56,12 +56,43 @@
   /* The app shell reuses the login screen's paper material: the sidebar is a
      warm sheet, and the inset content pane is the white page resting on it.
      A neutral grey sidebar would read cold beside the brand orange. */
-  --sidebar: #f8f1e6;
+  --sidebar: var(--vc-paper);
   --sidebar-foreground: var(--vc-ink);
   --sidebar-primary: var(--vc-orange);
   --sidebar-primary-foreground: var(--vc-ink);
-  --sidebar-accent: #f0e4d2;
+  --sidebar-accent: var(--vc-shell-tint);
   --sidebar-accent-foreground: var(--vc-ink);
-  --sidebar-border: #e7d9c5;
+  --sidebar-border: var(--vc-shell-rule);
   --sidebar-ring: var(--vc-orange-deep);
+
+  /* Scoped geometry and material for the authenticated app shell. These are
+     app-shell tokens, not a global geometry change: feature screens keep the
+     component library's own radii. */
+  --vc-shell-rule: oklch(0.891249 0.030951 76.9518);
+  --vc-shell-control-border: oklch(0.62 0.035 70);
+  --vc-shell-tint: oklch(0.947 0.022 80);
+  --vc-shell-muted: oklch(0.495416 0.052947 54.4202);
+  --vc-shell-radius-control: 5px;
+  --vc-shell-radius-panel: 8px;
+  --vc-shell-radius-sheet: 10px;
+
+  /* The desk the paper sits on, and the ruled line printed on the sidebar
+     sheet. The desk is only ever seen at the sheet's margins. */
+  --vc-shell-desk: var(--vc-wood);
+  --vc-shell-rule-ink: oklch(0.55 0.05 70 / 0.09);
+  --vc-shell-rule-pitch: 22px;
+
+  /* Two shadow roles: a solid offset for controls that should read as pressed
+     card stock, and a soft blur reserved for surfaces that genuinely float. */
+  --vc-shell-shadow-control: 0 2px 0 var(--vc-shell-rule);
+  --vc-shell-shadow-raised: 0 3px 0 var(--vc-wood);
+  --vc-shell-shadow-sheet: 0 5px 20px oklch(0.3 0.04 60 / 0.045);
+  --vc-shell-shadow-sidebar: 5px 0 18px oklch(0.22 0.03 48 / 0.12);
+  --vc-shell-shadow-drawer: 10px 0 32px oklch(0.2 0.03 48 / 0.24);
+
+  /* The topbar is inset past the page sheet's left gutter, and the content
+     column stops growing before lines get too long to scan. */
+  --vc-shell-topbar-inset: 31px;
+  --vc-shell-topbar-height: 64px;
+  --vc-shell-content-max: 1550px;
 }

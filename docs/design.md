@@ -1,6 +1,6 @@
 # Design System
 
-Last Verified: 2026-09-07
+Last Verified: 2026-09-10
 
 Tài liệu tham chiếu hệ thống thiết kế của frontend (`frontend/`). Mô tả những gì hiện có trong mã nguồn: token, typography, theme mapping, tầng CSS, và các nguyên hàm giao diện dùng chung. Quy tắc hành vi vẫn nằm ở `.agents/rules/`; tài liệu chức năng cho người dùng nằm ở `docs/documentation/`.
 
@@ -52,13 +52,32 @@ Các token trung tính dùng thang `oklch` của base color `zinc`. Các token m
 
 ### 2.4 Token sidebar
 
-`--sidebar` `#f8f1e6`, `--sidebar-foreground`, `--sidebar-primary`, `--sidebar-primary-foreground`, `--sidebar-accent` `#f0e4d2`, `--sidebar-accent-foreground`, `--sidebar-border` `#e7d9c5`, `--sidebar-ring`.
+`--sidebar` = `--vc-paper`, `--sidebar-foreground`, `--sidebar-primary`, `--sidebar-primary-foreground`, `--sidebar-accent` = `--vc-shell-tint`, `--sidebar-accent-foreground`, `--sidebar-border` = `--vc-shell-rule`, `--sidebar-ring`.
 
-Vỏ ứng dụng tái dùng chất liệu giấy của màn đăng nhập: sidebar là tờ giấy ấm, khung nội dung inset là trang trắng đặt trên đó. Sidebar xám trung tính sẽ lạnh khi đứng cạnh cam thương hiệu.
+Vỏ ứng dụng tái dùng chất liệu giấy của màn đăng nhập: sidebar là tờ giấy kẻ dòng, khung nội dung inset là trang trắng đặt trên đó. Sidebar xám trung tính sẽ lạnh khi đứng cạnh cam thương hiệu.
+
+Sidebar và page sheet dùng chung đúng một nền giấy nên chúng đọc như một tập tài liệu; phân tách giữa hai lớp là bóng đổ của sidebar, không phải màu nền khác nhau.
 
 ### 2.5 Bo góc
 
 Chỉ một token gốc: `--radius: 0.625rem`. `theme.css` dẫn xuất ra `--radius-sm` (−4px), `--radius-md` (−2px), `--radius-lg` (= gốc), `--radius-xl` (+4px).
+
+App shell dùng bộ token có phạm vi riêng, không thay đổi radius toàn cục của các màn
+hình tính năng: `--vc-shell-radius-control` `5px`,
+`--vc-shell-radius-panel` `8px`, `--vc-shell-radius-sheet` `10px`.
+Divider dùng `--vc-shell-rule`; control tương tác dùng
+`--vc-shell-control-border`; nền hover dùng `--vc-shell-tint`; chữ phụ trong shell
+dùng `--vc-shell-muted`.
+
+Chất liệu và hình học còn lại của shell cũng là token có phạm vi riêng:
+`--vc-shell-rule-ink` và `--vc-shell-rule-pitch` `22px` vẽ dòng kẻ trên tờ sidebar;
+`--vc-shell-topbar-height` `64px`, `--vc-shell-topbar-inset` `31px` và
+`--vc-shell-content-max` `1550px` định khung page sheet.
+
+Bóng đổ chia làm hai vai trò. Solid offset dành cho control và hàng điều hướng đang
+chọn (`--vc-shell-shadow-control` `0 2px 0`, `--vc-shell-shadow-raised` `0 3px 0`),
+đọc như giấy bìa được ấn xuống. Blur chỉ dành cho bề mặt thực sự nổi:
+`--vc-shell-shadow-sheet`, `--vc-shell-shadow-sidebar`, `--vc-shell-shadow-drawer`.
 
 ### 2.6 Chưa có token riêng
 
@@ -106,6 +125,7 @@ CSS của một tính năng **không** được import vào `styles.css`. Nó s�
 | --- | --- |
 | `src/modules/identity/styles/login.css` | `src/modules/identity/components/login-view.tsx` |
 | `src/modules/files/styles/filepond.css` | `src/modules/files/components/filepond-client.tsx` |
+| `src/components/layouts/app-shell.css` | `src/components/layouts/protected-shell.tsx` |
 
 Cách này vẫn đúng vì cascade layer là toàn cục theo tài liệu: `styles.css` khai báo thứ tự tầng, còn một khối `@layer components` nạp riêng vẫn được xếp vào đúng tầng đó, nằm dưới mọi utility. Vì vậy CSS tính năng luôn bọc trong `@layer components`.
 
@@ -130,14 +150,24 @@ Toàn bộ hiệu ứng bị tắt dưới `prefers-reduced-motion: reduce`; `.v
 
 | Vùng | Nguồn | Quy ước |
 | --- | --- | --- |
-| Vỏ đã đăng nhập | `components/layouts/protected-shell.tsx` | `SidebarProvider` + `AppSidebar` + `SidebarInset`; sidebar là rail cố định trên desktop, drawer dưới breakpoint mobile |
-| Nội dung | cùng tệp | `<main class="grow px-4 py-6 sm:px-6 sm:py-8">` |
-| Topbar | `components/layouts/app-header.tsx` | `h-16 shrink-0`, `border-b bg-background px-4 sm:px-6`; chỉ chứa `SidebarTrigger` và tiêu đề trang suy ra từ pathname |
+| Vỏ đã đăng nhập | `components/layouts/protected-shell.tsx` | `SidebarProvider` + `AppSidebar` + `SidebarInset`; sidebar mở rộng `14.75rem`, icon rail `4.875rem`, drawer mobile tối đa `min(19.5rem, 88vw)` |
+| IA điều hướng | `components/layouts/navigation.ts` | `Trang chủ`; nhóm `Học vụ` gồm Môn học, Phòng học, Lớp học; nhóm `Người dùng` gồm Giáo viên, Học sinh, Phụ huynh · Sắp có; nhóm `Hệ thống` gồm Quản lý thư viện |
+| Nội dung | `components/layouts/protected-shell.tsx` + `app-shell.css` | `<main class="vc-app-content">` là vùng cuộn duy nhất; shell cao `100svh` và ẩn overflow bên ngoài |
+| Page sheet | `app-shell.css` | Desktop inset `14px 14px 14px 12px` và radius `10px`, nền `--vc-surface-raised`; vùng cuộn giới hạn `1550px` và canh giữa để dòng không dài quá tầm quét; từ mobile bỏ inset/radius ngoài để ưu tiên chiều rộng |
+| Topbar | `components/layouts/app-header.tsx` | `64px` (mobile `60px`), thụt trái `31px` để đường kẻ bắt đầu ở mép vùng viết; chỉ chứa `SidebarTrigger` (`44px`, viền control, solid offset shadow) và tiêu đề trang `15px/600` suy ra từ pathname |
+| Chất liệu sidebar | `app-shell.css` | Tờ giấy kẻ dòng ngang mỗi `22px` (không phải giấy ô ly) kèm gáy lò xo trang trí ở mép phải; hàng thương hiệu có caption `Không gian quản lý lớp học` và một đường kẻ phía dưới |
+| Hàng điều hướng | `app-shell.css` | Cao tối thiểu `44px`, icon `18px`; hàng đang chọn là nền cam đặc `--vc-orange` + viền `--vc-wood` + solid offset `0 3px 0` và một chevron ở cuối hàng; hover chỉ đổi màu, không đổi kích thước |
+| Geometry app shell | `tokens.css` + `app-shell.css` | Control `5px`, panel `8px`, page sheet `10px`; viền control đậm hơn divider; control có solid offset focus/press shadow, blur chỉ dành cho page sheet/drawer |
 | Vỏ chưa đăng nhập | `app/(auth)/layout.tsx` | `flex min-h-svh grow flex-col` |
 
-Trạng thái mở/thu của sidebar lưu ở cookie `sidebar_state` và được đọc phía server để tránh nhảy layout.
+Chiều rộng sidebar hẹp dần theo breakpoint: `14.75rem` mặc định, `13.5rem` ở
+`1024–1199px`, `13rem` ở `768–1023px`. Primitive đặt chiều rộng bằng inline style nên
+mỗi giá trị đọc qua một biến (`--vc-shell-sidebar-width`) để CSS còn ghi đè được theo
+media query.
 
-Thương hiệu, điều hướng và menu tài khoản đều nằm trong sidebar; topbar cố ý để trống để không lặp lại.
+Trạng thái mở/thu của sidebar lưu ở cookie `sidebar_state` và được đọc phía server để tránh nhảy layout. Rail giữ nguyên quy tắc cookie ở mọi breakpoint desktop và tablet; không có breakpoint nào ép rail thu gọn.
+
+Thương hiệu, điều hướng và menu tài khoản đều nằm trong sidebar; topbar cố ý để trống để không lặp lại. Desktop có icon rail với tooltip; mobile dùng Radix Sheet với overlay, focus trap, Escape và nút `Đóng điều hướng`. Các màn nghiệp vụ giữ nguyên route, dữ liệu và state loading/empty/no-result/error.
 
 ## 9. Thang khoảng cách trong màn hình
 
@@ -179,6 +209,7 @@ Ranh giới: `EmptyState` dành cho ô bảng hoặc lưới, không phải toà
 - `BrandIcon` dùng `public/images/brand-mark.png`, bản đã cắt viền của bộ icon trong `public/app-icons/`. Bộ icon launcher mang ~20% đệm trong suốt để vừa mask nền tảng; ở 24px phần đệm đó chiếm một phần năm khung nên phải dùng bản cắt.
 - Mark **không** được lấy mẫu pixel: `image-rendering: pixelated` chỉ giúp khi phóng to pixel art; ở đây ảnh bị thu nhỏ mạnh, nearest-neighbour sẽ làm rơi pixel và vỡ hình.
 - `BrandMark` nhận `tone`: `"desk"` cho cột nền tối (`text-vc-paper`), `"paper"` cho nền sáng (`text-vc-text`). Wordmark đặt ở `font-pixel text-[0.8rem] leading-none tracking-[0.06em]`.
+- `BrandMark` nhận thêm `caption` tùy chọn, đặt ngay dưới wordmark. Chỉ sidebar dùng nó; màn đăng nhập đã tự giới thiệu sản phẩm bằng headline riêng. Caption phải quay về `--font-sans` vì font pixel không có dấu tiếng Việt.
 - Kích thước do bên gọi quyết định, vì rail sidebar thu hẹp hơn header màn đăng nhập.
 - Ảnh minh họa trạng thái rỗng: `public/images/empty_1.png` (chưa có dữ liệu nào) và `empty_2.png` (bộ lọc không khớp).
 - Hoạt hình chờ: `public/animations/vietclass-owl-reading-thinking-loop.lottie` qua `@lottiefiles/dotlottie-react`.

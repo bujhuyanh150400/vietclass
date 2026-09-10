@@ -27,9 +27,16 @@ import {
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const SIDEBAR_WIDTH = "16rem";
-const SIDEBAR_WIDTH_MOBILE = "18rem";
-const SIDEBAR_WIDTH_ICON = "3rem";
+const SIDEBAR_WIDTH = "14.75rem";
+const SIDEBAR_WIDTH_MOBILE = "min(19.5rem, 88vw)";
+const SIDEBAR_WIDTH_ICON = "4.875rem";
+// Widths are set inline, which a stylesheet cannot override, so each one reads
+// through a variable first. That lets a consumer's CSS narrow the rail at a
+// breakpoint — something inline styles cannot express — while the constants
+// above stay the default for anyone who sets nothing.
+const SIDEBAR_WIDTH_VAR = `var(--vc-shell-sidebar-width, ${SIDEBAR_WIDTH})`;
+const SIDEBAR_WIDTH_ICON_VAR = `var(--vc-shell-sidebar-width-icon, ${SIDEBAR_WIDTH_ICON})`;
+const SIDEBAR_WIDTH_MOBILE_VAR = `var(--vc-shell-sidebar-width-mobile, ${SIDEBAR_WIDTH_MOBILE})`;
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
 type SidebarContextProps = {
@@ -139,8 +146,8 @@ function SidebarProvider({
           data-slot="sidebar-wrapper"
           style={
             {
-              "--sidebar-width": SIDEBAR_WIDTH,
-              "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+              "--sidebar-width": SIDEBAR_WIDTH_VAR,
+              "--sidebar-width-icon": SIDEBAR_WIDTH_ICON_VAR,
               ...style,
             } as React.CSSProperties
           }
@@ -198,19 +205,27 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+          className={cn(
+            "w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground",
+            className,
+          )}
           style={
             {
-              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+              "--sidebar-width": SIDEBAR_WIDTH_MOBILE_VAR,
             } as React.CSSProperties
           }
           side={side}
+          closeLabel="Đóng điều hướng"
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+            <SheetTitle>Điều hướng</SheetTitle>
+            <SheetDescription>Điều hướng chính của VietClasses.</SheetDescription>
           </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
+          {/* Carries the same slot as the desktop branch so one stylesheet can
+              dress both: the drawer is the same sheet, just slid in. */}
+          <div data-slot="sidebar-inner" className="flex h-full w-full flex-col">
+            {children}
+          </div>
         </SheetContent>
       </Sheet>
     );
@@ -270,7 +285,12 @@ function SidebarTrigger({
   onClick,
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar } = useSidebar();
+  const { isMobile, state, toggleSidebar } = useSidebar();
+  const label = isMobile
+    ? "Mở điều hướng"
+    : state === "expanded"
+      ? "Thu gọn điều hướng"
+      : "Mở rộng điều hướng";
 
   return (
     <Button
@@ -284,25 +304,27 @@ function SidebarTrigger({
         toggleSidebar();
       }}
       {...props}
+      aria-label={label}
+      title={label}
     >
       <PanelLeftIcon />
-      <span className="sr-only">Toggle Sidebar</span>
+      <span className="sr-only">{label}</span>
     </Button>
   );
 }
 
 /** Renders the thin edge strip that toggles the sidebar on drag/click, desktop only. */
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
-  const { toggleSidebar } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
+  const label = state === "expanded"
+    ? "Thu gọn điều hướng"
+    : "Mở rộng điều hướng";
 
   return (
     <button
       data-sidebar="rail"
       data-slot="sidebar-rail"
-      aria-label="Toggle Sidebar"
-      tabIndex={-1}
       onClick={toggleSidebar}
-      title="Toggle Sidebar"
       className={cn(
         "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-sidebar-border sm:flex",
         "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",
@@ -313,14 +335,17 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
         className,
       )}
       {...props}
+      aria-label={label}
+      tabIndex={-1}
+      title={label}
     />
   );
 }
 
-/** Renders the main content pane beside the sidebar, offset for the `inset` variant. */
-function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
+/** Renders the content pane beside the sidebar without creating a nested main landmark. */
+function SidebarInset({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <main
+    <div
       data-slot="sidebar-inset"
       className={cn(
         "relative flex w-full flex-1 flex-col bg-background",

@@ -4,6 +4,8 @@ import { AppHeader } from "@/components/layouts/app-header";
 import { AppSidebar } from "@/components/layouts/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
+import "./app-shell.css";
+
 /**
  * Renders the frame every authenticated screen sits in: a collapsible sidebar
  * (a fixed rail on desktop, a drawer below the mobile breakpoint — both from
@@ -21,11 +23,11 @@ export function ProtectedShell({
   children: ReactNode;
 }) {
   return (
-    <SidebarProvider defaultOpen={defaultSidebarOpen}>
+    <SidebarProvider className="vc-app-shell" defaultOpen={defaultSidebarOpen}>
       <AppSidebar accountMenu={accountMenu} />
-      <SidebarInset>
+      <SidebarInset className="vc-app-sheet">
         <AppHeader />
-        <main className="grow px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+        <main className="vc-app-content">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

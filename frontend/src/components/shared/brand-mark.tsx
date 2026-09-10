@@ -38,12 +38,19 @@ export function BrandIcon({ className }: { className?: string }) {
  * is set in a bitmap face so the brand speaks at the same resolution as the
  * icon artwork. `tone` picks the wordmark color for the dark desk column or a
  * light surface.
+ *
+ * `caption` adds the strapline beneath the name. It sits inside the wordmark
+ * rather than beside it so the two move as one block, and it is opt-in because
+ * the login screen already states what the product is in its own headline —
+ * only the sidebar, where the lockup stands alone, needs the explanation.
  */
 export function BrandMark({
   tone,
+  caption,
   className,
 }: {
   tone: "desk" | "paper";
+  caption?: string;
   className?: string;
 }) {
   return (
@@ -51,11 +58,14 @@ export function BrandMark({
       <BrandIcon className="size-7" />
       <span
         className={cn(
-          "font-pixel text-[0.8rem] leading-none tracking-[0.06em]",
+          "vc-app-brand-name font-pixel text-[0.8rem] leading-none tracking-[0.06em]",
           tone === "desk" ? "text-vc-paper" : "text-vc-text",
         )}
       >
         VIETCLASSES
+        {caption ? (
+          <span className="vc-app-brand-caption font-sans">{caption}</span>
+        ) : null}
       </span>
     </span>
   );

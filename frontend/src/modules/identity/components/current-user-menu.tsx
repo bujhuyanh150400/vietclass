@@ -51,16 +51,16 @@ export function CurrentUserMenu({
               size="lg"
               tooltip={user.username}
               aria-label={`Tài khoản của ${user.username}`}
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="vc-app-account-button data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <UserAvatar value={user.avatar} name={user.username} alt={`Ảnh đại diện của ${user.username}`} size="sm" className="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground" />
-              <span className="grid flex-1 text-left leading-tight">
+              <UserAvatar value={user.avatar} name={user.username} alt={`Ảnh đại diện của ${user.username}`} size="sm" className="bg-sidebar-primary text-sidebar-primary-foreground" />
+              <span className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate text-sm font-medium">{user.username}</span>
-                <span className="truncate text-xs text-sidebar-foreground/70">
+                <span data-slot="account-role" className="truncate text-xs">
                   {getRoleLabel(user.role)}
                 </span>
               </span>
-              <ChevronsUpDown aria-hidden="true" className="ml-auto size-4 text-sidebar-foreground/50" />
+              <ChevronsUpDown aria-hidden="true" className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
 

@@ -1,0 +1,543 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   App shell — "teacher's desk / academic workspace"
+
+   The presentation layer for the authenticated shell, scoped entirely to the
+   `vc-app-*` classes so feature screens keep the component library's own
+   geometry. Structure, state and accessibility stay in the React components;
+   this file only decides what the shell is made of.
+
+   These rules sit in `@layer utilities` rather than `@layer components` on
+   purpose. The shell is assembled from shadcn primitives whose own Tailwind
+   utilities would otherwise win on layer order alone, no matter how specific
+   the selector here is. Every selector below is at least two classes deep, so
+   inside the shared layer it out-specifies those utilities without `!important`
+   — which is reserved for the handful of primitive classes that ship marked
+   important themselves.
+
+   The material: the sidebar is a ruled paper sheet with a spiral binding, the
+   page sheet is the white page resting on it, and controls read as pressed card
+   stock via a solid offset shadow. A blurred shadow is reserved for surfaces
+   that genuinely float — the page sheet and the mobile drawer.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@layer utilities {
+  /* ── Frame ───────────────────────────────────────────────────────────────
+     The shell owns the viewport: it never scrolls, so the sidebar and topbar
+     stay put and only `.vc-app-content` moves. */
+  .vc-app-shell {
+    height: 100svh;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--vc-paper);
+  }
+
+  /* ── Sidebar: the ruled sheet ────────────────────────────────────────────
+     One horizontal rule every 22px, matching the notebook the brand is drawn
+     from. It is a ruled page, not graph paper — vertical lines would fight the
+     navigation rows for attention. */
+  .vc-app-shell [data-slot="sidebar-container"].vc-app-sidebar,
+  .vc-app-sidebar[data-mobile="true"] {
+    border: 0;
+    box-shadow: var(--vc-shell-shadow-sidebar);
+  }
+
+  .vc-app-sidebar [data-slot="sidebar-inner"] {
+    position: relative;
+    padding: 20px 14px 14px;
+    overflow: hidden;
+    background-color: var(--vc-paper);
+    background-image: linear-gradient(
+      var(--vc-shell-rule-ink) 1px,
+      transparent 1px
+    );
+    background-size: 100% var(--vc-shell-rule-pitch);
+  }
+
+  /* The spiral binding, punched down the sheet's trailing edge. Decorative
+     only, so it never intercepts a pointer. */
+  .vc-app-sidebar [data-slot="sidebar-inner"]::after {
+    content: "";
+    position: absolute;
+    top: 74px;
+    right: 8px;
+    bottom: 74px;
+    width: 7px;
+    background: radial-gradient(
+      circle,
+      var(--vc-shell-control-border) 0 2px,
+      var(--vc-surface-raised) 2.5px 3.5px,
+      transparent 4px
+    );
+    background-size: 7px 48px;
+    opacity: 0.58;
+    pointer-events: none;
+  }
+
+  /* ── Brand row ───────────────────────────────────────────────────────────
+     Sits above a rule that reads as the sheet's header line. */
+  .vc-app-sidebar [data-slot="sidebar-header"] {
+    min-height: 48px;
+    padding: 0 3px 14px;
+    border-bottom: 1px solid var(--vc-shell-rule);
+  }
+
+  /* The lockup is two stacked lines, so the row grows to fit rather than
+     clipping — the primitive sizes and truncates menu rows for single-line
+     labels. */
+  .vc-app-sidebar [data-slot="sidebar-header"] [data-slot="sidebar-menu-button"] {
+    height: auto;
+    min-height: 44px;
+    padding: 4px 6px;
+    overflow: visible;
+  }
+
+  .vc-app-sidebar [data-slot="sidebar-header"] [data-slot="sidebar-menu-button"] > span:last-child {
+    overflow: visible;
+    white-space: normal;
+    text-overflow: clip;
+  }
+
+  .vc-app-brand-lockup {
+    align-items: flex-start;
+    gap: 9px;
+  }
+
+  .vc-app-brand-lockup img {
+    width: 34px;
+    height: 34px;
+  }
+
+  .vc-app-brand-name {
+    font-size: 14px;
+    line-height: 1.1;
+  }
+
+  /* The caption sits inside the wordmark, so it has to walk back out of the
+     bitmap face: that face is Latin-only and would drop every diacritic in this
+     line. */
+  .vc-app-brand-caption {
+    display: block;
+    margin-top: 4px;
+    color: var(--vc-shell-muted);
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: 0.015em;
+    text-transform: none;
+  }
+
+  /* ── Navigation ──────────────────────────────────────────────────────────
+     The nav column scrolls on its own when the groups outgrow the sheet, so a
+     long list never pushes the account row off the bottom. */
+  .vc-app-sidebar [data-slot="sidebar-content"] {
+    gap: 0;
+    padding: 0 6px 12px;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--vc-shell-control-border) transparent;
+  }
+
+  .vc-app-sidebar [data-slot="sidebar-group"] {
+    padding: 0;
+  }
+
+  .vc-app-sidebar [data-slot="sidebar-group-label"] {
+    height: auto;
+    padding: 17px 8px 6px;
+    color: var(--vc-shell-muted);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .vc-app-sidebar [data-slot="sidebar-menu"] {
+    gap: 0;
+  }
+
+  .vc-app-sidebar [data-slot="sidebar-content"] [data-slot="sidebar-menu-button"] {
+    min-height: 44px;
+    margin: 3px 0;
+    padding: 9px 10px;
+    gap: 11px;
+    border: 1px solid transparent;
+    border-radius: var(--vc-shell-radius-control);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--vc-text);
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease;
+  }
+
+  .vc-app-sidebar [data-slot="sidebar-content"] [data-slot="sidebar-menu-button"] > svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 1.7;
+  }
+
+  /* The current destination is the one solid orange surface in the shell: a
+     pressed key on the desk, not a tinted row. */
+  .vc-app-sidebar [data-slot="sidebar-content"] [data-slot="sidebar-menu-button"][data-active="true"] {
+    background: var(--vc-orange);
+    border-color: var(--vc-wood);
+    box-shadow: var(--vc-shell-shadow-raised);
+    color: var(--vc-text);
+    font-weight: 500;
+  }
+
+  .vc-app-sidebar [data-slot="sidebar-content"] [data-slot="sidebar-menu-button"][data-active="true"]:hover {
+    background: var(--vc-orange);
+    color: var(--vc-text);
+  }
+
+  /* Hover and focus only repaint — no border or size change, so nothing in the
+     column shifts as the pointer travels down it. */
+  .vc-app-sidebar [data-slot="sidebar-content"] [data-slot="sidebar-menu-button"]:not([data-active="true"]):hover {
+    background: var(--vc-shell-tint);
+    border-color: var(--vc-shell-rule);
+    color: var(--vc-text);
+  }
+
+  .vc-app-nav-marker {
+    margin-left: auto;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  /* ── Upcoming placeholder ────────────────────────────────────────────────
+     Focusable so a keyboard reader reaches the tooltip, but it never navigates
+     and never reacts to hover like a link would. */
+  .vc-app-sidebar .vc-app-upcoming-item {
+    color: var(--vc-shell-muted);
+    cursor: default;
+    opacity: 1;
+  }
+
+  .vc-app-sidebar .vc-app-upcoming-item > svg {
+    opacity: 0.72;
+  }
+
+  .vc-app-sidebar .vc-app-upcoming-item:hover {
+    background: transparent;
+    border-color: transparent;
+    color: var(--vc-shell-muted);
+  }
+
+  /* The primitive floats the badge over the row and pins it to a fixed offset
+     from the top, which the taller row here would leave sitting high. Centring
+     it on the row keeps it aligned with the label whatever the row height. */
+  .vc-app-sidebar [data-slot="sidebar-menu-badge"] {
+    top: 50%;
+    right: 10px;
+    height: auto;
+    min-width: 0;
+    transform: translateY(-50%);
+    padding: 2px 6px;
+    border: 1px solid var(--vc-shell-rule);
+    border-radius: 4px;
+    background: var(--vc-surface-raised);
+    color: var(--vc-shell-muted);
+    font-size: 9px;
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+  }
+
+  /* ── Account row ─────────────────────────────────────────────────────────
+     A gradient fade lifts it off the ruled sheet so the rules do not run into
+     the avatar. */
+  .vc-app-sidebar [data-slot="sidebar-footer"] {
+    padding: 10px 6px 0;
+    background: linear-gradient(transparent, var(--vc-paper) 18px);
+  }
+
+  .vc-app-account-button {
+    min-height: 58px;
+    padding: 13px 6px 0;
+    gap: 10px;
+    border-top: 1px solid var(--vc-shell-rule);
+    border-radius: 0;
+  }
+
+  .vc-app-account-button:hover {
+    background: transparent;
+  }
+
+  .vc-app-account-button > svg:last-child {
+    color: var(--vc-shell-muted);
+  }
+
+  .vc-app-account-button [data-slot="account-role"] {
+    color: var(--vc-shell-muted);
+  }
+
+  /* The account avatar is a filed card, not a social-media circle: it matches
+     the initials tile used everywhere else on the desk. */
+  .vc-app-account-button [data-slot="avatar"] {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--vc-shell-control-border);
+    border-radius: 7px;
+    background: var(--vc-surface-raised);
+  }
+
+  .vc-app-account-button [data-slot="avatar-fallback"] {
+    border-radius: 6px;
+    background: transparent;
+    color: var(--vc-text);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Icon rail ───────────────────────────────────────────────────────────
+     The primitive collapses menu rows to a 32px square; the approved rail is a
+     78px sheet with 44px rows, so the square is overridden here. Those two
+     primitive classes ship marked important, which is why these are too. */
+  [data-slot="sidebar"][data-collapsible="icon"] .vc-app-sidebar [data-slot="sidebar-inner"] {
+    padding-inline: 12px;
+  }
+
+  [data-slot="sidebar"][data-collapsible="icon"] .vc-app-sidebar [data-slot="sidebar-content"] {
+    padding-inline: 4px;
+  }
+
+  [data-slot="sidebar"][data-collapsible="icon"] .vc-app-sidebar [data-slot="sidebar-content"] [data-slot="sidebar-menu-button"] {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 44px;
+    margin-block: 5px;
+    padding: 9px !important;
+    justify-content: center;
+  }
+
+  [data-slot="sidebar"][data-collapsible="icon"] .vc-app-sidebar [data-slot="sidebar-header"] {
+    padding-inline: 0;
+    border-bottom: 0;
+  }
+
+  [data-slot="sidebar"][data-collapsible="icon"] .vc-app-sidebar [data-slot="sidebar-header"] [data-slot="sidebar-menu-button"] {
+    justify-content: center;
+    padding: 4px !important;
+  }
+
+  /* The rail shows icons only. Labels are hidden the accessible way rather than
+     removed, so the rows keep their names for a screen reader while the tooltip
+     carries them for everyone else. The primitive normally relies on a 32px box
+     clipping the text, which the taller rows here would leave visible. */
+  [data-slot="sidebar"][data-collapsible="icon"] .vc-app-sidebar [data-slot="sidebar-content"] [data-slot="sidebar-menu-button"] > span,
+  [data-slot="sidebar"][data-collapsible="icon"] .vc-app-brand-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  [data-slot="sidebar"][data-collapsible="icon"] .vc-app-nav-marker {
+    display: none;
+  }
+
+  [data-slot="sidebar"][data-collapsible="icon"] .vc-app-sidebar [data-slot="sidebar-footer"] {
+    padding-inline: 4px;
+  }
+
+  [data-slot="sidebar"][data-collapsible="icon"] .vc-app-account-button {
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  /* ── Page sheet ──────────────────────────────────────────────────────────
+     The white page on the desk. It clips its own overflow so the topbar cannot
+     be scrolled away. */
+  .vc-app-shell .vc-app-sheet {
+    min-width: 0;
+    min-height: 0;
+    margin: 14px 14px 14px 12px;
+    overflow: hidden;
+    border: 1px solid var(--vc-shell-rule);
+    border-radius: var(--vc-shell-radius-sheet);
+    background: var(--vc-surface-raised);
+    box-shadow: var(--vc-shell-shadow-sheet);
+  }
+
+  /* ── Topbar ──────────────────────────────────────────────────────────────
+     Indented past the page's left gutter so its rule starts where the writing
+     area does, the way a ruled page's header line sits inside the margin. */
+  .vc-app-shell .vc-app-header {
+    flex: none;
+    height: var(--vc-shell-topbar-height);
+    margin-left: var(--vc-shell-topbar-inset);
+    padding: 0 28px 0 11px;
+    border-bottom: 1px solid var(--vc-shell-rule);
+    background: color-mix(in oklch, var(--vc-surface-raised) 96%, transparent);
+    backdrop-filter: blur(8px);
+  }
+
+  .vc-app-shell .vc-app-header [data-slot="sidebar-trigger"] {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--vc-shell-control-border);
+    border-radius: var(--vc-shell-radius-control);
+    background: var(--vc-surface-raised);
+    box-shadow: var(--vc-shell-shadow-control);
+  }
+
+  .vc-app-shell .vc-app-header [data-slot="sidebar-trigger"]:hover {
+    background: var(--vc-shell-tint);
+  }
+
+  .vc-app-shell .vc-app-header-title {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── Content ─────────────────────────────────────────────────────────────
+     The only scrolling region. `scrollbar-gutter` keeps the column from
+     reflowing as content grows past the fold. */
+  .vc-app-shell .vc-app-content {
+    width: 100%;
+    max-width: var(--vc-shell-content-max);
+    min-height: 0;
+    flex: 1 1 auto;
+    margin-inline: auto;
+    padding: 30px 35px 28px 48px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+
+  /* ── Focus ───────────────────────────────────────────────────────────────
+     One visible treatment for every shell control, replacing the primitive's
+     ring so the outline reads against both paper and the orange active row. */
+  .vc-app-sidebar [data-slot="sidebar-menu-button"]:focus-visible,
+  .vc-app-sidebar [data-slot="sheet-close"]:focus-visible,
+  .vc-app-shell .vc-app-header [data-slot="sidebar-trigger"]:focus-visible {
+    outline: 2px solid var(--vc-orange-deep);
+    outline-offset: 2px;
+    --tw-ring-shadow: 0 0 #0000;
+  }
+
+  /* ── Wide desktop ────────────────────────────────────────────────────── */
+  @media (min-width: 1600px) {
+    .vc-app-shell .vc-app-content {
+      padding: 38px 52px 28px 65px;
+    }
+  }
+
+  /* ── Small desktop: the sheet narrows before the content does ──────────── */
+  @media (min-width: 1024px) and (max-width: 1199px) {
+    .vc-app-shell {
+      --vc-shell-sidebar-width: 13.5rem;
+    }
+
+    .vc-app-sidebar [data-slot="sidebar-inner"] {
+      padding-inline: 10px;
+    }
+
+    .vc-app-shell .vc-app-content {
+      padding: 27px 25px 26px 45px;
+    }
+  }
+
+  /* ── Tablet: geometry tightens, but the rail still follows the cookie ──── */
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .vc-app-shell {
+      --vc-shell-sidebar-width: 13rem;
+    }
+
+    .vc-app-sidebar [data-slot="sidebar-inner"] {
+      padding-inline: 10px;
+    }
+
+    .vc-app-shell .vc-app-content {
+      padding: 25px 24px 22px 39px;
+    }
+  }
+
+  /* ── Mobile: the sheet goes full-bleed and the sidebar becomes a drawer ── */
+  @media (max-width: 767px) {
+    .vc-app-shell .vc-app-sheet {
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .vc-app-shell .vc-app-header {
+      height: 60px;
+      margin-left: 0;
+      padding: 0 14px;
+      background: var(--vc-surface-raised);
+      backdrop-filter: none;
+    }
+
+    .vc-app-shell .vc-app-header-title {
+      font-size: 14px;
+    }
+
+    .vc-app-shell .vc-app-content {
+      padding: 22px 16px 28px;
+      scrollbar-gutter: auto;
+    }
+
+    .vc-app-sidebar[data-mobile="true"] {
+      box-shadow: var(--vc-shell-shadow-drawer);
+    }
+
+    .vc-app-sidebar[data-mobile="true"] [data-slot="sidebar-inner"] {
+      padding: 16px 14px 14px;
+    }
+
+    .vc-app-sidebar[data-mobile="true"] [data-slot="sidebar-inner"]::after {
+      right: 7px;
+    }
+
+    /* The drawer's close control sits in the brand row's trailing space rather
+       than on top of the wordmark, and keeps a 40px hit area. */
+    .vc-app-sidebar [data-slot="sheet-close"] {
+      top: 18px;
+      right: 14px;
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--vc-shell-control-border);
+      border-radius: var(--vc-shell-radius-control);
+      background: var(--vc-surface-raised);
+      box-shadow: var(--vc-shell-shadow-control);
+      opacity: 1;
+    }
+
+    .vc-app-sidebar [data-slot="sidebar-header"] [data-slot="sidebar-menu-button"] {
+      padding-right: 56px;
+    }
+  }
+
+  @media (max-width: 390px) {
+    .vc-app-shell .vc-app-content {
+      padding-inline: 14px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .vc-app-sidebar [data-slot="sidebar-menu-button"] {
+      transition: none;
+    }
+  }
+}

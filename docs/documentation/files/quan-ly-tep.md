@@ -1,12 +1,12 @@
 # Quản lý tệp
 
-Last Verified: 2026-09-04
+Last Verified: 2026-09-10
 
 ## Tổng quan
 
 Mỗi tài khoản có một thư viện tệp riêng tư: tệp được tải lên, xem, đổi tên, chuyển vào thùng rác, khôi phục và xóa vĩnh viễn trong phạm vi tài khoản đó. Tệp không bao giờ công khai; nội dung chỉ mở được qua một liên kết tạm thời do hệ thống cấp sau khi đã kiểm tra quyền.
 
-Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/files` (mục **Tệp** trong nhóm Thư viện ở thanh bên).
+Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/files` (mục **Quản lý thư viện** trong nhóm Hệ thống ở thanh bên).
 
 ## Người dùng và điều kiện
 

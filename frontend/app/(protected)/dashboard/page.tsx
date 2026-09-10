@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { DashboardView } from "@/modules/dashboard";
 
 export const metadata: Metadata = {
-  title: "Tổng quan",
+  title: "Trang chủ",
 };
 
 /**

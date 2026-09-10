@@ -1,36 +1,65 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+import "@/components/layouts/app-shell.css";
+
 /**
- * Mirrors the protected shell's inset sidebar, topbar, and content geometry
- * while the authenticated shell resolves, so the page does not shift once the
- * real layout replaces it. Always approximates the sidebar's expanded width,
- * since the visitor's collapsed/expanded preference is not yet known this
- * early in the render.
+ * Mirrors the protected shell's ruled sidebar, inset page sheet, topbar and
+ * content scroll ownership while the authenticated shell resolves, so the page
+ * does not shift once the real layout replaces it.
+ *
+ * It borrows the shell's own stylesheet for the sheet material and geometry
+ * rather than restating them: a skeleton that drifts from the shell it stands
+ * in for is worse than none. Only the parts that depend on live state — the
+ * navigation copy and the account — are reduced to placeholder bars.
+ *
+ * The expanded sidebar is assumed because the cookie preference is not readable
+ * here, and the whole thing stays non-interactive and out of the accessibility
+ * tree.
  */
 export function AppShellSkeleton() {
   return (
-    <div className="flex min-h-svh w-full" aria-hidden="true">
-      <div className="hidden w-64 shrink-0 p-2 lg:block">
-        <div className="flex h-full flex-col gap-2 rounded-lg bg-sidebar p-2">
-          <div className="flex items-center gap-2 p-1.5">
-            <Skeleton className="size-7 rounded-md" />
-            <Skeleton className="h-3.5 w-24" />
-          </div>
-          <div className="mt-4 grid gap-1 px-2">
-            <Skeleton className="h-8 w-full" />
+    <div className="vc-app-shell flex w-full" aria-hidden="true">
+      <div className="hidden w-[14.75rem] shrink-0 md:block">
+        <div className="vc-app-sidebar h-full shadow-[var(--vc-shell-shadow-sidebar)]">
+          <div data-slot="sidebar-inner" className="flex h-full w-full flex-col">
+            <div data-slot="sidebar-header" className="flex items-center gap-[9px]">
+              <Skeleton className="size-[34px] rounded-[7px]" />
+              <div className="grid gap-1.5">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-2 w-32" />
+              </div>
+            </div>
+
+            <div data-slot="sidebar-content" className="flex flex-1 flex-col">
+              {[0, 1, 2, 3, 4].map((row) => (
+                <Skeleton
+                  key={row}
+                  className="my-[3px] h-11 w-full rounded-[var(--vc-shell-radius-control)]"
+                />
+              ))}
+            </div>
+
+            <div data-slot="sidebar-footer">
+              <div className="flex min-h-[58px] items-center gap-2.5 border-t border-[var(--vc-shell-rule)] pt-[13px]">
+                <Skeleton className="size-9 rounded-[7px]" />
+                <div className="grid flex-1 gap-1.5">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-2 w-16" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="flex min-w-0 grow flex-col lg:m-2 lg:ml-0">
-        <div className="flex h-16 shrink-0 items-center gap-3 rounded-t-xl border-b bg-background px-4 sm:px-6">
-          <Skeleton className="size-7 rounded-md" />
+      <div className="vc-app-sheet flex flex-1 flex-col">
+        <div className="vc-app-header flex items-center gap-3">
+          <Skeleton className="size-11 rounded-[var(--vc-shell-radius-control)]" />
           <Skeleton className="h-4 w-24" />
-          <Skeleton className="ml-auto h-4 w-32" />
         </div>
-        <div className="grow rounded-b-xl border border-t-0 bg-background px-4 py-6 sm:px-6 sm:py-8">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="mt-6 h-32 w-full max-w-xl rounded-xl" />
+        <div className="vc-app-content">
+          <Skeleton className="h-8 w-48 rounded-[var(--vc-shell-radius-control)]" />
+          <Skeleton className="mt-6 h-32 w-full max-w-xl rounded-[var(--vc-shell-radius-panel)]" />
         </div>
       </div>
     </div>

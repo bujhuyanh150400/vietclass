@@ -1,12 +1,12 @@
 # Quản lý giáo viên
 
-Last Verified: 2026-09-04
+Last Verified: 2026-09-10
 
 ## Tổng quan
 
 Hồ sơ giáo viên và tài khoản đăng nhập của giáo viên được quản lý cùng nhau: tạo hồ sơ là tạo luôn tài khoản. Lớp học phải có giáo viên phụ trách, nên hồ sơ giáo viên phải tồn tại trước khi tạo được lớp.
 
-Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/academic/teachers` (mục **Giáo viên** trong nhóm Học vụ ở thanh bên).
+Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/academic/teachers` (mục **Giáo viên** trong nhóm Người dùng ở thanh bên).
 
 ## Người dùng và điều kiện
 

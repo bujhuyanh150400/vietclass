@@ -3,8 +3,9 @@ import {
   DoorOpen,
   FolderOpen,
   GraduationCap,
-  LayoutDashboard,
+  House,
   School,
+  UserRound,
   Users,
 } from "lucide-react";
 
@@ -12,21 +13,35 @@ import {
  * Icons a navigation item may request, kept closed so no arbitrary icon leaks in.
  */
 export const NAVIGATION_ICONS = {
-  dashboard: LayoutDashboard,
+  home: House,
   subjects: BookOpen,
   rooms: DoorOpen,
   teachers: GraduationCap,
   classes: School,
   students: Users,
+  parents: UserRound,
   files: FolderOpen,
 } as const;
 
-/** One destination in the application navigation. */
-export type NavigationItem = {
-  href: string;
+type NavigationItemBase = {
   label: string;
   icon: keyof typeof NAVIGATION_ICONS;
 };
+
+/** A navigation item backed by a route that the application currently ships. */
+export type NavigationLinkItem = NavigationItemBase & {
+  kind: "link";
+  href: string;
+};
+
+/** A navigation item shown for a feature that is intentionally not routable yet. */
+export type NavigationUpcomingItem = NavigationItemBase & {
+  kind: "upcoming";
+  badge: "Sắp có";
+};
+
+/** One routable or upcoming destination in the application navigation. */
+export type NavigationItem = NavigationLinkItem | NavigationUpcomingItem;
 
 /** A titled set of destinations, or an untitled one when `label` is absent. */
 export type NavigationGroup = {
@@ -35,30 +50,36 @@ export type NavigationGroup = {
 };
 
 /**
- * Every destination this build actually ships, in the order they appear in the
- * sidebar. Academic screens follow the dependency order the data has: a class
- * needs a subject and a teacher before it can exist.
+ * Every destination this build exposes, in the order they appear in the
+ * sidebar. Upcoming items remain explicit so presentation code cannot create a
+ * route or link for a feature that has not shipped.
  */
 export const NAVIGATION: NavigationGroup[] = [
   {
     items: [
-      { href: "/dashboard", label: "Tổng quan", icon: "dashboard" },
-    ],
-  },
-  {
-    label: "Thư viện",
-    items: [
-      { href: "/files", label: "Tệp", icon: "files" },
+      { kind: "link", label: "Trang chủ", href: "/dashboard", icon: "home" },
     ],
   },
   {
     label: "Học vụ",
     items: [
-      { href: "/academic/subjects", label: "Môn học", icon: "subjects" },
-      { href: "/academic/rooms", label: "Phòng học", icon: "rooms" },
-      { href: "/academic/teachers", label: "Giáo viên", icon: "teachers" },
-      { href: "/academic/classes", label: "Lớp học", icon: "classes" },
-      { href: "/academic/students", label: "Học sinh", icon: "students" },
+      { kind: "link", label: "Môn học", href: "/academic/subjects", icon: "subjects" },
+      { kind: "link", label: "Phòng học", href: "/academic/rooms", icon: "rooms" },
+      { kind: "link", label: "Lớp học", href: "/academic/classes", icon: "classes" },
+    ],
+  },
+  {
+    label: "Người dùng",
+    items: [
+      { kind: "link", label: "Giáo viên", href: "/academic/teachers", icon: "teachers" },
+      { kind: "link", label: "Học sinh", href: "/academic/students", icon: "students" },
+      { kind: "upcoming", label: "Phụ huynh", badge: "Sắp có", icon: "parents" },
+    ],
+  },
+  {
+    label: "Hệ thống",
+    items: [
+      { kind: "link", label: "Quản lý thư viện", href: "/files", icon: "files" },
     ],
   },
 ];
@@ -70,7 +91,7 @@ export const NAVIGATION: NavigationGroup[] = [
  * still "Lớp học" — except for `/dashboard`, which would otherwise look current
  * for every dashboard descendant.
  */
-export function isCurrentPath(item: NavigationItem, pathname: string): boolean {
+export function isCurrentPath(item: NavigationLinkItem, pathname: string): boolean {
   if (item.href === "/dashboard") {
     return pathname === "/dashboard";
   }
@@ -85,6 +106,10 @@ export function isCurrentPath(item: NavigationItem, pathname: string): boolean {
 export function currentNavigationLabel(pathname: string): string {
   for (const group of NAVIGATION) {
     for (const item of group.items) {
+      if (item.kind === "upcoming") {
+        continue;
+      }
+
       if (isCurrentPath(item, pathname)) {
         return item.label;
       }

@@ -1,16 +1,19 @@
 # OpenDesign reference
 
-Last verified: 2026-09-09
+Last verified: 2026-09-10
 
 Tài liệu tham chiếu cho công việc thiết kế trong OpenDesign (self-host local). Mô tả những gì hiện có trong instance: project duy nhất được dùng, design system nào đang hoạt động, asset nào đã có, và những chỗ design system cố ý khác với frontend đang chạy. Quy trình làm việc nằm ở `.agents/skills/opendesign-redesign/SKILL.md`; hiện trạng token của frontend nằm ở `docs/design.md`.
 
-OpenDesign chạy local, URL và cổng đổi theo từng phiên daemon. Không hard-code `127.0.0.1` vào artifact hay tài liệu; truy cập qua MCP bằng project id.
+OpenDesign chạy local và địa chỉ truy cập thay đổi theo từng phiên. Không ghi URL daemon cụ thể vào artifact hay tài liệu; truy cập qua MCP bằng project id.
 
 ## 1. Project duy nhất
 
 `vietclass-polished-redesign` — "VietClass Polished Product Redesign" — là project thiết kế **duy nhất**. Mọi việc redesign màn hình làm trên project này. Không tạo project mới, kể cả để thử một hướng thị giác khác: dựng biến thể thành file mới trong chính project này.
 
-Entry file: `vietclass-prototype.html`. Đây là prototype nhiều màn, dùng hash route và dữ liệu minh họa trong bộ nhớ.
+Artifact app-shell đã được duyệt: `vietclass-prototype-v2.html` trong project này. File
+`vietclass-prototype.html` được giữ làm tham chiếu lịch sử. Cả hai là prototype nhiều
+màn, dùng hash route và dữ liệu minh họa trong bộ nhớ; chỉ v2 là visual contract cho
+app shell hiện tại.
 
 Lý do chọn nó: nó đọc IA và asset thật của repo thay vì bịa, dùng đúng hex thương hiệu đã convert sang OKLCH, self-host font nên render được offline, và là bản mà hướng thị giác hiện tại của design system được dựng từ đó.
 
@@ -50,13 +53,15 @@ Ngoài ra có `frontend/public/animations/vietclass-owl-reading-thinking-loop.lo
 
 ## 4. Chỗ design system cố ý khác frontend
 
-Design system đang chạy trước frontend về hình học. Đây là hướng đã được chốt, chưa triển khai.
+Design system dẫn đường cho hình học và craft; app shell frontend hiện đã áp dụng
+hướng được duyệt, còn các component màn hình ngoài shell chỉ thay đổi khi có task
+riêng.
 
 | Hạng mục | Design system | Frontend đang chạy |
 | --- | --- | --- |
-| Radius | 5px control, 8px panel, 10px page sheet | 3px |
-| Viền | 1px, hai tông (control edge đậm cho phần tương tác, notebook rule nhạt cho divider) | 2px ink |
-| Elevation | Solid offset cho phần bấm được; blur chỉ cho panel/dialog nổi | Solid offset |
+| Radius | 5px control, 8px panel, 10px page sheet | App shell dùng 5/8/10; feature screen giữ token hiện hữu |
+| Viền | 1px, hai tông (control edge đậm cho phần tương tác, notebook rule nhạt cho divider) | App shell dùng hai tông; feature screen giữ token hiện hữu |
+| Elevation | Solid offset cho phần bấm được; blur chỉ cho panel/dialog nổi | App shell dùng solid offset cho control và blur cho sheet/drawer |
 
 Vì vậy quyền quyết định bị chia đôi, và đừng "sửa" lẫn nhau:
 
@@ -65,7 +70,9 @@ Vì vậy quyền quyết định bị chia đôi, và đừng "sửa" lẫn nha
 
 Không kéo 5px/1px trong artifact về lại 3px/2px. Nhưng vẫn phải sửa mọi trôi dạt về hex thương hiệu, Be Vietnam Pro, quy tắc Silkscreen-chỉ-cho-wordmark, và Geist Mono.
 
-Khi frontend được rework token theo hình học mới, cập nhật `docs/design.md` cho khớp hiện trạng mới và xóa bảng khác biệt ở trên.
+Mã Next.js là source of truth cho behavior, accessibility, route, dữ liệu và state
+runtime; OpenDesign chỉ dẫn đường cho hierarchy, tỷ lệ, chất liệu và responsive
+states. Không sao chép HTML/CSS/JavaScript sinh bởi artifact vào runtime.
 
 ## 5. Skill id của OpenDesign
 
@@ -81,7 +88,7 @@ Dùng đúng id thật; `od-design-refine` không tồn tại.
 
 ## 6. Chưa xác định
 
-- Frontend chưa được rework token theo hình học mới, nên `docs/design.md` và design system còn lệch ở bảng mục 4.
+- Feature screen chưa được rework token theo hình học mới; phần app shell đã áp dụng hình học của design system theo bảng mục 4.
 - `error.webp` mới thêm vào `frontend/public/images/` và chưa được commit vào git.
-- Prototype của project chính chưa được duyệt chính thức để triển khai vào `frontend/`.
+- `vietclass-prototype-v2.html` là artifact app-shell đã được duyệt để triển khai vào `frontend/`; `vietclass-prototype.html` chỉ là tham chiếu lịch sử.
 - Chưa kiểm chứng: `metadata.json` của design system store có trường `projectId` trỏ tới project import. Sau khi project đó bị xóa, trường này thành tham chiếu treo. Run vẫn đọc được `DESIGN.md` từ store nên không bị ảnh hưởng, nhưng chưa rõ giao diện OpenDesign còn mở được design system để sửa trực tiếp hay không. Nếu mất, sửa `DESIGN.md` bằng file là đủ.
