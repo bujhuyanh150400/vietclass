@@ -66,10 +66,18 @@ phiên gắn với domain, nên đăng nhập ở `localhost` không mang sang �
 | Màn hình báo `Không kết nối được dịch vụ xác thực`; `api/storage/logs/laravel.log` có `could not find driver (Connection: pgsql, …)`; API trả 500 | PHP CLI thiếu `pdo_pgsql` | Mục 2.2, rồi khởi động lại `make dev` |
 | Trình duyệt chặn request với lỗi CORS; API luôn trả `Access-Control-Allow-Origin: http://app.vietclass.test:3000` | Đang mở app bằng `localhost:3000` nên origin không khớp allowlist | Thêm entry ở mục 2.1 và mở bằng `app.vietclass.test:3000` |
 | `make dev` dừng với `Failed to listen on 0.0.0.0:8000 (reason: Address already in use)` | Một tiến trình hoặc container khác đang giữ cổng 8000 | `ss -ltnp \| grep :8000` để tìm chủ sở hữu rồi dừng nó, hoặc đổi `DEV_API_PORT` cùng với cổng trong `frontend/.env.local` |
+| `FATAL: An unexpected Turbopack error occurred`, hoặc HMR lặp `Cell … no longer exists in task …` | Cache tăng dần trong `frontend/.next` đã hỏng | Dừng dev, `rm -rf frontend/.next`, chạy lại. Không có gì trong repo sai; `.next` chỉ là cache và sẽ được dựng lại |
 
 Lỗi cổng 8000 dễ gây hiểu nhầm: nếu thứ đang giữ cổng lại là một container API cũ
 thì ứng dụng vẫn chạy được, che mất việc host chưa cấu hình đúng. Khi container đó
 biến mất, cả hai lỗi ở hai dòng trên xuất hiện cùng lúc.
+
+**Không chạy `npm run build` khi `next dev` đang chạy.** Cả hai dùng chung thư mục
+`.next`. Bản build sẽ dừng ngay với `Another next build process is already running`
+vì dev đang giữ `.next/dev/lock`, nhưng trước đó nó đã kịp ghi vào `.next` — đủ để
+làm hỏng cache tăng dần của dev server. Triệu chứng không xuất hiện lập tức: dev vẫn
+phục vụ request bình thường thêm một lúc rồi HMR mới bắt đầu panic. Muốn build thì
+dừng dev trước.
 
 ## 5. Kiểm chứng thay đổi giao diện
 
