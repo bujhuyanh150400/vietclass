@@ -2,7 +2,9 @@
 
 namespace App\Modules\Identity\Http\Resources;
 
+use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Identity\Models\Profile;
+use App\Modules\Identity\Models\StudentGuardian;
 use App\Modules\Identity\Models\StudentProfile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -34,6 +36,8 @@ final class StudentResource extends JsonResource
             'guardian_phone' => $guardianLink?->guardian->phone,
             'guardian_gender' => $guardianLink?->guardian->gender->value,
             'guardian_relationship' => $guardianLink?->relationship->value,
+            'guardians' => $this->guardianSummaries(),
+            'active_enrollments' => $this->activeEnrollmentSummaries(),
             'address' => $profile->address,
             'note' => $profile->note,
             'status' => $this->status->value,
@@ -45,5 +49,53 @@ final class StudentResource extends JsonResource
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * Report every guardian recorded for this student, main contact first.
+     *
+     * The order is part of the contract rather than a detail: the list shows only the
+     * first couple of guardians and counts the rest behind a "+N", so the main
+     * contact has to be among the ones on screen. An empty list is returned as an
+     * empty array, never as null, so a reader never has to distinguish "no guardian"
+     * from "not reported".
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function guardianSummaries(): array
+    {
+        return $this->guardianLinks
+            ->sortByDesc(fn (StudentGuardian $link): bool => (bool) $link->is_primary)
+            ->map(fn (StudentGuardian $link): array => [
+                'profile_id' => $link->guardian_profile_id,
+                'full_name' => $link->guardian->full_name,
+                'phone' => $link->guardian->phone,
+                'relationship' => $link->relationship->value,
+                'is_primary' => (bool) $link->is_primary,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Report the classes this student is still attending, naming each one by the code
+     * a reader recognises it by and the subject it teaches.
+     *
+     * Only running enrolments appear. A class the student has left is absent rather
+     * than present and flagged, so nothing downstream has to re-implement the
+     * "still attending" rule to filter it out.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function activeEnrollmentSummaries(): array
+    {
+        return $this->activeEnrollments
+            ->map(fn (ClassEnrollment $enrollment): array => [
+                'class_id' => $enrollment->class_id,
+                'code' => $enrollment->schoolClass->code,
+                'subject_name' => $enrollment->schoolClass->subject?->name,
+            ])
+            ->values()
+            ->all();
     }
 }

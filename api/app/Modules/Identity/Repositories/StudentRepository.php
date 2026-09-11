@@ -24,15 +24,25 @@ final class StudentRepository extends BaseRepository
     }
 
     /**
-     * Return one page of students with the shared profile, login account, and primary
-     * guardian each one belongs to.
+     * Return one page of students with the shared profile, login account, every
+     * guardian, and the classes each one still attends.
+     *
+     * Guardians and enrolments are eager-loaded rather than read per row: the list
+     * serves up to two hundred students per page, so resolving them lazily would put
+     * two queries behind every row.
      *
      * @return LengthAwarePaginator<int, StudentProfile>
      */
     public function paginateList(ListQuery $query): LengthAwarePaginator
     {
         $builder = $this->modelQuery()
-            ->with(['profile.user:id,username,is_active', 'profile.avatarFileLink.file', 'primaryGuardian.guardian'])
+            ->with([
+                'profile.user:id,username,is_active',
+                'profile.avatarFileLink.file',
+                'primaryGuardian.guardian',
+                'guardianLinks.guardian',
+                'activeEnrollments.schoolClass.subject',
+            ])
             ->when(
                 $query->hasSearch(),
                 fn (Builder $builder): Builder => $builder->where(
@@ -78,14 +88,24 @@ final class StudentRepository extends BaseRepository
     }
 
     /**
-     * Find one student with the shared profile, login account, and primary guardian.
-     * The identifier is the shared `profile_id`, which is also what
-     * `class_enrollments.student_id` stores.
+     * Find one student with the shared profile, login account, every guardian, and the
+     * classes they still attend. The identifier is the shared `profile_id`, which is
+     * also what `class_enrollments.student_id` stores.
+     *
+     * The eager-load set matches `paginateList` on purpose: every write action returns
+     * the student through here, so a single record and a listed row report the same
+     * fields.
      */
     public function findById(int $studentId): ?StudentProfile
     {
         return $this->modelQuery()
-            ->with(['profile.user:id,username,is_active', 'profile.avatarFileLink.file', 'primaryGuardian.guardian'])
+            ->with([
+                'profile.user:id,username,is_active',
+                'profile.avatarFileLink.file',
+                'primaryGuardian.guardian',
+                'guardianLinks.guardian',
+                'activeEnrollments.schoolClass.subject',
+            ])
             ->find($studentId);
     }
 

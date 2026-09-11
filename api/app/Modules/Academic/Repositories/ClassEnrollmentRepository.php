@@ -55,10 +55,14 @@ final class ClassEnrollmentRepository extends BaseRepository
      * and they do not already hold a running enrolment there.
      *
      * Students who left the class previously are included, because re-enrolling is
-     * allowed and keeps the earlier period as history. The exclusion is expressed as a
-     * subquery over enrolments rather than a relation on the student model, because
-     * `StudentProfile` is owned by the Identity module and must not reference this
-     * module's `ClassEnrollment` back.
+     * allowed and keeps the earlier period as history. The exclusion stays a subquery
+     * over enrolments rather than a relation on the student model: it is scoped to one
+     * class, which no relation on `StudentProfile` would express.
+     *
+     * `StudentProfile::activeEnrollments()` does now reference this module, added so the
+     * student list can name the classes a student attends. That relation is the single
+     * sanctioned crossing from Identity into Academic; do not read it as licence to
+     * reach across for anything a query in this module can already answer.
      *
      * @return LengthAwarePaginator<int, StudentProfile>
      */
@@ -70,7 +74,17 @@ final class ClassEnrollmentRepository extends BaseRepository
             ->pluck('student_id');
 
         return StudentProfile::query()
-            ->with(['profile.user:id,username,is_active', 'profile.avatarFileLink.file', 'primaryGuardian.guardian'])
+            // Guardians and running enrolments are loaded here because this page is
+            // rendered by `StudentResource`, which reports both for every student it
+            // serialises. Leaving them out would not shrink the payload — it would
+            // resolve them one row at a time instead.
+            ->with([
+                'profile.user:id,username,is_active',
+                'profile.avatarFileLink.file',
+                'primaryGuardian.guardian',
+                'guardianLinks.guardian',
+                'activeEnrollments.schoolClass.subject',
+            ])
             ->whereHas('profile.user', fn (Builder $user): Builder => $user->where('is_active', true))
             ->whereNotIn('profile_id', $activeStudentIds)
             ->when(

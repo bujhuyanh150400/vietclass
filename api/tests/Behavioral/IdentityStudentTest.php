@@ -1,5 +1,8 @@
 <?php
 
+use App\Modules\Academic\Models\ClassEnrollment;
+use App\Modules\Academic\Models\SchoolClass;
+use App\Modules\Academic\Models\Subject;
 use App\Modules\Identity\Actions\ChangeStudentPasswordAction;
 use App\Modules\Identity\Actions\GetStudentAction;
 use App\Modules\Identity\Actions\ToggleStudentAccountAction;
@@ -13,6 +16,7 @@ use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\Profile;
 use App\Modules\Identity\Models\StudentProfile;
 use App\Modules\Identity\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 beforeEach(function (): void {
@@ -227,4 +231,138 @@ test('toggling the account or changing the password of a student with no login a
     $this->patchJson("/api/v1/students/{$student->profile_id}/password", ['password' => 'matkhaumoi1'])
         ->assertStatus(IdentityError::AccountNotProvisioned->httpStatus())
         ->assertJsonPath('message', 'Học sinh này chưa có tài khoản đăng nhập.');
+});
+
+test('a student reports every guardian, with the main contact first', function () {
+    $student = StudentProfile::factory()->create();
+    $mother = Profile::factory()->create(['full_name' => 'Lê Thanh Mai', 'phone' => '0902000003']);
+    $father = Profile::factory()->create(['full_name' => 'Trần Văn Hùng', 'phone' => '0902000002']);
+
+    // The non-primary link is written first, so an unordered read would report it
+    // first and the assertion below would fail.
+    $student->guardianLinks()->create([
+        'guardian_profile_id' => $father->id,
+        'relationship' => GuardianRelationship::Father,
+        'is_primary' => false,
+    ]);
+    $student->guardianLinks()->create([
+        'guardian_profile_id' => $mother->id,
+        'relationship' => GuardianRelationship::Mother,
+        'is_primary' => true,
+    ]);
+
+    $this->getJson('/api/v1/students')
+        ->assertOk()
+        ->assertJsonCount(2, 'data.0.guardians')
+        ->assertJsonPath('data.0.guardians.0.profile_id', $mother->id)
+        ->assertJsonPath('data.0.guardians.0.full_name', 'Lê Thanh Mai')
+        ->assertJsonPath('data.0.guardians.0.phone', '0902000003')
+        ->assertJsonPath('data.0.guardians.0.relationship', GuardianRelationship::Mother->value)
+        ->assertJsonPath('data.0.guardians.0.is_primary', true)
+        ->assertJsonPath('data.0.guardians.1.profile_id', $father->id)
+        ->assertJsonPath('data.0.guardians.1.is_primary', false);
+
+    $this->getJson("/api/v1/students/{$student->profile_id}")
+        ->assertOk()
+        ->assertJsonCount(2, 'data.guardians')
+        ->assertJsonPath('data.guardians.0.is_primary', true);
+});
+
+test('a student reports the classes they still attend by code and subject', function () {
+    $student = StudentProfile::factory()->create();
+    $subject = Subject::factory()->create(['name' => 'Toán']);
+    $class = SchoolClass::factory()->create(['code' => 'TOAN9-A', 'subject_id' => $subject->id]);
+
+    ClassEnrollment::factory()->create([
+        'class_id' => $class->id,
+        'student_id' => $student->profile_id,
+    ]);
+
+    $this->getJson('/api/v1/students')
+        ->assertOk()
+        ->assertJsonCount(1, 'data.0.active_enrollments')
+        ->assertJsonPath('data.0.active_enrollments.0.class_id', $class->id)
+        ->assertJsonPath('data.0.active_enrollments.0.code', 'TOAN9-A')
+        ->assertJsonPath('data.0.active_enrollments.0.subject_name', 'Toán');
+
+    $this->getJson("/api/v1/students/{$student->profile_id}")
+        ->assertOk()
+        ->assertJsonPath('data.active_enrollments.0.code', 'TOAN9-A');
+});
+
+test('a student with no guardian and no class reports empty lists, not null', function () {
+    $student = StudentProfile::factory()->create();
+
+    $response = $this->getJson('/api/v1/students')->assertOk();
+
+    expect($response->json('data.0.guardians'))->toBe([])
+        ->and($response->json('data.0.active_enrollments'))->toBe([]);
+
+    $single = $this->getJson("/api/v1/students/{$student->profile_id}")->assertOk();
+
+    expect($single->json('data.guardians'))->toBe([])
+        ->and($single->json('data.active_enrollments'))->toBe([]);
+});
+
+test('a class the student has left is left out of the classes they attend', function () {
+    $student = StudentProfile::factory()->create();
+    $running = SchoolClass::factory()->create(['code' => 'VAN9-B']);
+    $departed = SchoolClass::factory()->create(['code' => 'ANH7-A']);
+
+    ClassEnrollment::factory()->create([
+        'class_id' => $running->id,
+        'student_id' => $student->profile_id,
+    ]);
+    ClassEnrollment::factory()->left()->create([
+        'class_id' => $departed->id,
+        'student_id' => $student->profile_id,
+    ]);
+
+    $this->getJson('/api/v1/students')
+        ->assertOk()
+        ->assertJsonCount(1, 'data.0.active_enrollments')
+        ->assertJsonPath('data.0.active_enrollments.0.code', 'VAN9-B');
+});
+
+test('the student list resolves guardians and classes without a query per row', function () {
+    $addStudent = function (): void {
+        $student = StudentProfile::factory()->create();
+        $student->guardianLinks()->create([
+            'guardian_profile_id' => Profile::factory()->create()->id,
+            'relationship' => GuardianRelationship::Mother,
+            'is_primary' => true,
+        ]);
+        ClassEnrollment::factory()->create(['student_id' => $student->profile_id]);
+    };
+
+    $countQueries = function (): int {
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $this->getJson('/api/v1/students')->assertOk();
+
+        $queries = count(DB::getQueryLog());
+        DB::disableQueryLog();
+
+        return $queries;
+    };
+
+    $addStudent();
+
+    // The auth guard resolves the token, the account, and the permission list on the
+    // first request of the process and holds them after that. Warming it up here keeps
+    // those four queries out of the baseline, so the comparison below is between the
+    // two list renders and nothing else.
+    $this->getJson('/api/v1/students')->assertOk();
+
+    $forOneRow = $countQueries();
+
+    foreach (range(1, 4) as $ignored) {
+        $addStudent();
+    }
+    $forFiveRows = $countQueries();
+
+    $this->getJson('/api/v1/students')->assertOk()->assertJsonPath('meta.total', 5);
+
+    expect($forFiveRows)->toBe($forOneRow);
 });

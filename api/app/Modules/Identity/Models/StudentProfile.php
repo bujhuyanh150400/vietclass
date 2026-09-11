@@ -2,6 +2,7 @@
 
 namespace App\Modules\Identity\Models;
 
+use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Identity\Enums\GradeLevel;
 use App\Modules\Identity\Enums\StudentStatus;
 use Database\Factories\StudentProfileFactory;
@@ -86,5 +87,27 @@ final class StudentProfile extends Model
     {
         return $this->hasOne(StudentGuardian::class, 'student_profile_id', 'profile_id')
             ->where('is_primary', true);
+    }
+
+    /**
+     * Return the class memberships this student is still attending, longest-running
+     * first so the order a reader sees does not shuffle between requests.
+     *
+     * This is the one place Identity reaches into Academic, inverting the direction
+     * every other reference between the two runs in. It is accepted because the
+     * student list has to name the classes a student attends, and the alternative —
+     * a courier type passed between the modules — would carry two fields and nothing
+     * else. The rule for "still attending" is deliberately not restated here: it
+     * comes from `ClassEnrollment::active()`, the single definition that class
+     * rosters and capacity counts already share.
+     *
+     * @return HasMany<ClassEnrollment, $this>
+     */
+    public function activeEnrollments(): HasMany
+    {
+        return $this->hasMany(ClassEnrollment::class, 'student_id', 'profile_id')
+            ->active()
+            ->orderBy('enrolled_at')
+            ->orderBy('id');
     }
 }
