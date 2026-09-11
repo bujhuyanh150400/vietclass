@@ -64,6 +64,13 @@ final class StudentRepository extends BaseRepository
                             fn (Builder $guardian): Builder => $guardian
                                 ->where('full_name', 'ilike', $query->searchLike())
                                 ->orWhere('phone', 'ilike', $query->searchLike()),
+                        )
+                        ->when(
+                            $this->searchAsProfileId($query) !== null,
+                            fn (Builder $scopedById): Builder => $scopedById->orWhere(
+                                'student_profiles.profile_id',
+                                $this->searchAsProfileId($query),
+                            ),
                         ),
                 ),
             )
@@ -85,6 +92,31 @@ final class StudentRepository extends BaseRepository
 
         return $this->applySort($builder, $query)
             ->paginate(perPage: $query->perPage, page: $query->page);
+    }
+
+    /**
+     * Read the search term as a student id, or return null when it cannot be one.
+     *
+     * The list prints the profile id as the student's code, so someone reading a row
+     * out loud and typing it back expects to land on that student. The match is added
+     * alongside the text clauses rather than replacing them, because phone numbers are
+     * digits too and searching one must keep working.
+     *
+     * Only a clean, in-range positive integer qualifies. A term longer than PHP's
+     * integer range would overflow on cast and silently become an unrelated id, which
+     * is worse than not matching at all.
+     */
+    private function searchAsProfileId(ListQuery $query): ?int
+    {
+        $search = trim((string) $query->search);
+
+        if ($search === '' || ! ctype_digit($search) || strlen($search) > 18) {
+            return null;
+        }
+
+        $id = (int) $search;
+
+        return $id > 0 ? $id : null;
     }
 
     /**

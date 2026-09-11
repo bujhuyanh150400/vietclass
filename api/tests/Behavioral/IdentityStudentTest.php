@@ -151,6 +151,48 @@ test('the student list is paginated and searchable across profile and guardian',
     $this->getJson('/api/v1/students?q=hs_chau')->assertOk()->assertJsonPath('meta.total', 1);
 });
 
+test('the student list finds a student by the id printed as their code', function () {
+    $target = StudentProfile::factory()->create([
+        'profile_id' => Profile::factory()->forRole(UserRole::Student)->create([
+            'full_name' => 'Ngô Bảo Châu',
+            'phone' => '0777000111',
+        ])->id,
+    ]);
+    StudentProfile::factory()->create([
+        'profile_id' => Profile::factory()->forRole(UserRole::Student)->create([
+            'full_name' => 'Đỗ Thị F',
+            'phone' => '0888000222',
+        ])->id,
+    ]);
+
+    // The id is one more clause in the same OR the name and phone clauses live in, so
+    // the assertion is that the student is among the matches. Asserting a total of one
+    // would be asserting that no phone happens to contain those digits, which is not a
+    // rule this search has — and a reader typing a few digits wants both readings.
+    $this->getJson('/api/v1/students?q='.$target->profile_id)
+        ->assertOk()
+        ->assertJsonPath(
+            'data',
+            fn (array $rows): bool => collect($rows)->pluck('id')->contains($target->profile_id),
+        );
+
+    // The digits of a phone number still search phones rather than being read as an id.
+    $this->getJson('/api/v1/students?q=0777000111')
+        ->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.id', $target->profile_id);
+
+    // An id nobody has, with digits no seeded phone or name carries, matches nothing.
+    $this->getJson('/api/v1/students?q=654321')
+        ->assertOk()
+        ->assertJsonPath('meta.total', 0);
+
+    // Far past PHP's integer range: must not overflow into a valid-looking id.
+    $this->getJson('/api/v1/students?q='.str_repeat('9', 40))
+        ->assertOk()
+        ->assertJsonPath('meta.total', 0);
+});
+
 test('the student list accepts the table page sizes exposed by the interface', function () {
     $this->getJson('/api/v1/students?per_page=200')
         ->assertOk()
