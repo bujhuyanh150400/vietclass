@@ -59,6 +59,28 @@ make dev
 Rồi mở **`http://app.vietclass.test:3000`** — không phải `localhost:3000`. Cookie
 phiên gắn với domain, nên đăng nhập ở `localhost` không mang sang được.
 
+### 3.1 Dữ liệu minh họa cho màn học sinh
+
+`IdentitySeeder` chỉ tạo tài khoản quản trị, nên DB mới sẽ không có học sinh nào và
+màn danh sách học sinh đứng ở state "chưa có dữ liệu". Không có dữ liệu thì không
+kiểm chứng được bảng, chip `+N`, hay phân trang.
+
+```
+cd api && php artisan db:seed --class=StudentDemoSeeder --force
+```
+
+Seeder này idempotent — chạy lại không nhân bản. Nó gọi `AcademicSeeder` trước để có
+môn học, rồi tạo một giáo viên `gvdemo01`, tám lớp, tám hồ sơ phụ huynh dùng chung,
+và 25 học sinh `hsdemo01`–`hsdemo25` với mật khẩu `matkhau123`.
+
+Phân bố được chọn có chủ ý để lộ hết mọi trạng thái của giao diện: số phụ huynh và số
+lớp đang học đều trải từ 0 đến 4 (nên có cả chip nét đứt, hai tag, và `+N`),
+`hsdemo16` bị khóa tài khoản, và `hsdemo01` có một bản ghi ghi danh đã `left_at` để
+chứng minh lớp đã nghỉ **không** lọt vào cột Lớp đang học.
+
+Seeder **không** được đăng ký trong `DatabaseSeeder`, nên `db:seed` mặc định không
+sinh dữ liệu minh họa. Phải gọi tường minh bằng `--class`.
+
 ## 4. Lỗi thường gặp
 
 | Triệu chứng | Nguyên nhân | Cách sửa |
@@ -67,6 +89,7 @@ phiên gắn với domain, nên đăng nhập ở `localhost` không mang sang �
 | Trình duyệt chặn request với lỗi CORS; API luôn trả `Access-Control-Allow-Origin: http://app.vietclass.test:3000` | Đang mở app bằng `localhost:3000` nên origin không khớp allowlist | Thêm entry ở mục 2.1 và mở bằng `app.vietclass.test:3000` |
 | `make dev` dừng với `Failed to listen on 0.0.0.0:8000 (reason: Address already in use)` | Một tiến trình hoặc container khác đang giữ cổng 8000 | `ss -ltnp \| grep :8000` để tìm chủ sở hữu rồi dừng nó, hoặc đổi `DEV_API_PORT` cùng với cổng trong `frontend/.env.local` |
 | `FATAL: An unexpected Turbopack error occurred`, hoặc HMR lặp `Cell … no longer exists in task …` | Cache tăng dần trong `frontend/.next` đã hỏng | Dừng dev, `rm -rf frontend/.next`, chạy lại. Không có gì trong repo sai; `.next` chỉ là cache và sẽ được dựng lại |
+| Một màn danh sách đứng mãi ở khung xương chờ dù Network cho thấy request đã trả lỗi | Module graph của HMR đã lệch sau nhiều vòng sửa file — xem mục 4.1 | Khởi động lại `make dev`. Đừng kết luận là lỗi của màn hình đang sửa trước khi thử trên dev server sạch |
 
 Lỗi cổng 8000 dễ gây hiểu nhầm: nếu thứ đang giữ cổng lại là một container API cũ
 thì ứng dụng vẫn chạy được, che mất việc host chưa cấu hình đúng. Khi container đó
@@ -79,6 +102,31 @@ làm hỏng cache tăng dần của dev server. Triệu chứng không xuất hi
 phục vụ request bình thường thêm một lúc rồi HMR mới bắt đầu panic. Muốn build thì
 dừng dev trước.
 
+### 4.1 Dev server chạy lâu qua nhiều vòng sửa file thì kết luận không còn tin được
+
+Một dev server đã chạy nhiều giờ trong khi hàng chục file bị viết lại có thể phục vụ
+một module graph lệch: giao diện hành xử theo code cũ dù file trên disk đã đúng.
+
+Triệu chứng đã thực sự gặp: một màn danh sách đứng mãi ở khung xương chờ, `aria-busy`
+vẫn là `"true"`, không có `[role="alert"]` và không có nút `Thử lại`, **trong khi** tab
+Network cho thấy request đã trả `422` và React Query đã ở `status: "error"`. Hai nguồn
+sự thật nói ngược nhau chính là dấu hiệu. Sau khi khởi động lại `make dev`, cùng URL
+đó hiện state lỗi đúng ngay lần đầu.
+
+Vì vậy: **trước khi ghi một hành vi lạ thành lỗi của sản phẩm, hãy tái hiện nó trên
+dev server vừa khởi động lại.** Cái giá của việc bỏ qua bước này là một mục tài liệu
+khẳng định sai, và thời gian của người sau bỏ ra đi tìm nguyên nhân không tồn tại.
+
+Cách ép một state lỗi thật để kiểm chứng:
+
+```
+http://app.vietclass.test:3000/academic/students?q=<151 ký tự bất kỳ>
+```
+
+`q` có luật `max:100` trong `api/app/Core/Http/Requests/Concerns/PaginatesQuery.php`,
+nên API trả `422` ngay ở request đầu tiên của lần tải trang. Trên dev server sạch,
+màn hình phải hiện panel lỗi kèm nút `Thử lại`.
+
 ## 5. Kiểm chứng thay đổi giao diện
 
 - **Trạng thái responsive.** Yêu cầu resize cửa sổ từ công cụ tự động hoá có thể bị
@@ -89,6 +137,16 @@ dừng dev trước.
 - **Đối chiếu prototype OpenDesign.** Artifact tham chiếu asset bằng đường dẫn tương
   đối và không mở được qua `file://` từ công cụ duyệt web. Phục vụ thư mục project
   qua HTTP rồi mở bằng `http://` để asset và font tải đúng.
+- **Ép state lỗi và state rỗng.** Transport của frontend là **axios**, tức
+  `XMLHttpRequest`, **không** phải `fetch` (`src/lib/api/browser-request.ts`). Ghi đè
+  `window.fetch` từ console hay từ công cụ tự động hoá **không có tác dụng gì** —
+  request vẫn đi bình thường và bạn sẽ tưởng mình chưa chặn được. Đây là cái bẫy đã
+  làm mất thời gian nhiều lần. Cách ép lỗi rẻ nhất là gửi tham số không hợp lệ qua
+  URL: `?q=` dài hơn 100 ký tự trả `422` (mục 4.1). Muốn chặn ở tầng mạng thì phải
+  patch `XMLHttpRequest.prototype.open`, không phải `fetch`.
+- **Không tắt API để thử state lỗi.** `make dev` chờ bằng `wait -n` trên cả hai tiến
+  trình, nên API thoát sẽ kéo cả frontend xuống theo. Ngoài ra axios không đặt
+  `timeout`, nên một API bị treo (`SIGSTOP`) cho ra loading vô hạn chứ không ra lỗi.
 - **Hai thẻ `<main>` trong DOM là bình thường.** Bản dựng production có hai
   `.vc-app-content`, nhưng một trong hai nằm trong container streaming Suspense của
   React (`#S:0`, `hidden` + `display:none`) nên không lộ ra accessibility tree. Chỉ

@@ -102,6 +102,7 @@ Trên trình duyệt:
 | --- | --- | --- | --- |
 | [Quản lý lớp học](lop-hoc.md) | Tiên quyết | Lớp phải đang hoạt động và còn chỗ. | Lớp kết thúc thì mọi thao tác ghi danh bị chặn. |
 | [Quản lý học sinh](../identity/hoc-sinh.md) | Tiên quyết | Học sinh phải có hồ sơ và tài khoản chưa khóa. | Học sinh bị khóa không xuất hiện trong danh sách chọn. |
+| [Quản lý học sinh](../identity/hoc-sinh.md) | Hạ nguồn | Hồ sơ học sinh báo về các lớp học sinh còn đang theo học, dùng đúng định nghĩa "còn đang học" ở mục Quy tắc nghiệp vụ. | Lớp đã cho nghỉ biến mất khỏi cột Lớp đang học ở danh sách học sinh, thay vì hiện kèm nhãn. Ghi danh, chuyển lớp và cho nghỉ đều làm mới cột đó ngay. |
 | [Phân quyền theo chức năng](../auth/phan-quyen.md) | Tiên quyết | Mỗi thao tác ghi danh có một quyền riêng. | Không đủ quyền thì nhận `403`. |
 
 ## Giới hạn hiện tại

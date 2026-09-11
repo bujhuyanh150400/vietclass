@@ -1,6 +1,6 @@
 # Database reference
 
-Last verified: 2026-09-04
+Last verified: 2026-09-10
 
 Database engine: PostgreSQL. Migrations under `api/database/migrations/` are the executable source of truth. Framework runtime, Identity, Auth, Academic, System, and File Management tables exist. No Schedule table exists: the module was removed and its schema is being redesigned. The Academic schema is a deliberate adaptation of the fork's, not a copy; each divergence is noted where it occurs.
 
@@ -188,6 +188,44 @@ several rows for the same class.
 An enrolment is **active** when `left_at IS NULL OR left_at > today`. At most one active
 row may exist per class and student. That rule depends on the current date, so it cannot
 be expressed as an index predicate and is enforced in the application instead.
+
+`ClassEnrollment::active()` is the single definition of that rule in the application.
+Capacity counts, duplicate checks, rosters, and the student list all share it, so they
+cannot disagree about who is still enrolled. Do not restate the `left_at` condition in a
+new caller.
+
+#### The one sanctioned Identity → Academic crossing
+
+`StudentProfile::activeEnrollments()` (Identity) is a `HasMany` onto this table
+(Academic). It is the **only** relation pointing that way, and it exists so the student
+list can name the classes a student attends.
+
+Everywhere else the dependency runs Academic → Identity: `classes.teacher_id` and
+`class_enrollments.student_id` target Identity's role tables, `ClassEnrollment` belongs
+to `StudentProfile`, `ClassEnrollmentRepository` queries `StudentProfile` directly, and
+`EnrollmentController` renders Identity's `StudentResource`. Identity was the lower
+layer, and the docblock on
+`ClassEnrollmentRepository::paginateAvailableForClass()` used to state that
+`StudentProfile` must never reference `ClassEnrollment` back. That paragraph has been
+rewritten to name this relation instead, so the rule and the code agree.
+
+Why the relation rather than data computed in Academic and handed to the resource:
+
+- `StudentResource` is rendered from six call sites: `StudentController::index`,
+  `store`, `show`, `update`, and `toggleAccount`, plus Academic's
+  `EnrollmentController::available`. (`changePassword` answers `204` and renders no
+  resource.) A relation travels with the model and is therefore correct at all six.
+  Pre-computed data has to be injected at each one, and a call site that forgets returns
+  `[]` — wrong data, reported silently.
+- `paginated()` in `app/Core/Http/Concerns/HandleApi.php` takes a resource **class name**
+  and calls `$resourceClass::collection(...)` itself. There is no seam for passing
+  per-item data, so injecting it would mean changing a helper every list endpoint in the
+  application depends on.
+
+A missing eager load on this relation costs query count, not correctness, and
+`IdentityStudentTest` asserts the student list's query count does not grow with the
+number of rows. Treat the crossing as closed: anything a query inside Academic can
+already answer stays inside Academic.
 
 ### `rooms`
 
