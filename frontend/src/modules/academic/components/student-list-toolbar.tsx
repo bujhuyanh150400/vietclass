@@ -76,7 +76,7 @@ export function StudentListToolbar({
       onSearchChange={onSearchChange}
       searchPlaceholder="Tìm tên, số điện thoại, phụ huynh…"
       searchAriaLabel="Tìm kiếm học sinh"
-      searchHelpText="Tìm theo tên hoặc số điện thoại học sinh, tên hoặc số điện thoại phụ huynh, và tên đăng nhập."
+      searchHelpText="Tìm theo mã học sinh, tên hoặc số điện thoại học sinh, tên hoặc số điện thoại phụ huynh, và tên đăng nhập."
       align="start"
       size="control"
       searchClassName="w-full min-w-0 sm:w-[min(420px,42vw)] sm:min-w-[260px]"

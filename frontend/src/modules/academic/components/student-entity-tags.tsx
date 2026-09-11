@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn, personInitials } from "@/lib/utils/index";
 
 import type { Student } from "../types/academic";
@@ -87,17 +86,107 @@ function EntityTag({
 }
 
 /** Renders the monogram square on a guardian chip, dotted when it is the main contact. */
-function GuardianMonogram({ name, isPrimary }: { name: string; isPrimary: boolean }) {
+function GuardianMonogram({
+  name,
+  isPrimary,
+  className,
+}: {
+  name: string;
+  isPrimary: boolean;
+  className?: string;
+}) {
   return (
     <span
       aria-hidden="true"
-      className="relative grid size-6 shrink-0 place-items-center rounded-control bg-background text-[9px] font-bold"
+      className={cn(
+        "relative grid size-6 shrink-0 place-items-center rounded-control bg-background text-[9px] font-bold",
+        className,
+      )}
     >
       {personInitials(name)}
       {isPrimary ? (
         <span className="absolute -right-0.5 -bottom-0.5 size-[7px] rounded-full border-2 border-card bg-vc-orange" />
       ) : null}
     </span>
+  );
+}
+
+/** Renders the square that stands in for a class where a guardian has a monogram. */
+function ClassMark({ className }: { className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "grid size-6 shrink-0 place-items-center rounded-control bg-background text-muted-foreground",
+        className,
+      )}
+    >
+      <School className="size-4" />
+    </span>
+  );
+}
+
+/**
+ * Renders the dialog both relation chips open: which student it is about, how
+ * many records there are, and one row each.
+ *
+ * Guardians and classes share it rather than each carrying their own copy. The
+ * two lists answer the same shape of question — "show me all of these for this
+ * student" — and when they were a dialog and a popover they had already drifted
+ * apart on what the count meant.
+ */
+function RelationDialog({
+  open,
+  onOpenChange,
+  title,
+  student,
+  summary,
+  children,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  student: Student;
+  summary: string;
+  children: ReactNode;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            {`${student.full_name} · ${GRADE_LEVEL_LABELS[student.grade_level]} · ${summary}`}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-2">{children}</div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Renders one record inside a relation dialog: its mark, two lines, and a state. */
+function RelationRow({
+  leading,
+  title,
+  detail,
+  trailing,
+}: {
+  leading: ReactNode;
+  title: string;
+  detail: string;
+  trailing?: ReactNode;
+}) {
+  return (
+    <div className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-2.5 rounded-panel border border-vc-rule bg-card p-2.5">
+      {leading}
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold">{title}</p>
+        <p className="truncate text-xs text-muted-foreground">{detail}</p>
+      </div>
+      {trailing}
+    </div>
   );
 }
 
@@ -201,40 +290,39 @@ export function GuardianTags({
         />
       ) : null}
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Danh sách phụ huynh</DialogTitle>
-            <DialogDescription>
-              {`${student.full_name} · ${GRADE_LEVEL_LABELS[student.grade_level]} · ${guardians.length} phụ huynh`}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-2">
-            {guardians.map((guardian) => (
-              <div
-                key={guardian.profile_id}
-                className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-2.5 rounded-panel border border-vc-rule bg-card p-2.5"
-              >
-                <GuardianMonogram name={guardian.full_name} isPrimary={guardian.is_primary} />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">{guardian.full_name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {guardian.phone === null
-                      ? GUARDIAN_RELATIONSHIP_LABELS[guardian.relationship]
-                      : `${GUARDIAN_RELATIONSHIP_LABELS[guardian.relationship]} · ${guardian.phone}`}
-                  </p>
-                </div>
-                {guardian.is_primary ? (
-                  <Badge variant="outline" className="whitespace-nowrap">
-                    Liên hệ chính
-                  </Badge>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <RelationDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Danh sách phụ huynh"
+        student={student}
+        summary={`${guardians.length} phụ huynh`}
+      >
+        {guardians.map((guardian) => (
+          <RelationRow
+            key={guardian.profile_id}
+            leading={
+              <GuardianMonogram
+                name={guardian.full_name}
+                isPrimary={guardian.is_primary}
+                className="size-8 text-[10px]"
+              />
+            }
+            title={guardian.full_name}
+            detail={
+              guardian.phone === null
+                ? GUARDIAN_RELATIONSHIP_LABELS[guardian.relationship]
+                : `${GUARDIAN_RELATIONSHIP_LABELS[guardian.relationship]} · ${guardian.phone}`
+            }
+            trailing={
+              guardian.is_primary ? (
+                <Badge variant="outline" className="whitespace-nowrap">
+                  Liên hệ chính
+                </Badge>
+              ) : undefined
+            }
+          />
+        ))}
+      </RelationDialog>
     </div>
   );
 }
@@ -243,11 +331,12 @@ export function GuardianTags({
  * Renders the classes a student still attends as chips, collapsing any past the
  * first two into a count that opens the complete list.
  *
- * A popover rather than a dialog: a class is named by a short code, so the
- * remainder is a glance rather than something to read, and a dialog would take
- * over the screen for two lines of text.
+ * The count opens the same dialog the guardians use. It was a popover first, on
+ * the reasoning that a class code is a glance rather than something to read; that
+ * left the two counts in one row behaving differently for no reason a reader
+ * could see, so both now open a list.
  *
- * Owns its own popover state so the surrounding list stays presentational.
+ * Owns its own dialog state so the surrounding list stays presentational.
  */
 export function ClassTags({
   student,
@@ -256,6 +345,7 @@ export function ClassTags({
   student: Student;
   layout?: TagLayout;
 }) {
+  const [open, setOpen] = useState(false);
   const enrollments = student.active_enrollments;
 
   if (enrollments.length === 0) {
@@ -277,38 +367,35 @@ export function ClassTags({
       ))}
 
       {collapsed > 0 ? (
-        <Popover>
-          <PopoverTrigger asChild>
-            <OverflowChip
-              collapsed={collapsed}
-              label={`Xem tất cả ${enrollments.length} lớp của ${student.full_name}`}
-            />
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-60 p-1.5">
-            <p className="flex items-center justify-between gap-2 px-2 pt-1 pb-2 text-xs font-semibold">
-              Lớp đang học
-              <span className="font-mono text-muted-foreground">{enrollments.length}</span>
-            </p>
-            {enrollments.map((enrollment) => (
-              <div
-                key={enrollment.class_id}
-                className="flex items-center gap-2 rounded-control px-2 py-1.5"
-              >
-                <School aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
-                <span className="min-w-0">
-                  <strong className="block truncate text-xs font-semibold">
-                    {enrollment.code}
-                  </strong>
-                  <small className="block truncate text-[10px] text-muted-foreground">
-                    {enrollment.subject_name ?? "Chưa rõ môn"}
-                  </small>
-                </span>
-              </div>
-            ))}
-          </PopoverContent>
-        </Popover>
-      )
-        : null}
+        <OverflowChip
+          collapsed={collapsed}
+          label={`Xem tất cả ${enrollments.length} lớp đang học của ${student.full_name}`}
+          aria-haspopup="dialog"
+          onClick={() => setOpen(true)}
+        />
+      ) : null}
+
+      <RelationDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Lớp đang học"
+        student={student}
+        summary={`${enrollments.length} lớp đang học`}
+      >
+        {enrollments.map((enrollment) => (
+          <RelationRow
+            key={enrollment.class_id}
+            leading={<ClassMark className="size-8" />}
+            title={enrollment.code}
+            detail={enrollment.subject_name ?? "Chưa rõ môn"}
+            trailing={
+              <Badge variant="outline" className="whitespace-nowrap">
+                Đang học
+              </Badge>
+            }
+          />
+        ))}
+      </RelationDialog>
     </div>
   );
 }

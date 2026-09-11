@@ -65,30 +65,51 @@ export function AccountBadge({ isActive }: { isActive: boolean }) {
 }
 
 /**
- * Renders the cell a reader scans the list by: the student's face, their name as
- * the link into their profile, and the phone number underneath.
+ * Renders one labelled fact under a student's name.
  *
- * The number is set in the mono face so digits align down the column, which is
- * what makes a phone number scannable at all in a list this dense.
+ * The label sits in a fixed column so the values line up with each other down
+ * the cell; without it "SĐT" and "Mã học sinh" would push their numbers to
+ * different offsets and the pair would read as two unrelated lines.
+ */
+function IdentityMeta({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="grid grid-cols-[62px_minmax(0,1fr)] gap-1.5 text-[10px] leading-[1.45]">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="truncate font-mono text-foreground">{value}</span>
+    </span>
+  );
+}
+
+/**
+ * Renders the cell a reader scans the list by: the student's face, their name as
+ * the link into their profile, and the two facts used to tell one student from
+ * another with the same name — the phone number and the student code.
+ *
+ * The code is the profile id printed as it is. There is no separate code column
+ * on `student_profiles`, and inventing a prefixed format here would put a second
+ * identifier in front of readers that nothing else in the system answers to.
+ *
+ * Both are set in the mono face so digits align down the column, which is what
+ * makes them scannable at all in a list this dense.
  */
 export function StudentIdentity({ student }: { student: Student }) {
   return (
-    <div className="flex min-w-0 items-center gap-2.5">
+    <div className="grid min-w-0 grid-cols-[44px_minmax(0,1fr)] items-center gap-3">
       <UserAvatar
         value={student.avatar}
         name={student.full_name}
         alt={`Ảnh đại diện của ${student.full_name}`}
+        className="size-11 border border-vc-control bg-background"
       />
-      <div className="min-w-0">
+      <div className="grid min-w-0 gap-0.5">
         <Link
           href={`/academic/students/${student.id}`}
           className="block truncate text-xs font-medium hover:text-vc-orange-deep focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           {student.full_name}
         </Link>
-        <p className="truncate font-mono text-[11px] text-muted-foreground">
-          {student.phone ?? "Chưa có số điện thoại"}
-        </p>
+        <IdentityMeta label="SĐT" value={student.phone ?? "Chưa có"} />
+        <IdentityMeta label="Mã học sinh" value={String(student.id)} />
       </div>
     </div>
   );
