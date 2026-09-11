@@ -49,7 +49,7 @@ Trường tùy chọn: `phone`, `dob`, `guardian_phone`, `address`, `note`, và 
 
 Giới tính (học sinh và phụ huynh): `0` Nam, `1` Nữ, `2` Khác. Khối lớp: `0` Tiền tiểu học, `1`–`12` theo số lớp. Quan hệ phụ huynh: `0` Bố, `1` Mẹ, `2` Người giám hộ khác.
 
-Danh sách nhận thêm `q` để tìm theo họ tên học sinh, số điện thoại học sinh, tên phụ huynh, số điện thoại phụ huynh hoặc tên đăng nhập; `status[]`, `grade_level[]`, `is_active` để lọc; cùng `page`, `per_page`, `sort`, `direction`. Cột sắp xếp cho phép: `id`, `full_name`, `grade_level`, `created_at`. `q` tối đa 100 ký tự và `per_page` tối đa 200; vượt quá thì trả `422`.
+Danh sách nhận thêm `q` để tìm theo mã học sinh, họ tên học sinh, số điện thoại học sinh, tên phụ huynh, số điện thoại phụ huynh hoặc tên đăng nhập. Mã học sinh là `profile_id`, nên `q` toàn chữ số được đối chiếu thêm với id bên cạnh các điều kiện văn bản — không thay thế chúng, vì số điện thoại cũng là chữ số. Hệ quả: gõ vài chữ số có thể ra cả học sinh mang id đó và những học sinh có số điện thoại chứa dãy số đó. Chuỗi số dài quá tầm số nguyên không được coi là id. Ngoài ra có `status[]`, `grade_level[]`, `is_active` để lọc; cùng `page`, `per_page`, `sort`, `direction`. Cột sắp xếp cho phép: `id`, `full_name`, `grade_level`, `created_at`. `q` tối đa 100 ký tự và `per_page` tối đa 200; vượt quá thì trả `422`.
 
 API vẫn nhận `status[]`, nhưng màn danh sách trên trình duyệt **không còn gửi tham số này** — xem mục dưới.
 
@@ -57,11 +57,11 @@ API vẫn nhận `status[]`, nhưng màn danh sách trên trình duyệt **khôn
 
 | Vùng | Hành vi |
 | --- | --- |
-| Cột | Học sinh (ảnh, họ tên, số điện thoại) · Khối · Phụ huynh · Lớp đang học · Tài khoản · menu thao tác |
-| Phụ huynh và Lớp đang học | Hiện tối đa **2** mục, phần còn lại gộp vào chip `+N`. Bấm `+N` ở cột Phụ huynh mở hộp thoại liệt kê **toàn bộ** phụ huynh kèm quan hệ, số điện thoại và nhãn `Liên hệ chính`; bấm `+N` ở cột Lớp đang học mở popover liệt kê **toàn bộ** lớp |
+| Cột | Học sinh (ảnh đại diện, họ tên, số điện thoại, mã học sinh) · Khối · Phụ huynh · Lớp đang học · Tài khoản · menu thao tác |
+| Phụ huynh và Lớp đang học | Hiện tối đa **2** mục, phần còn lại gộp vào chip `+N`. Bấm `+N` ở cột Phụ huynh mở hộp thoại liệt kê **toàn bộ** phụ huynh kèm quan hệ, số điện thoại và nhãn `Liên hệ chính`; bấm `+N` ở cột Lớp đang học mở hộp thoại cùng dạng, liệt kê **toàn bộ** lớp kèm môn và nhãn `Đang học` |
 | Không có dữ liệu liên quan | Hiện `Chưa có phụ huynh` hoặc `Chưa có lớp` |
 | Tài khoản | `Đang mở` hoặc `Đã khóa` |
-| Tìm kiếm | Ô tìm kiếm áp dụng sau khoảng dừng nhập, không tìm theo từng ký tự |
+| Tìm kiếm | Ô tìm kiếm áp dụng sau khoảng dừng nhập, không tìm theo từng ký tự. Tìm được theo mã học sinh, tên và số điện thoại học sinh, tên và số điện thoại phụ huynh, và tên đăng nhập |
 | Bộ lọc | Chỉ **Khối** và **Tài khoản**. Không có bộ lọc trạng thái học tập |
 | Sắp xếp | Mới tạo gần đây (mặc định), Tên A–Z, Tên Z–A, Khối tăng dần |
 | Điều kiện đang áp dụng | Hiện thành dải chip bỏ được từng cái, kèm `Xóa tất cả`. Từ khóa quá dài bị cắt bớt kèm dấu `…`; trỏ chuột vào chip để xem đủ |
