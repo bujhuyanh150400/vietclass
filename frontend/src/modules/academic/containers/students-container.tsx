@@ -78,7 +78,6 @@ export function StudentsContainer() {
         tablePageSize={list.tablePageSize}
         onSearchChange={list.query.setSearch}
         onToggleGradeLevel={list.toggleGradeLevel}
-        onToggleStatus={list.toggleStatus}
         onAccountActiveChange={list.setAccountActive}
         onClearFilters={list.clearFilters}
         onSortChange={list.setSort}

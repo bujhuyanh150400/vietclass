@@ -59,6 +59,12 @@ function useEnrollmentInvalidation() {
     void queryClient.invalidateQueries({ queryKey: academicQueryKeys.enrollments.root() });
     // A class carries its own headcount, so its list and detail are stale too.
     void queryClient.invalidateQueries({ queryKey: academicQueryKeys.classes.root() });
+    // A student reports the classes they currently attend, so enrolling, transferring,
+    // or ending a membership changes what the student list shows about them. Without
+    // this, that column serves the pre-change answer for as long as the query stays
+    // fresh. The account toggle already invalidates enrolments for the mirror-image
+    // reason.
+    void queryClient.invalidateQueries({ queryKey: academicQueryKeys.students.root() });
   };
 }
 

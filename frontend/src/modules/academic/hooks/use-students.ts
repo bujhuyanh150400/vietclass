@@ -22,7 +22,7 @@ import {
   type StudentListParams,
 } from "../api";
 import { academicQueryKeys } from "./academic-query-keys";
-import type { GradeLevel, Student, StudentStatus } from "../types/academic";
+import type { GradeLevel, Student } from "../types/academic";
 import type {
   CreateProfileSubmission,
   CreateStudentRequest,
@@ -41,9 +41,6 @@ import {
   type StudentListView,
 } from "../utils/student-list-controls";
 
-/** Every study status accepted by the student list endpoint. */
-const STUDENT_STATUSES = [0, 1, 2] as const;
-
 /** The controls and mutations the student list view can invoke. */
 export type StudentListViewModel = ResourceListViewModel<Student> & {
   filters: StudentFilterState;
@@ -52,7 +49,6 @@ export type StudentListViewModel = ResourceListViewModel<Student> & {
   view: StudentListView;
   tablePageSize: number;
   toggleGradeLevel: (gradeLevel: GradeLevel) => void;
-  toggleStatus: (status: StudentStatus) => void;
   setAccountActive: (isActive: boolean | null) => void;
   setSort: (sort: StudentListSort) => void;
   setView: (view: StudentListView) => void;
@@ -68,7 +64,6 @@ export function useStudentList(): StudentListViewModel {
   const [controls, setControls] = useQueryStates(
     {
       grade_level: parseAsArrayOf(parseAsNumberLiteral(GRADE_LEVELS)).withDefault([]),
-      status: parseAsArrayOf(parseAsNumberLiteral(STUDENT_STATUSES)).withDefault([]),
       is_active: parseAsBoolean,
       sort: parseAsStringLiteral(STUDENT_LIST_SORTS).withDefault("newest"),
       view: parseAsStringLiteral(STUDENT_LIST_VIEWS).withDefault("table"),
@@ -79,7 +74,6 @@ export function useStudentList(): StudentListViewModel {
 
   const filters: StudentFilterState = {
     gradeLevels: controls.grade_level,
-    statuses: controls.status,
     isActive: controls.is_active,
   };
   const pageSize = resolveStudentPageSize(controls.view, controls.per_page);
@@ -102,19 +96,6 @@ export function useStudentList(): StudentListViewModel {
       list.query.setPage(1);
     },
     [controls.grade_level, list.query, setControls],
-  );
-
-  /** Toggles one study-status filter and returns the collection to its first page. */
-  const toggleStatus = useCallback(
-    (status: StudentStatus) => {
-      const next = controls.status.includes(status)
-        ? controls.status.filter((value) => value !== status)
-        : [...controls.status, status].sort((left, right) => left - right);
-
-      void setControls({ status: next.length === 0 ? null : next });
-      list.query.setPage(1);
-    },
-    [controls.status, list.query, setControls],
   );
 
   /** Applies or clears the account-state filter immediately. */
@@ -156,7 +137,7 @@ export function useStudentList(): StudentListViewModel {
 
   /** Clears student filters without changing keyword, sort, view, or table density. */
   const clearFilters = useCallback(() => {
-    void setControls({ grade_level: null, status: null, is_active: null });
+    void setControls({ grade_level: null, is_active: null });
     list.query.setPage(1);
   }, [list.query, setControls]);
 
@@ -165,7 +146,6 @@ export function useStudentList(): StudentListViewModel {
     list.query.reset();
     void setControls({
       grade_level: null,
-      status: null,
       is_active: null,
       sort: null,
     });
@@ -179,7 +159,6 @@ export function useStudentList(): StudentListViewModel {
     view: controls.view,
     tablePageSize: controls.per_page,
     toggleGradeLevel,
-    toggleStatus,
     setAccountActive,
     setSort,
     setView,

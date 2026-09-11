@@ -1,4 +1,4 @@
-import type { GradeLevel, StudentStatus } from "../types/academic";
+import type { GradeLevel } from "../types/academic";
 import type { StudentListParams } from "../api/students-api";
 
 /** The display modes the student list can switch between. */
@@ -22,10 +22,15 @@ export const STUDENT_LIST_SORTS: StudentListSort[] = [
 /** Every supported student collection layout. */
 export const STUDENT_LIST_VIEWS: StudentListView[] = ["table", "grid"];
 
-/** The filters the student endpoint accepts. */
+/**
+ * The filters the student list offers.
+ *
+ * The endpoint also filters by study status, but the list neither shows that
+ * column nor filters on it — a student's standing is read and changed on their
+ * own profile, so offering it here would filter by something invisible.
+ */
 export type StudentFilterState = {
   gradeLevels: GradeLevel[];
-  statuses: StudentStatus[];
   isActive: boolean | null;
 };
 
@@ -45,10 +50,6 @@ export function buildStudentListParams(
 
   controls.gradeLevels.forEach((gradeLevel, index) => {
     params[`grade_level[${index}]`] = gradeLevel;
-  });
-
-  controls.statuses.forEach((status, index) => {
-    params[`status[${index}]`] = status;
   });
 
   if (controls.isActive !== null) {
@@ -71,7 +72,6 @@ export function buildStudentListParams(
 /** Counts active filter groups so the Filter button reports useful scope. */
 export function activeStudentFilterCount(filters: StudentFilterState): number {
   return Number(filters.gradeLevels.length > 0)
-    + Number(filters.statuses.length > 0)
     + Number(filters.isActive !== null);
 }
 

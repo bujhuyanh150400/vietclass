@@ -9,6 +9,8 @@ export type {
   RoomStatus,
   SchoolClass,
   Student,
+  StudentEnrollmentSummary,
+  StudentGuardianSummary,
   StudentStatus,
   Subject,
   Teacher,

@@ -73,6 +73,10 @@ export function useCreateClass() {
 
 /**
  * Changes a class and refreshes the list.
+ *
+ * The student caches go too: a student profile names the classes it attends by
+ * code and subject, so moving a class to another subject leaves every enrolled
+ * student reporting the old one.
  */
 export function useUpdateClass(id: number) {
   const queryClient = useQueryClient();
@@ -82,6 +86,7 @@ export function useUpdateClass(id: number) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.classes.root() });
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.subjects.root() });
+      void queryClient.invalidateQueries({ queryKey: academicQueryKeys.students.root() });
     },
   });
 }
@@ -92,6 +97,11 @@ export function useUpdateClass(id: number) {
  * Finishing a class closes every enrolment it still has, so the roster caches are
  * refreshed alongside the class itself, as is the subject list whose running-class
  * counts have just changed.
+ *
+ * The student caches are refreshed for the same reason as the rosters: closing the
+ * enrolments takes the class out of every enrolled student's current classes, and
+ * a cached student list would otherwise keep presenting a finished class as one
+ * they still attend.
  */
 export function useChangeClassStatus() {
   const queryClient = useQueryClient();
@@ -103,6 +113,7 @@ export function useChangeClassStatus() {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.classes.root() });
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.enrollments.root() });
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.subjects.root() });
+      void queryClient.invalidateQueries({ queryKey: academicQueryKeys.students.root() });
     },
   });
 }

@@ -96,6 +96,33 @@ export type SchoolClass = {
   updated_at: string | null;
 };
 
+/**
+ * One guardian as the student list reports it, enough to show a contact chip
+ * without loading the guardian's own profile.
+ *
+ * A student may have several. `is_primary` marks the single main contact, and
+ * the API returns that one first, because the list only shows the first few and
+ * the main contact is the one worth showing.
+ */
+export type StudentGuardianSummary = {
+  profile_id: number;
+  full_name: string;
+  phone: string | null;
+  relationship: GuardianRelationship;
+  is_primary: boolean;
+};
+
+/**
+ * One class the student is currently enrolled in, as the student list reports
+ * it. Only running enrolments appear, so a class the student has left is absent
+ * rather than present and flagged.
+ */
+export type StudentEnrollmentSummary = {
+  class_id: number;
+  code: string;
+  subject_name: string | null;
+};
+
 /** A student profile together with the state of its login account. */
 export type Student = {
   id: number;
@@ -111,6 +138,10 @@ export type Student = {
   guardian_phone: string | null;
   guardian_gender: Gender | null;
   guardian_relationship: GuardianRelationship | null;
+  /** Every guardian, main contact first. Empty rather than absent when none. */
+  guardians: StudentGuardianSummary[];
+  /** Only the enrolments still running. Empty rather than absent when none. */
+  active_enrollments: StudentEnrollmentSummary[];
   address: string | null;
   note: string | null;
   status: StudentStatus;

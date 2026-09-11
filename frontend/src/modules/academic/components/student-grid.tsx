@@ -1,117 +1,111 @@
 "use client";
 
 import Link from "next/link";
-import { MoreHorizontal, Phone, UserRound } from "lucide-react";
+import type { ReactNode } from "react";
 
-import { EmptyState, type DataTableState } from "@/components/shared/data-table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import type { DataTableState } from "@/components/shared/data-table";
 import { UserAvatar } from "@/modules/avatar";
 
-import type { Student, StudentStatus } from "../types/academic";
-import { GRADE_LEVEL_LABELS, STUDENT_STATUS_LABELS } from "../utils/labels";
+import type { Student } from "../types/academic";
+import { AccountBadge, GradeToken, StudentRowMenu } from "./student-cells";
+import { ClassTags, GuardianTags } from "./student-entity-tags";
 
-/** How each study status is coloured in a student card. */
-const STATUS_VARIANT: Record<StudentStatus, "default" | "secondary" | "destructive"> = {
-  0: "default",
-  1: "secondary",
-  2: "destructive",
-};
-
-/** Renders student records as compact cards while preserving list states and actions. */
+/**
+ * Renders student records as cards.
+ *
+ * This is both the chosen card view and what the table falls back to on a narrow
+ * screen, so it carries the same facts the table's columns do rather than a
+ * reduced set — a reader on a phone is not looking for less.
+ *
+ * Only the content state reaches here: loading, empty, and failure are drawn once
+ * by the sheet, whichever layout is active.
+ */
 export function StudentGrid({
   state,
   onToggleAccount,
   onChangePassword,
 }: {
-  state: DataTableState<Student>;
+  state: Extract<DataTableState<Student>, { kind: "content" }>;
   onToggleAccount: (student: Student) => void;
   onChangePassword: (student: Student) => void;
 }) {
-  if (state.kind === "loading") {
-    return (
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Đang tải học sinh">
-        {Array.from({ length: 8 }, (_, index) => (
-          <div key={index} className="h-48 animate-pulse rounded-xl border bg-muted/40" />
-        ))}
-      </div>
-    );
-  }
-
-  if (state.kind === "error") {
-    return <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-8 text-center text-sm text-destructive">{state.message}</div>;
-  }
-
-  if (state.kind === "empty") {
-    return (
-      <EmptyState
-        title={state.message}
-        description={state.description}
-        icon={state.icon}
-        image={state.image}
-        action={state.action}
-        className="rounded-xl border border-dashed py-16"
-      />
-    );
-  }
-
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-3 p-3 sm:grid-cols-2 xl:grid-cols-3">
       {state.rows.map((student) => (
-        <article key={student.id} className="rounded-xl border bg-card p-4 shadow-xs transition-shadow hover:shadow-sm">
-          <div className="flex items-start gap-3">
+        <article
+          key={student.id}
+          className="min-w-0 rounded-panel border border-vc-rule bg-card p-3.5 transition-shadow hover:border-vc-control hover:shadow-[0_3px_0_var(--vc-shell-rule)] focus-within:border-vc-control"
+        >
+          <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5">
             <UserAvatar
               value={student.avatar}
               name={student.full_name}
               alt={`Ảnh đại diện của ${student.full_name}`}
-              size="lg"
+              className="size-[38px]"
             />
-            <div className="min-w-0 grow">
-              <Link href={`/academic/students/${student.id}`} className="block truncate text-sm font-semibold hover:text-vc-orange-deep">
-                {student.full_name}
-              </Link>
-              <p className="truncate text-xs text-muted-foreground">@{student.username ?? "chưa-có-tài-khoản"}</p>
+            <div className="min-w-0">
+              <h3 className="truncate text-[15px] font-semibold">
+                <Link
+                  href={`/academic/students/${student.id}`}
+                  className="hover:text-vc-orange-deep focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
+                  {student.full_name}
+                </Link>
+              </h3>
+              <p className="mt-0.5 truncate font-mono text-[11px] text-muted-foreground">
+                {student.phone ?? "Chưa có số điện thoại"}
+              </p>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" aria-label={`Thao tác với ${student.full_name}`}>
-                  <MoreHorizontal aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild><Link href={`/academic/students/${student.id}`}>Sửa hồ sơ</Link></DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => onChangePassword(student)}>Đổi mật khẩu</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => onToggleAccount(student)}>
-                  {student.is_account_active === false ? "Mở tài khoản" : "Khóa tài khoản"}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <StudentRowMenu
+              student={student}
+              onToggleAccount={onToggleAccount}
+              onChangePassword={onChangePassword}
+            />
           </div>
 
-          <div className="mt-4 grid gap-2 border-y py-3 text-xs">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground">Khối</span>
-              <span className="font-medium">{GRADE_LEVEL_LABELS[student.grade_level]}</span>
-            </div>
-            <div className="flex min-w-0 items-center justify-between gap-3">
-              <span className="flex items-center gap-1 text-muted-foreground"><UserRound aria-hidden="true" className="size-3.5" />Phụ huynh</span>
-              <span className="truncate">{student.guardian_name ?? "—"}</span>
-            </div>
-            <div className="flex min-w-0 items-center justify-between gap-3">
-              <span className="flex items-center gap-1 text-muted-foreground"><Phone aria-hidden="true" className="size-3.5" />Liên hệ</span>
-              <span className="truncate">{student.guardian_phone ?? student.phone ?? "—"}</span>
-            </div>
+          <div className="my-3 flex items-center gap-2 border-y border-vc-rule py-2.5">
+            <GradeToken gradeLevel={student.grade_level} />
+            <AccountBadge isActive={student.is_account_active !== false} />
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            <Badge variant={STATUS_VARIANT[student.status]}>{STUDENT_STATUS_LABELS[student.status]}</Badge>
-            <Badge variant={student.is_account_active === false ? "destructive" : "outline"}>
-              {student.is_account_active === false ? "Đã khóa" : "Đang mở"}
-            </Badge>
+          <CardEntityGroup label="Phụ huynh" count={student.guardians.length}>
+            <GuardianTags student={student} layout="card" />
+          </CardEntityGroup>
+
+          <div className="mt-2.5">
+            <CardEntityGroup label="Lớp đang học" count={student.active_enrollments.length}>
+              <ClassTags student={student} layout="card" />
+            </CardEntityGroup>
           </div>
         </article>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Labels one group of related records on a card and states how many there are.
+ *
+ * The count is printed even though the chips below are visible, because the
+ * chips stop at two: without it, a student with five guardians would look like a
+ * student with two and a "+3" whose total the reader has to work out.
+ */
+function CardEntityGroup({
+  label,
+  count,
+  children,
+}: {
+  label: string;
+  count: number;
+  children: ReactNode;
+}) {
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between text-[11px] font-bold text-muted-foreground">
+        <span>{label}</span>
+        <span className="font-mono">{count}</span>
+      </div>
+      {children}
     </div>
   );
 }

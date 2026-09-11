@@ -68,6 +68,10 @@ export function useCreateSubject() {
 
 /**
  * Changes a subject and refreshes every cached page of the list.
+ *
+ * The class and student caches are refreshed too, because both name a class by its
+ * subject: renaming one here would otherwise leave the old name printed on class
+ * rows and on the classes listed against each student.
  */
 export function useUpdateSubject(id: number) {
   const queryClient = useQueryClient();
@@ -76,6 +80,8 @@ export function useUpdateSubject(id: number) {
     mutationFn: (body: SubjectRequest) => updateSubject(id, body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.subjects.root() });
+      void queryClient.invalidateQueries({ queryKey: academicQueryKeys.classes.root() });
+      void queryClient.invalidateQueries({ queryKey: academicQueryKeys.students.root() });
     },
   });
 }

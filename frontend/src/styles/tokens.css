@@ -65,9 +65,12 @@
   --sidebar-border: var(--vc-shell-rule);
   --sidebar-ring: var(--vc-orange-deep);
 
-  /* Scoped geometry and material for the authenticated app shell. These are
-     app-shell tokens, not a global geometry change: feature screens keep the
-     component library's own radii. */
+  /* Geometry and material from the design system. The authenticated app shell
+     was the first surface to adopt it, which is why the names still say
+     `shell`; `theme.css` registers the radii, the two border tones, and the
+     sheet shadow as utilities, so a redesigned feature screen shares the same
+     values. A screen that has not been redesigned yet keeps the component
+     library's own radii. */
   --vc-shell-rule: oklch(0.891249 0.030951 76.9518);
   --vc-shell-control-border: oklch(0.62 0.035 70);
   --vc-shell-tint: oklch(0.947 0.022 80);

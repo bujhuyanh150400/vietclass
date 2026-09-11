@@ -3,15 +3,11 @@
 import { useMemo, useState, type ComponentProps } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { personInitials } from "@/lib/utils/index";
 import { fileContentUrl } from "@/modules/files";
 
 import type { AvatarValue } from "../types/avatar";
 import { renderDiceBear } from "../utils/dicebear";
-
-/** Derives a stable visible fallback from a display name. */
-function initials(name: string): string {
-  return (Array.from(name.trim())[0] ?? "?").toUpperCase();
-}
 
 /** Resolves only the API content route or local renderer output into an image source. */
 function avatarSource(value: AvatarValue): string | null {
@@ -39,7 +35,7 @@ export function UserAvatar({
   return (
     <Avatar {...props}>
       {source !== null && !failed ? <AvatarImage src={source} alt={alt} loading={loading} onError={() => setFailedSource(source)} /> : null}
-      <AvatarFallback delayMs={0}>{initials(name)}</AvatarFallback>
+      <AvatarFallback delayMs={0}>{personInitials(name)}</AvatarFallback>
     </Avatar>
   );
 }

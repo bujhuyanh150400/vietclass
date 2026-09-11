@@ -5,6 +5,9 @@ import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils/index";
+
+import { COMPACT_BADGE, COMPACT_LABEL, COMPACT_TRIGGER } from "./toolbar-control";
 
 /** One selectable choice in a SortPopover. */
 export type SortOption<T extends string> = {
@@ -25,12 +28,15 @@ export function SortPopover<T extends string>({
   onChange,
   isActive,
   triggerLabel = "Sắp xếp",
+  compact = false,
 }: {
   value: T;
   options: SortOption<T>[];
   onChange: (value: T) => void;
   isActive: boolean;
   triggerLabel?: string;
+  /** Renders the taller sheet-toolbar trigger that sheds its label when narrow. */
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -41,12 +47,20 @@ export function SortPopover<T extends string>({
           type="button"
           variant="outline"
           size="sm"
-          className={isActive ? "border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100" : undefined}
+          className={cn(
+            compact && COMPACT_TRIGGER,
+            isActive && "border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100",
+          )}
         >
           <ArrowUpDown aria-hidden="true" />
-          {triggerLabel}
+          {compact ? <span className={COMPACT_LABEL}>{triggerLabel}</span> : triggerLabel}
           {isActive ? (
-            <span className="grid size-4 place-items-center rounded-full bg-violet-600 text-[10px] font-semibold text-white">
+            <span
+              className={cn(
+                "grid size-4 place-items-center rounded-full bg-violet-600 text-[10px] font-semibold text-white",
+                compact && COMPACT_BADGE,
+              )}
+            >
               1
             </span>
           ) : null}

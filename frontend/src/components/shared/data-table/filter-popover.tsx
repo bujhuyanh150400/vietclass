@@ -10,6 +10,9 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { cn } from "@/lib/utils/index";
+
+import { COMPACT_BADGE, COMPACT_LABEL, COMPACT_TRIGGER } from "./toolbar-control";
 
 /**
  * Renders the Filter trigger and its popover shell: a title, a reset action, and
@@ -24,12 +27,15 @@ export function FilterPopover({
   children,
   title = "Bộ lọc",
   note,
+  compact = false,
 }: {
   count: number;
   onClear: () => void;
   children: ReactNode;
   title?: string;
   note?: ReactNode;
+  /** Renders the taller sheet-toolbar trigger that sheds its label when narrow. */
+  compact?: boolean;
 }) {
   return (
     <Popover>
@@ -38,12 +44,20 @@ export function FilterPopover({
           type="button"
           variant="outline"
           size="sm"
-          className={count > 0 ? "border-vc-orange/35 bg-orange-50 text-vc-orange-deep hover:bg-orange-100" : undefined}
+          className={cn(
+            compact && COMPACT_TRIGGER,
+            count > 0 && "border-vc-orange/35 bg-orange-50 text-vc-orange-deep hover:bg-orange-100",
+          )}
         >
           <Filter aria-hidden="true" />
-          {title}
+          {compact ? <span className={COMPACT_LABEL}>{title}</span> : title}
           {count > 0 ? (
-            <span className="grid size-4 place-items-center rounded-full bg-vc-orange text-[10px] font-semibold text-white">
+            <span
+              className={cn(
+                "grid size-4 place-items-center rounded-full bg-vc-orange text-[10px] font-semibold text-white",
+                compact && COMPACT_BADGE,
+              )}
+            >
               {count}
             </span>
           ) : null}

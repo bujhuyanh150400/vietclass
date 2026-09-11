@@ -17,6 +17,12 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  /* The design system's geometry scale: 5px for interactive controls, 8px for
+     panels, 10px for a page sheet. Registered as utilities so a feature screen
+     can adopt it, not only the app shell's own stylesheet. */
+  --radius-control: var(--vc-shell-radius-control);
+  --radius-panel: var(--vc-shell-radius-panel);
+  --radius-sheet: var(--vc-shell-radius-sheet);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -59,6 +65,17 @@
   --color-vc-line: var(--vc-line);
   --color-vc-text: var(--vc-text);
   --color-vc-text-muted: var(--vc-text-muted);
+  /* The two border tones the design system separates: `vc-rule` is the quiet
+     divider printed between rows and sections, `vc-control` the darker edge
+     that marks something interactive. `vc-tint` is the hover ground shared by
+     both. */
+  --color-vc-rule: var(--vc-shell-rule);
+  --color-vc-control: var(--vc-shell-control-border);
+  --color-vc-tint: var(--vc-shell-tint);
+  /* Blur elevation, reserved for a surface that genuinely floats above the
+     page. Pressable elements use a solid offset instead. */
+  --shadow-vc-sheet: var(--vc-shell-shadow-sheet);
+  --shadow-vc-raised: var(--vc-shell-shadow-raised);
   --font-sans: var(--font-be-vietnam-pro);
   --font-mono: var(--font-geist-mono);
   --font-pixel: var(--font-silkscreen);
