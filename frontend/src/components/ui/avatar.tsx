@@ -30,6 +30,11 @@ function Avatar({
 
 /**
  * Renders the avatar's image, yielding to the fallback when the image cannot load.
+ *
+ * `object-cover` rather than the browser default: the frame is a square but an
+ * uploaded photo rarely is, and without it a portrait is stretched sideways to
+ * fill the box. Cropping to the centre loses the edges of the picture; stretching
+ * changes the face.
  */
 function AvatarImage({
   className,
@@ -38,7 +43,7 @@ function AvatarImage({
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
-      className={cn("aspect-square size-full", className)}
+      className={cn("aspect-square size-full object-cover", className)}
       {...props}
     />
   )
