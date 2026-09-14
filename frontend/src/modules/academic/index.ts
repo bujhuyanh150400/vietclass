@@ -7,6 +7,7 @@ export type {
   GuardianRelationship,
   Option,
   Room,
+  RoomFacility,
   RoomStatus,
   SchoolClass,
   Student,

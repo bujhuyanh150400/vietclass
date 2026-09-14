@@ -9,6 +9,7 @@ import {
   StatePanel,
   type DataTableState,
 } from "@/components/shared/data-table";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -27,12 +28,7 @@ import {
   type StudentListSort,
   type StudentListView,
 } from "../utils/student-list-controls";
-import {
-  AccountBadge,
-  GradeToken,
-  StudentIdentity,
-  StudentRowMenu,
-} from "./student-cells";
+import { GradeToken, StudentIdentity, StudentRowMenu } from "./student-cells";
 import { ClassTags, GuardianTags } from "./student-entity-tags";
 import { StudentGrid } from "./student-grid";
 import { StudentListSkeleton } from "./student-list-skeleton";
@@ -402,7 +398,7 @@ function StudentTable({
               <ClassTags student={student} />
             </TableCell>
             <TableCell>
-              <AccountBadge isActive={student.is_account_active !== false} />
+              <StatusBadge status={student.is_account_active !== false ? "active" : "inactive"} />
             </TableCell>
             <TableCell>
               <StudentRowMenu

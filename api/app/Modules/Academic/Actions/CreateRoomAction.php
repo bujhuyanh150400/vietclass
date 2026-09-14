@@ -20,7 +20,7 @@ final class CreateRoomAction
     /**
      * Create a room with the fields validated at the HTTP boundary.
      *
-     * @param  array{name: string, capacity?: int, note?: string|null, status?: RoomStatus}  $attributes
+     * @param  array{name: string, capacity?: int, location?: string|null, note?: string|null, facilities?: list<int>, status?: RoomStatus}  $attributes
      * @return ActionResult<Room, AcademicError>
      */
     public function handle(array $attributes): ActionResult

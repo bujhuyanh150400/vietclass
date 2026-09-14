@@ -59,7 +59,7 @@ final class RoomController extends BaseController
      */
     public function store(StoreRoomRequest $request, CreateRoomAction $create): JsonResponse
     {
-        $result = $create->handle(attributes: $request->validated());
+        $result = $create->handle(attributes: $request->roomAttributes());
 
         /** @var Room $room */
         $room = $result->getData();
@@ -88,11 +88,11 @@ final class RoomController extends BaseController
     }
 
     /**
-     * Change a room's editable details.
+     * Change a room's editable details, including its availability status.
      */
     public function update(UpdateRoomRequest $request, UpdateRoomAction $update, int $roomId): JsonResponse
     {
-        $result = $update->handle(roomId: $roomId, attributes: $request->validated());
+        $result = $update->handle(roomId: $roomId, attributes: $request->roomAttributes());
 
         if (! $result->isSuccess()) {
             return $this->actionFailure(result: $result);

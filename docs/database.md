@@ -249,9 +249,29 @@ already answer stays inside Academic.
 | `id` | BIGINT auto-increment primary key | Room identifier. |
 | `name` | VARCHAR(50), unique | Room name. |
 | `capacity` | SMALLINT, default `0` | Seats from `0` to `32767`, matching PostgreSQL `smallint` and `classes.max_students`; the fork used a tinyint. |
+| `location` | TEXT, nullable | Where the room is, in free text. Searched alongside `name`. |
+| `facilities` | JSONB, not null, default `'[]'` | What the room is equipped with: a JSON array of `ClassroomFacility` integers, `0`–`9`. |
 | `note` | TEXT, nullable | Free-text note. |
 | `status` | SMALLINT, default `0`, indexed | `0` Hoạt động, `1` Tạm khóa, `2` Bảo trì (`RoomStatus`). Only an active room may be assigned. |
 | `created_at`, `updated_at` | timestamps | Record lifecycle. |
+| — | GIN index `rooms_facilities_gin_index` on `facilities jsonb_path_ops` | Serves the list's facility filter. |
+
+`facilities` holds integers, not the enum's names, for the same reason every other
+enum column does: `ClassroomFacility` is int-backed and its values start at `0`. The
+ten cases are `0` Máy chiếu, `1` Điều hòa, `2` Máy tính, `3` Tivi thông minh, `4` Loa,
+`5` Micro, `6` Bảng trắng, `7` Bảng thông minh, `8` Thiết bị thí nghiệm, `9` Wifi.
+
+The filter asks `facilities @> '[…]'::jsonb` — containment, so a room qualifies only
+when it carries **every** facility requested. `jsonb_path_ops` is the operator class
+because containment is the only operator ever used against the column, and it builds
+a smaller index than the default `jsonb_ops`.
+
+**jsonb distinguishes `0` from `"0"`.** A query string delivers `facilities[]=0` as
+the string `"0"`, and `'["0"]'::jsonb @> '[0]'::jsonb` is false. Both `IndexRoomRequest`
+and the store/update requests therefore coerce to `int` before the value reaches the
+repository or the column. Removing either coercion makes the filter silently match
+nothing rather than fail; `AcademicRoomTest` pins this with a test that saves through
+a JSON body and filters through a query string.
 
 ## Laravel runtime tables
 

@@ -25,7 +25,7 @@ class RoomRepository extends BaseRepository
     }
 
     /**
-     * Return one page of rooms filtered by their availability status and name.
+     * Return one page of rooms narrowed by name, location, status, facilities, and capacity.
      *
      * @return LengthAwarePaginator<int, Room>
      */
@@ -34,11 +34,29 @@ class RoomRepository extends BaseRepository
         return $this->modelQuery()
             ->when(
                 $query->hasSearch(),
-                fn (Builder $builder): Builder => $this->whereAnyUnaccentedLike($builder, ['name'], (string) $query->searchLike()),
+                fn (Builder $builder): Builder => $this->whereAnyUnaccentedLike($builder, ['name', 'location'], (string) $query->searchLike()),
             )
             ->when(
                 $query->hasFilter('status'),
                 fn (Builder $builder): Builder => $builder->where('status', $query->filter('status')),
+            )
+            ->when(
+                $query->hasFilter('facilities') && $query->filter('facilities') !== [],
+                // Containment rather than overlap: a room qualifies only when it carries
+                // every facility asked for. The list travels as one bound JSON parameter,
+                // so no caller value is ever concatenated into the statement.
+                fn (Builder $builder): Builder => $builder->whereRaw(
+                    'facilities @> ?::jsonb',
+                    [json_encode($query->filter('facilities'))],
+                ),
+            )
+            ->when(
+                $query->hasFilter('capacity_min'),
+                fn (Builder $builder): Builder => $builder->where('capacity', '>=', $query->filter('capacity_min')),
+            )
+            ->when(
+                $query->hasFilter('capacity_max'),
+                fn (Builder $builder): Builder => $builder->where('capacity', '<=', $query->filter('capacity_max')),
             )
             ->orderBy($query->sort, $query->direction)
             ->paginate(perPage: $query->perPage, page: $query->page);

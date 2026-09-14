@@ -4,6 +4,8 @@ import type {
   Gender,
   GradeLevel,
   GuardianRelationship,
+  RoomFacility,
+  RoomStatus,
   StudentStatus,
   TeacherStatus,
 } from "./academic";
@@ -20,7 +22,10 @@ export type SubjectRequest = {
 export type RoomRequest = {
   name: string;
   capacity: number;
+  location: string | null;
+  facilities: RoomFacility[];
   note: string | null;
+  status: RoomStatus;
 };
 
 type TeacherProfileRequest = {

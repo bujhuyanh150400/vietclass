@@ -248,6 +248,28 @@ CSS không diễn tả được bằng utility (mục 6).
 | Page heading | `h2` `28px`, từ `md` lên `34px`, trên nó là eyebrow `10px` uppercase và `BackLink`. Là `h2` vì topbar đã giữ `h1` |
 | Khối ảnh đại diện | Một ô `152px` duy nhất, cặp nút `Tải ảnh lên` / `Avatar mẫu` quyết định cái gì chiếm ô đó: panel tròn của FilePond, hay chân dung DiceBear. FilePond được **ẩn chứ không unmount** khi đổi chế độ — huỷ instance lúc còn ảnh sẽ bỏ lại object URL của ảnh đó, nên chủ sở hữu xoá file trước (qua prop `clearToken`) rồi mới ẩn. Xem `modules/files/components/filepond-client.tsx` cho phần quét URL mà FilePond bỏ sót |
 
+### 7.4 Màn phòng học
+
+Áp đúng bộ hình học của mục 7.2 (danh sách) và 7.3 (biểu mẫu) mà **không** thêm token
+hay prop dùng chung nào — `ListSheet`, `StatePanel`, `ConditionsBar`,
+`DataTablePagination numbered`, `FormSheet` và `NumberedSection` đã đủ từ hai vòng
+redesign trước. Chỉ ghi lại những chỗ nó quyết định khác:
+
+| Vùng | Quy ước |
+| --- | --- |
+| Bảng | 5 cột dữ liệu + cột `⋯`, `table-fixed` theo tỉ lệ `22/23/10/28/13/4`, `min-width` `1040px`. Hàng cao `68px` — thấp hơn `72px` của màn học sinh vì ô tên phòng chỉ có một dòng, không có avatar và dòng phụ |
+| Chip tiện ích | Tối đa **3** trong bảng, **4** trong thẻ, phần dư thành chip `+N` mở `Dialog` liệt kê **toàn bộ** tiện ích. Khác màn học sinh ở chỗ chip không cap bề rộng: nhãn tiện ích là hằng số trong mã nguồn, dài nhất 18 ký tự, nên không có gì để cắt |
+| Ô rỗng | Chip viền nét đứt `Chưa cập nhật` cho tiện ích; cột Vị trí trống thì dùng chữ nghiêng mờ, không phải chip — nó là một dòng văn bản, không phải một tập hợp |
+| Bộ lọc | Ba `FilterSection`: Trạng thái (segmented 4 ô), Sức chứa (hai ô số), Tiện ích (lưới chip `aria-pressed` 10 mục). Mục Tiện ích mang một dòng chú thích nói rõ ngữ nghĩa **VÀ**, vì người đọc mặc định hiểu là "hoặc" và sẽ coi kết quả rỗng là lỗi |
+| Chip điều kiện | Mỗi tiện ích một chip riêng, vì chúng được gỡ từng cái. Khác nút Bộ lọc, nơi cả nhóm tiện ích chỉ đếm là `1` |
+| Chọn tiện ích trên form | Lưới checkbox `2/3/5` cột, **không** phải dropdown-với-chip như mock. `FormSheet` cố tình không `overflow: hidden` nên một menu thả xuống gần mép dưới là rủi ro bố cục đã gặp ở mục 7.3; mười mục vừa một lưới mà không cần thu gọn |
+| Trạng thái trên form | Có mặt, khác màn học sinh. Trạng thái là thuộc tính của phòng như mọi thuộc tính khác; menu dòng vẫn giữ thao tác đổi nhanh có xác nhận cho lúc không muốn mở biểu mẫu |
+
+Ba thứ trong mock OpenDesign **cố ý không dựng**: mã phòng, loại phòng, và ô tìm kiếm
+theo mã. Bảng `rooms` không có hai cột đó, và thêm chúng nằm ngoài phạm vi đã thống
+nhất. Vì vậy dòng mã dưới tên phòng, dòng `mã · loại` trong thẻ, và select Loại phòng
+ở đầu filter popover đều không có trong bản dựng.
+
 ## 8. Bố cục vỏ ứng dụng
 
 | Vùng | Nguồn | Quy ước |
@@ -397,8 +419,8 @@ Ranh giới: `EmptyState` dành cho ô bảng hoặc lưới, không phải toà
 - Không có token spacing, thang typography, shadow hay motion. Bổ sung khi có nhu cầu thực sự lệch khỏi thang mặc định của Tailwind.
 - Không có chế độ tối, và variant `dark` bất hoạt theo thiết kế.
 - Khối chú thích đầu `frontend/src/modules/identity/styles/login.css` nói rằng nó vào bundle qua `@import` trong `src/styles.css`. Điều đó không còn đúng: `styles.css` không import nó, và nó được `login-view.tsx` import. Chú thích cần sửa; mục 6 mô tả hành vi hiện tại đã xác minh.
-- Môn học, Phòng học, Lớp học, Giáo viên, sổ lớp và các màn biểu mẫu không có tiêu đề riêng — `<h1>` của chúng là nhãn ở topbar (mục 8). Điều đó đúng về khả năng tiếp cận nhưng có nghĩa là tiêu đề của những màn này chỉ cao `15px` ở topbar, không có mô tả và không có chỗ đặt hành động chính. Màn nào được redesign tiếp thì nhận page heading riêng ở `<h2>` theo mẫu mục 7.2. Chỉ nên hạ topbar xuống `<span>` để mỗi màn tự sở hữu `<h1>` khi **mọi** màn đã có tiêu đề riêng; làm nửa vời một lần rồi đã phải hoàn nguyên.
-- Danh sách học sinh và Môn học dùng bộ hình học ở mục 2.5: heading cấp trang, `ListSheet`, toolbar điều khiển và pager đánh số. Các màn Phòng học, Lớp học, Giáo viên và sổ lớp vẫn dùng `DataTable` + `DataTableToolbar`, còn Tệp dùng toolbar riêng của module files — vì vậy hai ngôn ngữ thị giác vẫn cùng tồn tại ở những màn chưa redesign.
+- Lớp học, Giáo viên, sổ lớp và các màn biểu mẫu chưa redesign không có tiêu đề riêng — `<h1>` của chúng là nhãn ở topbar (mục 8). Điều đó đúng về khả năng tiếp cận nhưng có nghĩa là tiêu đề của những màn này chỉ cao `15px` ở topbar, không có mô tả và không có chỗ đặt hành động chính. Màn nào được redesign tiếp thì nhận page heading riêng ở `<h2>` theo mẫu mục 7.2. Chỉ nên hạ topbar xuống `<span>` để mỗi màn tự sở hữu `<h1>` khi **mọi** màn đã có tiêu đề riêng; làm nửa vời một lần rồi đã phải hoàn nguyên.
+- Danh sách học sinh, Môn học và Phòng học dùng bộ hình học ở mục 2.5: heading cấp trang, `ListSheet`, toolbar điều khiển và pager đánh số. Các màn Lớp học, Giáo viên và sổ lớp vẫn dùng `DataTable` + `DataTableToolbar`, còn Tệp dùng toolbar riêng của module files — vì vậy hai ngôn ngữ thị giác vẫn cùng tồn tại ở những màn chưa redesign.
 
 ## 15. Tham chiếu
 

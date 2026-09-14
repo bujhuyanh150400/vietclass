@@ -3,6 +3,7 @@ import type {
   Gender,
   GradeLevel,
   GuardianRelationship,
+  RoomFacility,
   RoomStatus,
   StudentStatus,
   TeacherStatus,
@@ -61,6 +62,26 @@ export const ROOM_STATUS_LABELS: Record<RoomStatus, string> = {
   1: "Tạm khóa",
   2: "Bảo trì",
 };
+
+/** Every room status in the order a picker offers them. */
+export const ROOM_STATUSES: RoomStatus[] = [0, 1, 2];
+
+/** What a room is equipped with. */
+export const ROOM_FACILITY_LABELS: Record<RoomFacility, string> = {
+  0: "Máy chiếu",
+  1: "Điều hòa",
+  2: "Máy tính",
+  3: "Tivi thông minh",
+  4: "Loa",
+  5: "Micro",
+  6: "Bảng trắng",
+  7: "Bảng thông minh",
+  8: "Thiết bị thí nghiệm",
+  9: "Wifi",
+};
+
+/** Every facility in the order a picker offers them. */
+export const ROOM_FACILITIES: RoomFacility[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 /** A student's recorded gender. */
 export const GENDER_LABELS: Record<Gender, string> = {

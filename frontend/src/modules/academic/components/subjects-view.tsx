@@ -15,8 +15,16 @@ import {
   type DataTableColumn,
   type DataTableState,
 } from "@/components/shared/data-table";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,7 +92,7 @@ export function SubjectsView({
       key: "grade_levels",
       header: "Khối áp dụng",
       hideOnMobile: true,
-      cell: (subject) => <div className="flex flex-wrap gap-1">{subject.grade_levels.slice(0, 3).map((gradeLevel) => <span key={gradeLevel} className="rounded-control border border-vc-control bg-card px-2 py-1 font-mono text-[10px]" title={GRADE_LEVEL_LABELS[gradeLevel]}>{gradeLevel === 0 ? "Tiền TH" : gradeLevel}</span>)}{subject.grade_levels.length > 3 ? <span className="rounded-control border border-vc-control px-2 py-1 text-[10px]">+{subject.grade_levels.length - 3}</span> : null}</div>,
+      cell: (subject) => <SubjectGradeLevels subject={subject} />,
     },
     {
       key: "classes",
@@ -98,9 +106,10 @@ export function SubjectsView({
       header: "Trạng thái",
       className: "w-36",
       cell: (subject) => (
-        <Badge variant={subject.is_active ? "default" : "secondary"} className="rounded-control">
-          {subject.is_active ? "Hoạt động" : "Ngừng hoạt động"}
-        </Badge>
+        <StatusBadge
+          status={subject.is_active ? "active" : "inactive"}
+          label={subject.is_active ? "Hoạt động" : "Ngừng hoạt động"}
+        />
       ),
     },
     {
@@ -217,4 +226,60 @@ export function SubjectsView({
       </ListSheet>
     </div>
   );
+}
+
+/** Renders the compact grade chips and opens the complete set from the +N chip. */
+function SubjectGradeLevels({ subject }: { subject: Subject }) {
+  const extraCount = Math.max(subject.grade_levels.length - 3, 0);
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {subject.grade_levels.slice(0, 3).map((gradeLevel) => (
+        <span
+          key={gradeLevel}
+          title={GRADE_LEVEL_LABELS[gradeLevel]}
+          className="inline-flex min-h-7 items-center rounded-control border border-vc-control bg-background px-2.5 py-1 text-[11px] font-medium whitespace-nowrap"
+        >
+          {formatGradeLevel(gradeLevel)}
+        </span>
+      ))}
+      {extraCount > 0 ? (
+        <Dialog>
+          <DialogTrigger asChild>
+            <button
+              type="button"
+              aria-label={`Xem thêm ${extraCount} khối áp dụng của ${subject.name}`}
+              title={`${extraCount} khối áp dụng khác`}
+              className="inline-flex min-h-7 items-center rounded-control border border-vc-control bg-vc-tint px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap transition-colors hover:bg-vc-tint/70 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
+            >
+              +{extraCount}
+            </button>
+          </DialogTrigger>
+          <DialogContent className="rounded-sheet border-vc-wood bg-card sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Các khối áp dụng</DialogTitle>
+              <DialogDescription>
+                {subject.name} đang áp dụng cho {subject.grade_levels.length} khối.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-wrap gap-2">
+              {subject.grade_levels.map((gradeLevel) => (
+                <span
+                  key={gradeLevel}
+                  className="inline-flex min-h-8 items-center rounded-control border border-vc-control bg-background px-3 py-1.5 text-xs font-semibold"
+                >
+                  {formatGradeLevel(gradeLevel)}
+                </span>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
+    </div>
+  );
+}
+
+/** Keeps the table and the grade detail modal on the same short labels. */
+function formatGradeLevel(gradeLevel: GradeLevel): string {
+  return gradeLevel === 0 ? "Tiền TH" : `Khối ${gradeLevel}`;
 }

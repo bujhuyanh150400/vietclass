@@ -18,14 +18,13 @@ final class UpdateRoomAction
     ) {}
 
     /**
-     * Change a room's name, capacity, or note without altering its availability state.
+     * Apply a room's editable details, including its availability status.
      *
-     * Availability belongs to ChangeRoomStatusAction, which the list screen reaches
-     * through its own confirmed operation. A `status` key is therefore dropped rather
-     * than applied, so no caller can move a room out of circulation as a side effect
-     * of renaming it.
+     * The edit form owns every field a room has, status among them. The separate
+     * ChangeRoomStatusAction remains for the list screen's confirmed one-step
+     * transition, which changes availability without opening the form.
      *
-     * @param  array{name: string, capacity: int, note?: string|null, status?: mixed}  $attributes
+     * @param  array{name: string, capacity: int, location?: string|null, note?: string|null, facilities?: list<int>, status?: int}  $attributes
      * @return ActionResult<Room, AcademicError>
      */
     public function handle(int $roomId, array $attributes): ActionResult
@@ -39,9 +38,6 @@ final class UpdateRoomAction
                     code: AcademicError::RoomNotFound,
                 );
             }
-
-            // Ignored on purpose; see the note above this method.
-            unset($attributes['status']);
 
             return ActionResult::success($this->rooms->update($room, $attributes));
         } catch (ActionError $error) {

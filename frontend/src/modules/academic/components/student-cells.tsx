@@ -42,29 +42,6 @@ export function GradeToken({ gradeLevel }: { gradeLevel: GradeLevel }) {
 }
 
 /**
- * Reports whether a student can still sign in.
- *
- * The wording deliberately describes the login account only. Whether a student
- * is still studying is a separate field on their profile, and a badge that
- * blurred the two would make a locked account look like a withdrawal.
- */
-export function AccountBadge({ isActive }: { isActive: boolean }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-control border px-2 py-1 text-[11px] font-bold whitespace-nowrap",
-        isActive
-          ? "border-vc-leaf/30 bg-vc-leaf/10 text-vc-leaf"
-          : "border-destructive/25 bg-destructive/10 text-destructive",
-      )}
-    >
-      <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
-      {isActive ? "Đang mở" : "Đã khóa"}
-    </span>
-  );
-}
-
-/**
  * Renders one labelled fact under a student's name.
  *
  * The label sits in a fixed column so the values line up with each other down

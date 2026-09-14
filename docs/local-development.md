@@ -81,6 +81,21 @@ chứng minh lớp đã nghỉ **không** lọt vào cột Lớp đang học.
 Seeder **không** được đăng ký trong `DatabaseSeeder`, nên `db:seed` mặc định không
 sinh dữ liệu minh họa. Phải gọi tường minh bằng `--class`.
 
+### 3.2 Dữ liệu minh họa cho màn phòng học
+
+Cùng lý do: DB mới không có phòng học nào, nên bảng, chip tiện ích `+N` và bộ lọc
+không có gì để kiểm chứng.
+
+```
+cd api && php artisan db:seed --class=RoomDemoSeeder --force
+```
+
+Seeder này cũng idempotent và cũng **không** đăng ký trong `DatabaseSeeder`. Nó tạo
+mười phòng với phân bố được chọn có chủ ý để lộ hết mọi trạng thái của giao diện: cả
+ba trạng thái phòng đều có mặt, số tiện ích trải từ 0 đến 7 (nên có cả chip nét đứt
+"Chưa cập nhật" lẫn chip `+N`), hai phòng không có vị trí, và sức chứa trải từ 8 đến
+200 để bộ lọc khoảng sức chứa có gì để lọc.
+
 ## 4. Lỗi thường gặp
 
 | Triệu chứng | Nguyên nhân | Cách sửa |

@@ -4,10 +4,11 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import type { DataTableState } from "@/components/shared/data-table";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { UserAvatar } from "@/modules/avatar";
 
 import type { Student } from "../types/academic";
-import { AccountBadge, GradeToken, StudentRowMenu } from "./student-cells";
+import { GradeToken, StudentRowMenu } from "./student-cells";
 import { ClassTags, GuardianTags } from "./student-entity-tags";
 
 /**
@@ -65,7 +66,7 @@ export function StudentGrid({
 
           <div className="my-3 flex items-center gap-2 border-y border-vc-rule py-2.5">
             <GradeToken gradeLevel={student.grade_level} />
-            <AccountBadge isActive={student.is_account_active !== false} />
+            <StatusBadge status={student.is_account_active !== false ? "active" : "inactive"} />
           </div>
 
           <CardEntityGroup label="Phụ huynh" count={student.guardians.length}>

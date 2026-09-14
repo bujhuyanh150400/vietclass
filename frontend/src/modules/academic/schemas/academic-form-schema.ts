@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { GradeLevel } from "../types/academic";
+import type { GradeLevel, RoomFacility } from "../types/academic";
 
 /**
  * Form validation for every academic screen, mirroring the API's own rules so a
@@ -14,6 +14,9 @@ const PHONE_PATTERN = /^0[0-9]{9,10}$/;
 
 /** A six-digit hex colour, as the API accepts it. */
 const HEX_COLOUR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
+
+/** Every facility value the API declares, used to check one array element. */
+const ROOM_FACILITY_VALUES: RoomFacility[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 /** A date the API accepts, in `YYYY-MM-DD`. */
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -91,6 +94,17 @@ export const roomFormSchema = z.object({
     .int()
     .min(0, { error: "Sức chứa không được nhỏ hơn 0." })
     .max(32767, { error: "Sức chứa không được vượt quá 32767." }),
+  status: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+  location: z
+    .string()
+    .max(500, { error: "Vị trí không được vượt quá 500 ký tự." })
+    .default(""),
+  facilities: z
+    .array(z.custom<RoomFacility>((value) => ROOM_FACILITY_VALUES.includes(value as RoomFacility)))
+    .refine((values) => new Set(values).size === values.length, {
+      error: "Mỗi tiện ích chỉ được chọn một lần.",
+    })
+    .default([]),
   note: z
     .string()
     .max(2000, { error: "Ghi chú không được vượt quá 2000 ký tự." })

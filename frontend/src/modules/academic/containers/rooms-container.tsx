@@ -2,80 +2,63 @@
 
 import { useState } from "react";
 
-import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
 import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
+import { RoomDeleteDialog } from "../components/room-delete-dialog";
+import { RoomDetailDialog } from "../components/room-detail-dialog";
 import { RoomsView } from "../components/rooms-view";
-import { useChangeRoomStatus, useDeleteRoom, useRoomList } from "../hooks/use-rooms";
-import type { Room, RoomStatus } from "../types/academic";
-import { ROOM_STATUS_LABELS } from "../utils/labels";
-
-/** Which confirmation, if any, is currently open for a room. */
-type PendingAction =
-  | { kind: "none" }
-  | { kind: "delete"; room: Room }
-  | { kind: "status"; room: Room; status: RoomStatus };
+import { useDeleteRoom, useRoomList } from "../hooks/use-rooms";
+import type { Room } from "../types/academic";
 
 /**
- * Coordinates the room list, its availability filter, and the two room mutations.
+ * Coordinates the room list, its URL-backed controls, and the delete mutation.
  *
- * A status change and deletion are both confirmed because they can remove a room
- * from future scheduling or erase it altogether. The dialog remains open on a
- * refusal, so the caller sees the API's reason instead of losing its context.
+ * Availability status is no longer changed from the list: it is a field on the
+ * edit form like any other, so the row menu only opens the detail dialog, the
+ * edit form, or this confirmation. Deletion stays confirmed because it removes
+ * a room from future scheduling for good; the dialog switches to an
+ * acknowledgement-only notice on a refusal rather than staying a retryable
+ * confirmation, since a schedule-in-use refusal cannot be resolved by trying
+ * the same delete again.
  */
 export function RoomsContainer() {
-  const [status, setStatus] = useState<RoomStatus | undefined>();
-  const list = useRoomList(status);
-  const changeStatus = useChangeRoomStatus();
+  const list = useRoomList();
   const remove = useDeleteRoom();
   const showToast = useToast();
 
-  const [pending, setPending] = useState<PendingAction>({ kind: "none" });
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Room | null>(null);
+  const [blockedReason, setBlockedReason] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<Room | null>(null);
 
-  /** Opens one room mutation confirmation and clears the prior refusal message. */
-  function open(action: PendingAction) {
-    setActionError(null);
-    setPending(action);
+  /** Opens the delete confirmation and clears any prior refusal. */
+  function openDelete(room: Room) {
+    setBlockedReason(null);
+    setPendingDelete(room);
   }
 
   /** Closes the confirmation without changing the selected room. */
   function close() {
-    setActionError(null);
-    setPending({ kind: "none" });
+    setBlockedReason(null);
+    setPendingDelete(null);
   }
 
-  /** Keeps an API refusal visible inside the confirmation that caused it. */
-  function reportFailure(error: unknown) {
-    setActionError(
-      isApiClientError(error) ? error.message : "Không thực hiện được thao tác này.",
-    );
-  }
-
-  /** Applies the selected room mutation and closes only after a successful response. */
-  async function confirm() {
-    if (pending.kind === "none") {
+  /** Deletes the selected room, or records why the API refused to. */
+  async function confirmDelete() {
+    if (pendingDelete === null) {
       return;
     }
 
     try {
-      if (pending.kind === "delete") {
-        await remove.mutateAsync(pending.room.id);
-      } else {
-        await changeStatus.mutateAsync({ id: pending.room.id, status: pending.status });
-      }
-
-      showToast({ variant: "success", title: successMessage(pending) });
+      await remove.mutateAsync(pendingDelete.id);
+      showToast({ variant: "success", title: `Đã xóa phòng học "${pendingDelete.name}".` });
       close();
     } catch (error) {
-      reportFailure(error);
+      setBlockedReason(
+        isApiClientError(error) ? error.message : "Không thực hiện được thao tác này.",
+      );
     }
   }
-
-  const room = pending.kind === "none" ? null : pending.room;
-  const isDeleting = pending.kind === "delete";
-  const targetStatus = pending.kind === "status" ? pending.status : undefined;
 
   return (
     <>
@@ -83,57 +66,35 @@ export function RoomsContainer() {
         state={list.state}
         meta={list.meta}
         search={list.query.q}
-        status={status}
+        filters={list.filters}
+        filterCount={list.filterCount}
+        sort={list.sort}
+        view={list.view}
+        tablePageSize={list.tablePageSize}
         onSearchChange={list.query.setSearch}
-        onStatusChange={setStatus}
+        onStatusChange={list.setStatus}
+        onToggleFacility={list.toggleFacility}
+        onCapacityMinChange={list.setCapacityMin}
+        onCapacityMaxChange={list.setCapacityMax}
+        onClearFilters={list.clearFilters}
+        onSortChange={list.setSort}
+        onViewChange={list.setView}
+        onTablePageSizeChange={list.setTablePageSize}
+        onClearConditions={list.clearConditions}
         onPageChange={list.query.setPage}
-        onChangeStatus={(target, next) => open({ kind: "status", room: target, status: next })}
-        onDelete={(target) => open({ kind: "delete", room: target })}
+        onView={setViewing}
+        onDelete={openDelete}
       />
 
-      <ConfirmActionDialog
-        open={pending.kind !== "none"}
-        onOpenChange={(next) => (next ? undefined : close())}
-        title={isDeleting ? "Xóa phòng học?" : "Đổi trạng thái phòng học?"}
-        description={confirmationDescription(room, isDeleting, targetStatus)}
-        confirmLabel={isDeleting ? "Xóa" : "Đổi trạng thái"}
-        destructive={isDeleting}
-        errorMessage={actionError}
-        isPending={changeStatus.isPending || remove.isPending}
-        onConfirm={() => void confirm()}
+      <RoomDetailDialog room={viewing} onClose={() => setViewing(null)} />
+
+      <RoomDeleteDialog
+        room={pendingDelete}
+        blockedReason={blockedReason}
+        isPending={remove.isPending}
+        onConfirm={() => void confirmDelete()}
+        onClose={close}
       />
     </>
   );
-}
-
-/** States what the confirmed room action just did, for the toast that reports it. */
-function successMessage(pending: PendingAction): string {
-  if (pending.kind === "none") {
-    return "";
-  }
-
-  if (pending.kind === "delete") {
-    return `Đã xóa phòng học "${pending.room.name}".`;
-  }
-
-  return `Đã chuyển phòng học "${pending.room.name}" sang trạng thái ${ROOM_STATUS_LABELS[pending.status]}.`;
-}
-
-/**
- * Explains the exact room action awaiting confirmation.
- */
-function confirmationDescription(
-  room: Room | null,
-  isDeleting: boolean,
-  targetStatus: RoomStatus | undefined,
-): string {
-  if (room === null) {
-    return "";
-  }
-
-  if (isDeleting) {
-    return `Phòng học "${room.name}" sẽ bị xóa vĩnh viễn. Chỉ xóa được khi chưa có lịch học tham chiếu.`;
-  }
-
-  return `Phòng học "${room.name}" sẽ chuyển sang trạng thái ${ROOM_STATUS_LABELS[targetStatus ?? room.status]}.`;
 }

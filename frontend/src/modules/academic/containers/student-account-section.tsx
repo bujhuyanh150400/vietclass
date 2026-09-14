@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 
 import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
 import { Field } from "@/components/shared/field";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { useToast } from "@/components/shared/toast-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,6 @@ import { isApiClientError } from "@/lib/api/api-client-error";
 import { cn } from "@/lib/utils/index";
 
 import { ChangePasswordDialog } from "../components/change-password-dialog";
-import { AccountBadge } from "../components/student-cells";
 import { SHEET_CONTROL, SHEET_FIELD_TYPE } from "../components/form-control";
 import { useChangeStudentPassword, useSetStudentAccountActive } from "../hooks/use-students";
 import type { Student } from "../types/academic";
@@ -117,7 +117,7 @@ export function StudentAccountSection({ student }: { student: Student }) {
         title={
           <>
             Trạng thái tài khoản
-            <AccountBadge isActive={isActive} />
+            <StatusBadge status={isActive ? "active" : "inactive"} />
           </>
         }
         description={

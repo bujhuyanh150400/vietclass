@@ -8,16 +8,19 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['name', 'capacity', 'note', 'status'])]
+#[Fillable(['name', 'capacity', 'location', 'note', 'status', 'facilities'])]
 final class Room extends Model
 {
     /** @use HasFactory<RoomFactory> */
     use HasFactory;
 
-    /** @var array<string, int> */
+    /** @var array<string, int|string> */
     protected $attributes = [
         'capacity' => 0,
         'status' => RoomStatus::Active->value,
+        // Raw JSON rather than [], so an unsaved model reads back an empty list
+        // through the cast instead of null.
+        'facilities' => '[]',
     ];
 
     /**
@@ -38,6 +41,9 @@ final class Room extends Model
         return [
             'capacity' => 'integer',
             'status' => RoomStatus::class,
+            // Plain array rather than an enum collection: the column stores
+            // ClassroomFacility integers and every reader wants them as integers.
+            'facilities' => 'array',
         ];
     }
 }

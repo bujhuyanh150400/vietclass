@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Modules\Academic\Enums\ClassroomFacility;
 use App\Modules\Academic\Enums\RoomStatus;
 use App\Modules\Academic\Models\Room;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -24,6 +25,11 @@ class RoomFactory extends Factory
         return [
             'name' => 'Phòng '.fake()->unique()->numerify('###'),
             'capacity' => fake()->numberBetween(0, 120),
+            'location' => fake()->optional()->sentence(),
+            'facilities' => fake()->randomElements(
+                ClassroomFacility::values(),
+                fake()->numberBetween(0, 4),
+            ),
             'note' => fake()->optional()->sentence(),
             'status' => RoomStatus::Active,
         ];

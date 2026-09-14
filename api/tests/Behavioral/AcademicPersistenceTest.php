@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Academic\Enums\ClassroomFacility;
 use App\Modules\Academic\Enums\ClassStatus;
 use App\Modules\Academic\Enums\RoomStatus;
 use App\Modules\Academic\Models\ClassEnrollment;
@@ -52,13 +53,31 @@ test('database defaults match the values a new model starts with', function () {
         ->and($class->max_students)->toBe(0)
         ->and($subject->is_active)->toBeTrue()
         ->and($room->status)->toBe(RoomStatus::Active)
-        ->and($room->capacity)->toBe(0);
+        ->and($room->capacity)->toBe(0)
+        ->and($room->facilities)->toBe([]);
 });
 
 test('room statuses expose the Vietnamese labels used by the API and interface', function () {
     expect(RoomStatus::Active->label())->toBe('Hoạt động')
         ->and(RoomStatus::Inactive->label())->toBe('Tạm khóa')
         ->and(RoomStatus::Maintenance->label())->toBe('Bảo trì');
+});
+
+test('classroom facilities expose the Vietnamese labels used by the interface', function () {
+    expect(ClassroomFacility::Projector->label())->toBe('Máy chiếu')
+        ->and(ClassroomFacility::AirConditioner->label())->toBe('Điều hòa')
+        ->and(ClassroomFacility::Computer->label())->toBe('Máy tính')
+        ->and(ClassroomFacility::SmartTv->label())->toBe('Tivi thông minh')
+        ->and(ClassroomFacility::Speaker->label())->toBe('Loa')
+        ->and(ClassroomFacility::Microphone->label())->toBe('Micro')
+        ->and(ClassroomFacility::Whiteboard->label())->toBe('Bảng trắng')
+        ->and(ClassroomFacility::SmartBoard->label())->toBe('Bảng thông minh')
+        ->and(ClassroomFacility::LabEquipment->label())->toBe('Thiết bị thí nghiệm')
+        ->and(ClassroomFacility::Wifi->label())->toBe('Wifi');
+});
+
+test('classroom facilities are persisted as the integers starting at zero', function () {
+    expect(ClassroomFacility::values())->toBe([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 });
 
 test('a room factory persists its database-backed status and capacity', function () {

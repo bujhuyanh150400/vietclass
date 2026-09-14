@@ -22,6 +22,9 @@ export type ClassStatus = 0 | 1;
 /** Whether a room can be assigned to a new schedule. */
 export type RoomStatus = 0 | 1 | 2;
 
+/** A fitting a room is equipped with. */
+export type RoomFacility = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+
 /** A student's recorded gender. */
 export type Gender = 0 | 1 | 2;
 
@@ -62,6 +65,8 @@ export type Room = {
   id: number;
   name: string;
   capacity: number;
+  location: string | null;
+  facilities: RoomFacility[];
   note: string | null;
   status: RoomStatus;
   created_at: string | null;

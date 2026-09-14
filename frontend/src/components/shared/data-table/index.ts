@@ -13,3 +13,5 @@ export { ViewPopover } from "./view-popover";
 export type { ListView } from "./view-popover";
 export { ConditionTag, ConditionsBar } from "./condition-tag";
 export type { ConditionTone } from "./condition-tag";
+export { RowActionMenu } from "./row-action-menu";
+export type { RowAction } from "./row-action-menu";

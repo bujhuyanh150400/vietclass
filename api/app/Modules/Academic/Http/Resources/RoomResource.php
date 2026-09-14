@@ -20,6 +20,8 @@ final class RoomResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'capacity' => $this->capacity,
+            'location' => $this->location,
+            'facilities' => $this->facilities,
             'note' => $this->note,
             'status' => $this->status->value,
             'created_at' => $this->created_at?->toIso8601String(),

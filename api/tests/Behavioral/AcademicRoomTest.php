@@ -9,6 +9,7 @@ use App\Modules\Academic\Actions\ListRoomOptionsAction;
 use App\Modules\Academic\Actions\ListRoomsAction;
 use App\Modules\Academic\Actions\UpdateRoomAction;
 use App\Modules\Academic\Enums\AcademicError;
+use App\Modules\Academic\Enums\ClassroomFacility;
 use App\Modules\Academic\Enums\RoomStatus;
 use App\Modules\Academic\Models\Room;
 use App\Modules\Identity\Enums\UserRole;
@@ -129,7 +130,7 @@ test('the room list uses the shared pagination envelope and status filter', func
         ->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.name', 'Phòng A')
         ->assertJsonStructure([
-            'data' => [['id', 'name', 'capacity', 'note', 'status', 'created_at', 'updated_at']],
+            'data' => [['id', 'name', 'capacity', 'location', 'facilities', 'note', 'status', 'created_at', 'updated_at']],
             'meta' => ['current_page', 'per_page', 'total', 'last_page'],
         ]);
 });
@@ -240,4 +241,132 @@ test('a non-administrator cannot use any room endpoint', function (): void {
     $this->patchJson("/api/v1/rooms/{$room->id}/status", ['status' => RoomStatus::Inactive->value])
         ->assertForbidden();
     $this->deleteJson("/api/v1/rooms/{$room->id}")->assertForbidden();
+});
+
+test('a room records the facilities and location it was created with', function (): void {
+    $created = $this->postJson('/api/v1/rooms', [
+        'name' => 'Phòng Tin học',
+        'capacity' => 32,
+        'location' => 'Tầng 3 · Dãy B',
+        'facilities' => [
+            ClassroomFacility::Computer->value,
+            ClassroomFacility::Projector->value,
+        ],
+    ])->assertCreated();
+
+    $created->assertJsonPath('data.location', 'Tầng 3 · Dãy B')
+        ->assertJsonPath('data.facilities', [
+            ClassroomFacility::Computer->value,
+            ClassroomFacility::Projector->value,
+        ]);
+
+    $room = Room::query()->findOrFail($created->json('data.id'));
+
+    expect($room->facilities)->toBe([2, 0])
+        ->and($room->location)->toBe('Tầng 3 · Dãy B');
+});
+
+test('a room defaults to an empty facility list', function (): void {
+    $room = Room::query()->create(['name' => 'Phòng trống', 'capacity' => 10]);
+
+    expect($room->refresh()->facilities)->toBe([])
+        ->and($room->location)->toBeNull();
+});
+
+test('a facility outside the declared enum is refused', function (): void {
+    $this->postJson('/api/v1/rooms', [
+        'name' => 'Phòng A1',
+        'capacity' => 30,
+        'facilities' => [ClassroomFacility::Wifi->value + 1],
+    ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('facilities.0');
+});
+
+test('the facility filter returns only rooms carrying every facility asked for', function (): void {
+    Room::factory()->create([
+        'name' => 'Phòng đủ',
+        'facilities' => [ClassroomFacility::Projector->value, ClassroomFacility::Wifi->value],
+    ]);
+    Room::factory()->create([
+        'name' => 'Phòng thiếu',
+        'facilities' => [ClassroomFacility::Projector->value],
+    ]);
+
+    $this->getJson('/api/v1/rooms?facilities[]=0&facilities[]=9')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.name', 'Phòng đủ');
+});
+
+// The query string carries "0" where the JSON body carried 0, and jsonb tells the two
+// apart. Without the coercion in IndexRoomRequest and the store request this filter
+// matches nothing at all, and nothing anywhere reports an error.
+test('a facility filter sent as a query string matches a room saved from a JSON body', function (): void {
+    $this->postJson('/api/v1/rooms', [
+        'name' => 'Phòng Hội trường',
+        'capacity' => 200,
+        'facilities' => [ClassroomFacility::Speaker->value],
+    ])->assertCreated();
+
+    $this->getJson('/api/v1/rooms?facilities[]=4')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.name', 'Phòng Hội trường');
+});
+
+test('an empty facility filter narrows nothing', function (): void {
+    Room::factory()->count(2)->create(['facilities' => []]);
+
+    $this->getJson('/api/v1/rooms?facilities[]=')
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('facilities.0');
+
+    $this->getJson('/api/v1/rooms')
+        ->assertOk()
+        ->assertJsonCount(2, 'data');
+});
+
+test('the capacity range filter narrows the list at both ends', function (): void {
+    Room::factory()->create(['name' => 'Phòng nhỏ', 'capacity' => 10]);
+    Room::factory()->create(['name' => 'Phòng vừa', 'capacity' => 40]);
+    Room::factory()->create(['name' => 'Phòng lớn', 'capacity' => 120]);
+
+    $this->getJson('/api/v1/rooms?capacity_min=20&capacity_max=100')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.name', 'Phòng vừa');
+});
+
+test('the room search also matches a location', function (): void {
+    Room::factory()->create(['name' => 'Phòng A', 'location' => 'Tầng 3 · Dãy B']);
+    Room::factory()->create(['name' => 'Phòng B', 'location' => 'Tầng 1 · Dãy A']);
+
+    $this->getJson('/api/v1/rooms?q=Tang 3')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.name', 'Phòng A');
+});
+
+test('the room update endpoint changes availability status alongside the other fields', function (): void {
+    $room = Room::factory()->create(['name' => 'Phòng A', 'status' => RoomStatus::Active]);
+
+    $this->putJson("/api/v1/rooms/{$room->id}", [
+        'name' => 'Phòng A',
+        'capacity' => 44,
+        'status' => RoomStatus::Maintenance->value,
+        'facilities' => [ClassroomFacility::Whiteboard->value],
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.status', RoomStatus::Maintenance->value)
+        ->assertJsonPath('data.capacity', 44)
+        ->assertJsonPath('data.facilities', [ClassroomFacility::Whiteboard->value]);
+});
+
+test('the room update endpoint leaves status untouched when none is submitted', function (): void {
+    $room = Room::factory()->create(['name' => 'Phòng A', 'status' => RoomStatus::Maintenance]);
+
+    $this->putJson("/api/v1/rooms/{$room->id}", ['name' => 'Phòng A', 'capacity' => 44])
+        ->assertOk()
+        ->assertJsonPath('data.status', RoomStatus::Maintenance->value);
 });
