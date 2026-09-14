@@ -49,3 +49,4 @@ export function cn(...inputs: ClassValue[]) {
 export { mapApiErrorToForm } from "./map-api-error-to-form";
 export type { ApiFormErrorResult } from "./map-api-error-to-form";
 export { personInitials } from "./person-initials";
+export { foldVietnamese, foldedName, phoneDigits } from "./vietnamese-text";

@@ -1,3 +1,5 @@
+import { foldVietnamese } from "@/lib/utils/index";
+
 /**
  * Suggests a login name from a student's full name.
  *
@@ -10,15 +12,7 @@
  * can ask for the name first instead of offering `hs_`.
  */
 export function suggestStudentUsername(fullName: string): string {
-  const compact = fullName
-    .normalize("NFD")
-    // Combining tone and vowel marks, which NFD has just split off each letter.
-    .replace(/[̀-ͯ]/g, "")
-    // Đ and đ carry their stroke inside the letter, so NFD leaves them whole.
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "");
+  const compact = foldVietnamese(fullName).replace(/[^a-z0-9]+/g, "");
 
   return compact === "" ? "" : `hs_${compact}`;
 }

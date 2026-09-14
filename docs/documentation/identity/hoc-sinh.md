@@ -85,7 +85,15 @@ Nút tự tạo tên đăng nhập bỏ dấu tiếng Việt, bỏ khoảng tr�
 
 Khối `04` là một **danh sách** chứ không phải một phụ huynh: thanh trên cùng đếm số người đang được liên kết và mang nút **Thêm phụ huynh**; bên dưới là từng hàng, mỗi hàng gồm chữ cái đầu tên, họ tên, số điện thoại, ô **quan hệ với học sinh**, nút chọn **Liên hệ chính**, và nút thùng rác để gỡ. Chưa có ai thì chỗ đó là một ô trống có hình minh họa và nút thêm.
 
-Người mới nhập tay mang nhãn **Sẽ tạo mới**, vì một hàng sắp tạo hồ sơ và một hàng chỉ liên kết hồ sơ có sẵn trông giống hệt nhau nếu không nói ra.
+Mỗi hàng mang nhãn nói rõ nó là gì, vì hàng sắp tạo hồ sơ, hàng vừa liên kết và hàng đã lưu trông giống hệt nhau nếu không nói ra:
+
+| Nhãn | Nghĩa | Xuất hiện ở |
+| --- | --- | --- |
+| **Sẽ tạo mới** | Người nhập tay, lưu xong mới có hồ sơ | Cả hai màn |
+| **Mới thêm** | Người có sẵn, vừa được liên kết trong phiên sửa này, chưa lưu | Chỉ màn sửa |
+| *(không nhãn)* | Liên kết đã lưu trên hồ sơ | Chỉ màn sửa |
+
+Màn tạo không dùng nhãn **Mới thêm**: ở đó hàng nào cũng chưa lưu, nên nhãn đó chỉ là nhiễu.
 
 **Liên hệ chính** là một nhóm radio trải suốt danh sách, nên không bao giờ đánh dấu được hai người. Người đầu tiên được thêm tự động nhận cờ này; gỡ người đang giữ cờ thì cờ chuyển cho người còn lại đầu danh sách, để một danh sách còn người luôn có số điện thoại để gọi trước.
 
@@ -96,9 +104,23 @@ Nút **Thêm phụ huynh** mở một hộp thoại có hai thẻ:
 
 Ô tìm phụ huynh bỏ dấu: gõ `Hung` ra `Hùng`, gõ `Do Thi Uoc` ra `Đỗ Thị Ước`. Mọi ô tìm khác trong ứng dụng đều như vậy.
 
+Thẻ **Tạo phụ huynh mới** kiểm tra trùng trước khi thêm, để hai hồ sơ của cùng một người không cùng tồn tại. Ba tình huống, mỗi tình huống một lối ra riêng vì chúng khác nhau thật chứ không phải ba mức của cùng một cảnh báo:
+
+| Tình huống | Ý nghĩa | Lựa chọn |
+| --- | --- | --- |
+| Trùng người **đã có trong danh sách** của học sinh này | Không còn gì để thêm | **Đóng và xem danh sách** |
+| Trùng **số điện thoại** với một người khác trong hệ thống | Số điện thoại nhận ra một người chắc chắn hơn tên tiếng Việt, nên nhiều khả năng cùng một người hoặc gõ nhầm số | **Liên kết người này** hoặc **Sửa số điện thoại** |
+| Chỉ trùng **họ tên** | Tên tiếng Việt trùng nhau là chuyện thường, nên đây là nhắc chứ không phải chặn | **Liên kết người này** hoặc **Vẫn tạo người mới** |
+
+So khớp **bỏ dấu và không phân biệt hoa thường**, nên gõ `bui minh son` vẫn nhận ra `Bùi Minh Sơn`. Số điện thoại được rút về chữ số và quy `+84`/`84` về `0` trước khi so, và chỉ so khi đủ 9 chữ số trở lên. Kiểm tra chạy lúc bấm **Thêm vào hồ sơ** chứ không chạy trong lúc gõ, vì một truy vấn còn dở dang khi người dùng bấm nút sẽ để lọt bản trùng.
+
+Đây là **lớp trợ giúp ở giao diện**, không phải ràng buộc của API: số điện thoại cố ý không duy nhất (anh chị em ruột dùng chung số của phụ huynh), nên bấm **Vẫn tạo người mới** vẫn tạo được người thứ hai trùng tên. Nếu không gọi được danh bạ, thao tác thêm vẫn chạy bình thường thay vì bị chặn.
+
 Hộp thoại **không gọi API**. Nó trả một hàng về cho biểu mẫu và danh sách chỉ được ghi khi bấm **Tạo học sinh** / **Lưu thay đổi** — nhờ vậy người dùng thêm ba người, đổi ý về một người, rồi rời đi mà chưa ghi gì cả.
 
-Chế độ sửa dùng đúng khối đó, mở sẵn với những người học sinh đang liên kết.
+Chế độ sửa dùng đúng khối đó, mở sẵn với những người học sinh đang liên kết. Khác biệt nằm ở lời văn, vì lời hứa khác nhau: màn sửa nói thêm **"Thay đổi chỉ được lưu khi bạn nhấn Lưu thay đổi"** dưới danh sách, ô trống ghi **"Hồ sơ chưa liên kết phụ huynh"**, và thông báo nổi khi thêm hoặc gỡ đều nhắc phải nhấn **Lưu thay đổi** để xác nhận — trên màn tạo thì nhắc nhấn **Tạo học sinh**.
+
+Gỡ một hàng chỉ gỡ **liên kết**, không xóa hồ sơ người đó: họ có thể vẫn là phụ huynh của học sinh khác, và thao tác này cũng chỉ có hiệu lực sau khi lưu.
 
 Hàng **Hủy** / **Tạo học sinh** nằm ở mép dưới của tờ hồ sơ. Trên màn hình hẹp hàng này dính đáy khung nhìn, nên biểu mẫu dài không che mất nút gửi của chính nó. Dưới 1024px tờ hồ sơ về một cột; dưới 640px mỗi khối về một cột.
 

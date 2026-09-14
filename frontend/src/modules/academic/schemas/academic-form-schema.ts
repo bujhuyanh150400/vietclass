@@ -160,6 +160,15 @@ export const guardianDraftSchema = z.object({
   gender: z.union([z.literal(0), z.literal(1), z.literal(2)]),
   relationship: z.union([z.literal(0), z.literal(1), z.literal(2)]),
   is_primary: z.boolean(),
+  /**
+   * Whether this link is already stored on the profile.
+   *
+   * The payload does not carry it — the API is told the roster, not which parts of it
+   * are new. It exists so an edit screen can tell a link the reader is looking at
+   * because it was saved earlier from one they just added and have not committed yet,
+   * which are the same row drawn twice over otherwise.
+   */
+  is_saved: z.boolean(),
 });
 
 /** One row of the student form's guardian roster. */

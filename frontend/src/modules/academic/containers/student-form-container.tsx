@@ -130,6 +130,7 @@ function guardianDrafts(student: Student | undefined): GuardianDraft[] {
     gender: 0 as const,
     relationship: guardian.relationship,
     is_primary: guardian.is_primary,
+    is_saved: true,
   }));
 }
 
@@ -410,7 +411,11 @@ export function StudentFormContainer({ student }: { student?: Student }) {
     <NumberedSection
       index={4}
       title="Phụ huynh và người giám hộ"
-      description="Một học sinh có thể liên kết nhiều phụ huynh, và một phụ huynh cũng có thể theo dõi nhiều học sinh."
+      description={
+        isEditing
+          ? "Một học sinh có thể liên kết nhiều phụ huynh, và một phụ huynh cũng có thể theo dõi nhiều học sinh."
+          : "Một học sinh có thể liên kết nhiều phụ huynh, và một phụ huynh cũng có thể theo dõi nhiều học sinh. Phần này có thể bổ sung sau."
+      }
     >
       <Controller
         control={form.control}
@@ -419,6 +424,7 @@ export function StudentFormContainer({ student }: { student?: Student }) {
           <GuardianRosterField
             value={field.value ?? []}
             onChange={field.onChange}
+            mode={isEditing ? "edit" : "create"}
             disabled={isSubmitting}
             error={errors.guardians?.message}
           />

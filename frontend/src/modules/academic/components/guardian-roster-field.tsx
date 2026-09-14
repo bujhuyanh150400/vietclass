@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { EmptyState } from "@/components/shared/data-table";
+import { useToast } from "@/components/shared/toast-provider";
 import { SelectField } from "@/components/shared/select-field";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -15,23 +16,74 @@ import type { GuardianRelationship } from "../types/academic";
 import { GUARDIAN_RELATIONSHIP_CHOICES } from "../utils/labels";
 import { SHEET_CONTROL, SHEET_FIELD_TYPE } from "./form-control";
 
+/** Which screen the roster is on, which is what the wording around it turns on. */
+export type GuardianRosterMode = "create" | "edit";
+
+/**
+ * The sentences that differ between the two screens.
+ *
+ * They differ because the promise differs: on a new profile nothing exists yet and
+ * the button says "Tạo học sinh", while on an existing one the reader is looking at
+ * links that are already real and the edits they make are not. Saying "nhấn Lưu thay
+ * đổi" on a screen with no such button, or leaving an edit screen silent about it,
+ * are both ways of misleading somebody about whether their work is safe.
+ */
+const ROSTER_COPY: Record<
+  GuardianRosterMode,
+  { emptyTitle: string; foot: string; added: (name: string) => string; removed: (name: string) => string }
+> = {
+  create: {
+    emptyTitle: "Chưa liên kết phụ huynh nào",
+    foot: "",
+    added: (name) => `Đã thêm ${name} vào hồ sơ. Nhấn Tạo học sinh để lưu.`,
+    removed: (name) => `Đã gỡ liên kết với ${name}.`,
+  },
+  edit: {
+    emptyTitle: "Hồ sơ chưa liên kết phụ huynh",
+    foot: " Thay đổi chỉ được lưu khi bạn nhấn Lưu thay đổi.",
+    added: (name) => `Đã thêm ${name} vào bản chỉnh sửa. Nhấn Lưu thay đổi để xác nhận.`,
+    removed: (name) =>
+      `Đã gỡ liên kết với ${name} trong bản chỉnh sửa. Nhấn Lưu thay đổi để xác nhận.`,
+  },
+};
+
 /** Builds a key that stays with a row for as long as the form holds it. */
 function draftKey(): string {
   return Math.random().toString(36).slice(2);
 }
 
+/**
+ * What a row is, beyond the person it names.
+ *
+ * Creating, every row is pending by definition, so only the rows that will bring a
+ * new profile into existence are worth marking. Editing, the list mixes links that
+ * were already on the profile with ones added since it opened, and a reader who
+ * cannot tell them apart cannot tell what leaving the page would cost them.
+ */
+function rowTag(draft: GuardianDraft, mode: GuardianRosterMode): string | null {
+  if (draft.profile_id === null) {
+    return "Sẽ tạo mới";
+  }
+
+  return mode === "edit" && !draft.is_saved ? "Mới thêm" : null;
+}
+
 /** One person on the roster, with the two things about them this student can change. */
 function GuardianRow({
   draft,
+  mode,
   disabled,
   onRelationshipChange,
   onRemove,
 }: {
   draft: GuardianDraft;
+  mode: GuardianRosterMode;
   disabled: boolean;
   onRelationshipChange: (relationship: GuardianRelationship) => void;
   onRemove: () => void;
 }) {
+  const tag = rowTag(draft, mode);
+
   return (
     <article className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-x-[11px] gap-y-3 rounded-control border border-vc-control bg-card p-3">
       <GuardianInitials name={draft.name} />
@@ -42,13 +94,13 @@ function GuardianRow({
           <span className="font-mono text-[10px] text-muted-foreground">
             {draft.phone === "" ? "Chưa có số điện thoại" : draft.phone}
           </span>
-          {/* Says plainly that this person does not exist yet, because a row that will
-              create a profile and a row that links one look identical otherwise. */}
-          {draft.profile_id === null ? (
+          {/* Said plainly, because a row that will create a profile, one that links an
+              existing person, and one already stored all look identical otherwise. */}
+          {tag === null ? null : (
             <span className="rounded-[3px] border border-vc-control px-1.5 py-0.5 text-[9px] text-muted-foreground">
-              Sẽ tạo mới
+              {tag}
             </span>
-          ) : null}
+          )}
         </small>
       </div>
 
@@ -121,23 +173,28 @@ function GuardianRow({
 export function GuardianRosterField({
   value,
   onChange,
+  mode,
   disabled = false,
   error,
 }: {
   value: GuardianDraft[];
   onChange: (next: GuardianDraft[]) => void;
+  mode: GuardianRosterMode;
   disabled?: boolean;
   error?: string;
 }) {
   const [picking, setPicking] = useState(false);
+  const showToast = useToast();
+  const copy = ROSTER_COPY[mode];
 
   const count = value.length;
   const full = count >= MAX_GUARDIANS;
   const primaryKey = value.find((draft) => draft.is_primary)?.key ?? "";
 
   /** Appends one person, making them the main contact when nobody else is. */
-  function add(entry: Omit<GuardianDraft, "key" | "is_primary">): void {
-    onChange([...value, { ...entry, key: draftKey(), is_primary: count === 0 }]);
+  function add(entry: Omit<GuardianDraft, "key" | "is_primary" | "is_saved">): void {
+    onChange([...value, { ...entry, key: draftKey(), is_primary: count === 0, is_saved: false }]);
+    showToast({ variant: "success", title: copy.added(entry.name) });
   }
 
   /**
@@ -148,14 +205,20 @@ export function GuardianRosterField({
    * and no first number.
    */
   function remove(key: string): void {
+    const removed = value.find((draft) => draft.key === key);
+
+    if (removed === undefined) {
+      return;
+    }
+
     const next = value.filter((draft) => draft.key !== key);
-    const removedPrimary = value.find((draft) => draft.key === key)?.is_primary === true;
 
     onChange(
-      removedPrimary && next.length > 0
+      removed.is_primary && next.length > 0
         ? next.map((draft, index) => ({ ...draft, is_primary: index === 0 }))
         : next,
     );
+    showToast({ title: copy.removed(removed.name) });
   }
 
   /** Moves the main-contact flag, which only ever sits on one row. */
@@ -192,7 +255,7 @@ export function GuardianRosterField({
         {count === 0 ? (
           <EmptyState
             image="/images/empty_1.png"
-            title="Chưa liên kết phụ huynh nào"
+            title={copy.emptyTitle}
             description="Một học sinh có thể có nhiều phụ huynh hoặc người giám hộ. Thêm ít nhất một người để nhà trường biết liên hệ với ai."
             action={addButton}
           />
@@ -208,6 +271,7 @@ export function GuardianRosterField({
               <GuardianRow
                 key={draft.key}
                 draft={draft}
+                mode={mode}
                 disabled={disabled}
                 onRelationshipChange={(relationship) =>
                   onChange(
@@ -224,7 +288,7 @@ export function GuardianRosterField({
       {count === 0 ? null : (
         <p className="text-[10px] leading-[1.6] text-muted-foreground">
           Người được đánh dấu <strong className="font-semibold">Liên hệ chính</strong> sẽ nhận thông
-          báo của nhà trường trước tiên.
+          báo của nhà trường trước tiên.{copy.foot}
         </p>
       )}
 
@@ -243,9 +307,7 @@ export function GuardianRosterField({
       <GuardianPickerDialog
         open={picking}
         onOpenChange={setPicking}
-        linkedProfileIds={value
-          .map((draft) => draft.profile_id)
-          .filter((id): id is number => id !== null)}
+        roster={value}
         onAdd={add}
       />
     </div>
