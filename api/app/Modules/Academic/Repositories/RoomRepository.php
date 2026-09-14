@@ -34,7 +34,7 @@ class RoomRepository extends BaseRepository
         return $this->modelQuery()
             ->when(
                 $query->hasSearch(),
-                fn (Builder $builder): Builder => $builder->where('name', 'ilike', $query->searchLike()),
+                fn (Builder $builder): Builder => $this->whereAnyUnaccentedLike($builder, ['name'], (string) $query->searchLike()),
             )
             ->when(
                 $query->hasFilter('status'),
@@ -55,7 +55,7 @@ class RoomRepository extends BaseRepository
             ->where('status', RoomStatus::Active)
             ->when(
                 $query->hasSearch(),
-                fn (Builder $builder): Builder => $builder->where('name', 'ilike', $query->searchLike()),
+                fn (Builder $builder): Builder => $this->whereAnyUnaccentedLike($builder, ['name'], (string) $query->searchLike()),
             )
             ->orderBy('name')
             ->limit($query->perPage)

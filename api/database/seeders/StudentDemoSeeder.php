@@ -215,7 +215,7 @@ final class StudentDemoSeeder extends Seeder
             ['Trần Văn Hùng', '0902000002', Gender::Male, GuardianRelationship::Father],
             ['Lê Thanh Mai', '0902000003', Gender::Female, GuardianRelationship::Mother],
             ['Phạm Minh Đức', '0902000004', Gender::Male, GuardianRelationship::Father],
-            ['Hoàng Ngọc Lan', '0902000005', Gender::Female, GuardianRelationship::Other],
+            ['Hoàng Ngọc Lan', '0902000005', Gender::Female, GuardianRelationship::Guardian],
             ['Vũ Quốc Anh', '0902000006', Gender::Male, GuardianRelationship::Father],
             ['Đặng Thanh Vân', '0902000007', Gender::Female, GuardianRelationship::Mother],
             ['Bùi Minh Sơn', '0902000008', Gender::Male, GuardianRelationship::Father],

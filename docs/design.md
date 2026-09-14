@@ -1,6 +1,6 @@
 # Design System
 
-Last Verified: 2026-09-10
+Last Verified: 2026-09-11
 
 Tài liệu tham chiếu hệ thống thiết kế của frontend (`frontend/`). Mô tả những gì hiện có trong mã nguồn: token, typography, theme mapping, tầng CSS, và các nguyên hàm giao diện dùng chung. Quy tắc hành vi vẫn nằm ở `.agents/rules/`; tài liệu chức năng cho người dùng nằm ở `docs/documentation/`.
 
@@ -158,6 +158,7 @@ CSS của một tính năng **không** được import vào `styles.css`. Nó s�
 | Stylesheet | Được import bởi |
 | --- | --- |
 | `src/modules/identity/styles/login.css` | `src/modules/identity/components/login-view.tsx` |
+| `src/modules/academic/styles/student-form.css` | `src/modules/academic/containers/student-form-container.tsx` |
 | `src/modules/files/styles/filepond.css` | `src/modules/files/components/filepond-client.tsx` |
 | `src/components/layouts/app-shell.css` | `src/components/layouts/protected-shell.tsx` |
 
@@ -224,6 +225,29 @@ kể cả ở state chưa có dữ liệu, vì nó là đường thoát khỏi �
 `EmptyState` đang để `alt=""` — mỗi dáng linh vật nói một điều mà tiêu đề không nói,
 xem `docs/opendesign.md` mục 3.
 
+### 7.3 Màn tạo và sửa học sinh
+
+Feature screen thứ hai áp bộ hình học ở mục 2.5, và là màn **biểu mẫu** đầu tiên làm
+vậy. Nó dựng bằng utility của Tailwind, cộng đúng một stylesheet theo module cho phần
+CSS không diễn tả được bằng utility (mục 6).
+
+| Vùng | Quy ước |
+| --- | --- |
+| Khung | Một `FormSheet` duy nhất (`components/shared/form-sheet.tsx`): `rounded-sheet` + `border-vc-rule` + `shadow-vc-sheet`, các khối phân tách bằng đường kẻ, hàng nút là mép dưới của chính sheet. Đây là bản song sinh phía form của `ListSheet`; `FormShell` vẫn giữ nguyên cho các màn hình thẻ chưa redesign |
+| Không clip | `FormSheet` cố ý **không** `overflow: hidden`, vì hai lý do: popover mở bên trong phải thoát ra được, và `overflow: hidden` sẽ biến sheet thành containing block của hàng nút `sticky` và làm nó chết. Hệ quả: phần tử nào có nền riêng thì tự bo góc ngoài của mình — cột giấy kẻ ô lấy `rounded-t-sheet lg:rounded-tr-none lg:rounded-bl-sheet`, hàng nút lấy `rounded-b-sheet` |
+| Hai cột | `lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]`. Cột trái là hai khối chỉ tồn tại lúc tạo (ảnh đại diện, tài khoản), cột phải là hồ sơ. Chế độ sửa bỏ cột trái và về một cột |
+| Cột giấy kẻ ô | `.vc-form-grid-paper` trong `modules/academic/styles/student-form.css`: lưới ô `22px` bằng hai `linear-gradient` trên `--vc-grid-minor`. Khác `.vc-paper` của màn đăng nhập (giấy ô ly 4 gradient, có dòng đậm mỗi ô thứ năm) — bên trong biểu mẫu thì dòng đậm quá ồn. Repo không có utility lưới nào, và `image-rendering`/`background-image` vẫn là hai thứ phải viết bằng CSS thật |
+| Tiêu đề khối | `NumberedSection`: chip mono `01`–`04` (`rounded-[4px]`, `border-vc-control`, `font-mono text-[10px]`) + `h2` `18px` + mô tả `11px`. Số là thứ làm một biểu mẫu dài đọc được; nó đặt trong chip viền nhỏ và dùng đúng face mono mà design system dành cho dữ liệu cố định độ rộng, nên đọc như dấu vị trí chứ không phải nội dung. Hai section liền nhau cách nhau bằng `border-t border-vc-rule`, không bằng khoảng trống |
+| Control trong sheet | Thư viện mặc định `36px`/`rounded-md`; trong một form sheet mọi input, select trigger và date trigger đọc lại thành `44px`/`rounded-control` qua các hằng ở `modules/academic/components/form-control.ts` (`SHEET_CONTROL`, `SHEET_TEXTAREA`, `SHEET_FIELD_GRID`, `SHEET_FIELD_TYPE`), theo đúng cách `toolbar-control.ts` làm cho toolbar. Là hằng chứ không phải `Input` được restyle, vì primitive còn dùng chung với năm màn chưa redesign. `SelectField` và `DateField` nhận thêm prop `triggerClassName` cho việc này |
+| Ba bẫy specificity của control | Cùng họ với bẫy `Button` ở mục 4, và cả ba đều **im lặng** — class có trong DOM, không lỗi, chỉ là không có tác dụng. `SelectTrigger` đặt chiều cao bằng `data-[size=default]:h-9`: class + attribute selector, thắng `h-11` trơn, nên select thấp hơn input bên cạnh 8px cho tới khi viết lại thành `data-[size=default]:h-11`. `Input` và `Textarea` đặt cỡ chữ bằng `text-base md:text-sm`: cùng specificity với `text-[13px]` nhưng Tailwind in biến thể responsive **sau** utility gốc nên nó thắng theo thứ tự nguồn, phải thêm `md:text-[13px]`. `TabsList` cũng vậy với `group-data-[orientation=horizontal]:h-9` — `h-auto` trơn thua, và trigger `40px` tràn ra khỏi khung `36px` |
+| Nút gắn liền input | Ô tên đăng nhập và nút tự tạo là một control liền mạch: input `rounded-r-none border-r-0`, nút `size-11 rounded-control rounded-l-none`. Nút hiện/ẩn mật khẩu thì `absolute` trong ô, `size-10`, input chừa `pr-12` |
+| Thẻ radio | Lựa chọn Bỏ qua / Chọn phụ huynh là `RadioGroup` với `RadioGroupItem` bọc trong `<label htmlFor>` nên bấm cả thẻ được. Thẻ `min-h-[76px] rounded-control border-vc-control`; đang chọn `border-foreground bg-vc-tint` |
+| Segmented | Hai nguồn phụ huynh là `Tabs` trong khung `rounded-control border-vc-control bg-card p-[3px]`, tab đang chọn `data-[state=active]:bg-vc-ink data-[state=active]:text-vc-paper`. Mặc định của primitive chỉ nâng nền lên trắng, mà trên giấy trắng thì tab "đang chọn" không đọc ra được |
+| Kết quả tìm kiếm | Danh sách phụ huynh khớp nằm **trong luồng** ngay dưới ô tìm, không phải overlay. Cố ý khác mock: sheet bo góc của chính nó, và một dropdown gần mép dưới sẽ bị cắt ở đó |
+| Hàng nút | `min-h-[78px]`, `border-t border-vc-rule`, canh phải. Nút primary dùng đúng công thức "phím bấm được" ở mục 7.2 (`h-11 rounded-control border-vc-wood shadow-vc-raised has-[>svg]:px-[15px]`, icon đặt `size-*` thẳng trên `svg`). Dưới `md` hàng này `sticky bottom-0` kèm bóng hướng lên, nên biểu mẫu mười lăm trường không che mất nút gửi của chính nó |
+| Page heading | `h2` `28px`, từ `md` lên `34px`, trên nó là eyebrow `10px` uppercase và `BackLink`. Là `h2` vì topbar đã giữ `h1` |
+| Khối ảnh đại diện | Một ô `152px` duy nhất, cặp nút `Tải ảnh lên` / `Avatar mẫu` quyết định cái gì chiếm ô đó: panel tròn của FilePond, hay chân dung DiceBear. FilePond được **ẩn chứ không unmount** khi đổi chế độ — huỷ instance lúc còn ảnh sẽ bỏ lại object URL của ảnh đó, nên chủ sở hữu xoá file trước (qua prop `clearToken`) rồi mới ẩn. Xem `modules/files/components/filepond-client.tsx` cho phần quét URL mà FilePond bỏ sót |
+
 ## 8. Bố cục vỏ ứng dụng
 
 | Vùng | Nguồn | Quy ước |
@@ -232,7 +256,7 @@ xem `docs/opendesign.md` mục 3.
 | IA điều hướng | `components/layouts/navigation.ts` | `Trang chủ`; nhóm `Học vụ` gồm Môn học, Phòng học, Lớp học; nhóm `Người dùng` gồm Giáo viên, Học sinh, Phụ huynh · Sắp có; nhóm `Hệ thống` gồm Quản lý thư viện |
 | Nội dung | `components/layouts/protected-shell.tsx` + `app-shell.css` | `<main class="vc-app-content">` là vùng cuộn duy nhất; shell cao `100svh` và ẩn overflow bên ngoài |
 | Page sheet | `app-shell.css` | Desktop inset `14px 14px 14px 12px` và radius `10px`, nền `--vc-surface-raised`; vùng cuộn giới hạn `1550px` và canh giữa để dòng không dài quá tầm quét; từ mobile bỏ inset/radius ngoài để ưu tiên chiều rộng |
-| Topbar | `components/layouts/app-header.tsx` | `64px` (mobile `60px`), thụt trái `31px` để đường kẻ bắt đầu ở mép vùng viết; chỉ chứa `SidebarTrigger` (`44px`, viền control, solid offset shadow) và tiêu đề trang `15px/600` suy ra từ pathname, là `<h1>` của màn |
+| Topbar | `components/layouts/app-header.tsx` | `64px` (mobile `60px`), thụt trái `31px` để đường kẻ bắt đầu ở mép vùng viết; chỉ chứa `SidebarTrigger` (`44px`, viền control, solid offset shadow) và breadcrumb suy ra từ pathname. Crumb cuối là `<h1>` `15px/600`; crumb cha là link `15px/500` màu `--vc-shell-muted`, cách nhau bằng `ChevronRight` `15px` |
 | Chất liệu sidebar | `app-shell.css` | Tờ giấy kẻ dòng ngang mỗi `22px` (không phải giấy ô ly) kèm gáy lò xo trang trí ở mép phải; hàng thương hiệu có caption `Không gian quản lý lớp học` và một đường kẻ phía dưới |
 | Hàng điều hướng | `app-shell.css` | Cao tối thiểu `44px`, icon `18px`; hàng đang chọn là nền cam đặc `--vc-orange` + viền `--vc-wood` + solid offset `0 3px 0` và một chevron ở cuối hàng; hover chỉ đổi màu, không đổi kích thước |
 | Geometry app shell | `tokens.css` + `app-shell.css` | Control `5px`, panel `8px`, page sheet `10px`; viền control đậm hơn divider; control có solid offset focus/press shadow, blur chỉ dành cho page sheet/drawer |
@@ -247,12 +271,26 @@ Trạng thái mở/thu của sidebar lưu ở cookie `sidebar_state` và đượ
 
 Thương hiệu, điều hướng và menu tài khoản đều nằm trong sidebar; topbar cố ý để trống để không lặp lại. Desktop có icon rail với tooltip; mobile dùng Radix Sheet với overlay, focus trap, Escape và nút `Đóng điều hướng`. Các màn nghiệp vụ giữ nguyên route, dữ liệu và state loading/empty/no-result/error.
 
+**Breadcrumb ở topbar.** `currentNavigationTrail(pathname)` trong `navigation.ts` dựng
+đường dẫn: crumb đầu là mục điều hướng mà path nằm trong (đúng nhãn sidebar highlight),
+rồi mỗi tổ tiên mà build này có đặt tên, rồi màn hiện tại. Tên của route con nằm trong
+bảng `SUB_ROUTE_LABELS`, **chép đúng `metadata.title`** của từng page để không phát minh
+chữ mới; một phân đoạn số trong khóa được chuẩn hóa thành `:id` nên một dòng phủ mọi
+bản ghi. Route ba tầng như `/academic/classes/:id/edit` ra ba crumb.
+
+Hai điều kiện ràng buộc cách vẽ nó. Thứ nhất `.vc-app-header-title` là
+`white-space: nowrap` + `text-overflow: ellipsis`, nên chỉ crumb cuối được co và cắt;
+crumb cha là `flex: none` và giữ nguyên nhãn — một crumb cắt thành `Lớp h…` không giúp
+ai. Thứ hai, dưới `768px` topbar chỉ đủ chỗ cho một nhãn, nên crumb cha **ẩn hẳn** thay
+vì bóp tên của màn hiện tại thành dấu chấm lửng. Route không nằm dưới mục điều hướng nào
+(`/account/avatar`) ra đúng một crumb, giống hành vi cũ.
+
 **Ai sở hữu `<h1>`.** Topbar giữ `<h1>`, và mỗi màn có tiêu đề riêng thì bắt đầu từ
 `<h2>` dưới nó. Thang heading trong một màn nghiệp vụ vì vậy là:
 
 | Cấp | Ai render |
 | --- | --- |
-| `h1` | Nhãn ở topbar (`app-header.tsx`), suy ra từ pathname |
+| `h1` | Crumb cuối ở topbar (`app-header.tsx`), suy ra từ pathname |
 | `h2` | Tiêu đề của màn, nếu màn đó có — ví dụ page heading ở mục 7.2 |
 | `h3` | Tiêu đề của một vùng bên trong màn: `StatePanel`, tên học sinh trên mỗi thẻ |
 
@@ -269,7 +307,8 @@ Không có token riêng, nhưng các màn hình dùng nhất quán:
 | Ngữ cảnh | Lớp |
 | --- | --- |
 | Vùng cấp trang của một màn danh sách | `grid gap-6` |
-| Form (`components/shared/form-shell.tsx`) | `grid gap-6`, thân Card `grid gap-5 sm:grid-cols-2` |
+| Form dạng thẻ (`components/shared/form-shell.tsx`) | `grid gap-6`, thân Card `grid gap-5 sm:grid-cols-2` |
+| Form dạng sheet (`components/shared/form-sheet.tsx`) | `grid gap-6`; đệm trong sheet `p-7`, từ `lg` là `p-8`, dưới `md` là `px-4 py-5`; lưới trường `gap-[18px_16px]` |
 | Một trường (`components/shared/field.tsx`) | `grid gap-1.5`, hint và lỗi `text-xs` |
 | Hàng nút của form | `flex items-center gap-3` |
 | Toolbar danh sách | `flex flex-wrap items-center justify-end gap-2`, ô tìm kiếm `h-8 text-xs`, `w-full sm:w-64` |

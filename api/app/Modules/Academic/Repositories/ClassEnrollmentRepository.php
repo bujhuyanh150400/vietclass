@@ -43,7 +43,7 @@ final class ClassEnrollmentRepository extends BaseRepository
                 $query->hasSearch(),
                 fn (Builder $builder): Builder => $builder->whereHas(
                     'student.profile',
-                    fn (Builder $profile): Builder => $profile->where('full_name', 'ilike', $query->searchLike()),
+                    fn (Builder $profile): Builder => $this->whereAnyUnaccentedLike($profile, ['full_name'], (string) $query->searchLike()),
                 ),
             )
             ->orderBy($query->sort, $query->direction)
@@ -91,11 +91,7 @@ final class ClassEnrollmentRepository extends BaseRepository
                 $query->hasSearch(),
                 fn (Builder $builder): Builder => $builder->whereHas(
                     'profile',
-                    fn (Builder $profile): Builder => $profile->where(
-                        fn (Builder $scoped): Builder => $scoped
-                            ->where('full_name', 'ilike', $query->searchLike())
-                            ->orWhere('phone', 'ilike', $query->searchLike()),
-                    ),
+                    fn (Builder $profile): Builder => $this->whereAnyUnaccentedLike($profile, ['full_name', 'phone'], (string) $query->searchLike()),
                 ),
             )
             ->orderBy(

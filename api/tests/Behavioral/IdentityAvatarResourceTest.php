@@ -67,7 +67,7 @@ test('student creation accepts a multipart file avatar and commits its file link
 
 test('teacher creation accepts a JSON DiceBear avatar and keeps its resource shape', function (): void {
     $this->postJson('/api/v1/teachers', multipartTeacherPayload([
-        'avatar' => ['type' => 'dicebear', 'style' => 'thumbs', 'seed' => 'teacher', 'options' => []],
+        'avatar' => ['type' => 'dicebear', 'style' => 'adventurer', 'seed' => 'teacher', 'options' => []],
     ]))->assertCreated()
         ->assertJsonPath('data.profile_id', Profile::query()->where('full_name', 'Avatar Teacher')->value('id'))
         ->assertJsonPath('data.avatar.type', 'dicebear')
@@ -80,7 +80,7 @@ test('multipart avatar validation rejects a missing file, an unexpected file, an
     ])->assertJsonValidationErrorFor('avatar_file');
 
     $this->post('/api/v1/teachers', [
-        'payload' => json_encode(multipartTeacherPayload(['avatar' => ['type' => 'dicebear', 'style' => 'thumbs', 'seed' => 'x', 'options' => []]]), JSON_THROW_ON_ERROR),
+        'payload' => json_encode(multipartTeacherPayload(['avatar' => ['type' => 'dicebear', 'style' => 'adventurer', 'seed' => 'x', 'options' => []]]), JSON_THROW_ON_ERROR),
         'avatar_file' => UploadedFile::fake()->image('unexpected.jpg'),
     ])->assertJsonValidationErrorFor('avatar_file');
 

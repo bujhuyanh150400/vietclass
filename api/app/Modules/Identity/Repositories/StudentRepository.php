@@ -50,20 +50,18 @@ final class StudentRepository extends BaseRepository
                         ->whereHas(
                             'profile',
                             fn (Builder $profile): Builder => $profile->where(
-                                fn (Builder $inner): Builder => $inner
-                                    ->where('full_name', 'ilike', $query->searchLike())
-                                    ->orWhere('phone', 'ilike', $query->searchLike())
-                                    ->orWhereHas(
+                                function (Builder $inner) use ($query): void {
+                                    $this->whereAnyUnaccentedLike($inner, ['full_name', 'phone'], (string) $query->searchLike());
+                                    $inner->orWhereHas(
                                         'user',
-                                        fn (Builder $user): Builder => $user->where('username', 'ilike', $query->searchLike()),
-                                    ),
+                                        fn (Builder $user): Builder => $this->whereAnyUnaccentedLike($user, ['username'], (string) $query->searchLike()),
+                                    );
+                                },
                             ),
                         )
                         ->orWhereHas(
                             'guardianLinks.guardian',
-                            fn (Builder $guardian): Builder => $guardian
-                                ->where('full_name', 'ilike', $query->searchLike())
-                                ->orWhere('phone', 'ilike', $query->searchLike()),
+                            fn (Builder $guardian): Builder => $this->whereAnyUnaccentedLike($guardian, ['full_name', 'phone'], (string) $query->searchLike()),
                         )
                         ->when(
                             $this->searchAsProfileId($query) !== null,

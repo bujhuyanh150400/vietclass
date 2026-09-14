@@ -1,8 +1,22 @@
 # Database reference
 
-Last verified: 2026-09-10
+Last verified: 2026-09-14
 
 Database engine: PostgreSQL. Migrations under `api/database/migrations/` are the executable source of truth. Framework runtime, Identity, Auth, Academic, System, and File Management tables exist. No Schedule table exists: the module was removed and its schema is being redesigned. The Academic schema is a deliberate adaptation of the fork's, not a copy; each divergence is noted where it occurs.
+
+## Extensions
+
+| Extension | Installed by | Used for |
+| --- | --- | --- |
+| `unaccent` | `2026_09_14_000001_enable_unaccent_extension.php` | Folding Vietnamese tone marks so a search matches a name typed without them. |
+
+Every list and combobox search in the application goes through it, via `BaseRepository::whereAnyUnaccentedLike()` — students, teachers, guardians, classes, subjects, rooms, enrolments, files, and the account picker. Keeping it in one helper is what stops the wildcard escaping from being forgotten in one of the nine call sites.
+
+`unaccent` is a **trusted** extension from PostgreSQL 13 on, so the migration installs it as the application's own database user — no superuser step and no manual provisioning. It ships a dictionary that covers Vietnamese completely, `Đ` to `D` included.
+
+No functional index accompanies it. Every search that uses it wraps the term as `%term%`, and a leading wildcard rules out a btree index whether the column is folded or not. A search that outgrows a sequential scan needs a `pg_trgm` GIN index, and only then does `unaccent()` have to be wrapped in an `IMMUTABLE` function — it is `STABLE` on its own and unusable in an index expression.
+
+Dropping the extension breaks every query calling `unaccent()`, so `down()` reverses cleanly only together with those queries.
 
 ## Identity
 
@@ -93,7 +107,7 @@ The many-to-many link between a student and the profiles acting as their guardia
 | `id` | BIGINT auto-increment primary key | Link identifier. |
 | `student_profile_id` | BIGINT, indexed, FK `student_profiles(profile_id)` cascade on delete | The student. |
 | `guardian_profile_id` | BIGINT, indexed, FK `profiles(id)` restrict on delete | The guardian. Restrict, not cascade: a profile still recorded as somebody's guardian may not be deleted. |
-| `relationship` | SMALLINT | `0` Bố, `1` Mẹ, `2` Người giám hộ khác (`GuardianRelationship`). |
+| `relationship` | SMALLINT | `0` Bố, `1` Mẹ, `2` Người giám hộ (`GuardianRelationship`). Giá trị `2` trước đây đặt tên là `Other`; đổi tên tại chỗ, không đổi số, nên không có hàng nào phải chuyển đổi. |
 | `is_primary` | BOOLEAN, default `false` | Marks the main contact for the student. |
 | `created_at`, `updated_at` | timestamps | Record lifecycle. |
 | — | unique (`student_profile_id`, `guardian_profile_id`) | The same pair cannot be linked twice. |

@@ -2,28 +2,40 @@ import { z } from "zod";
 
 import type { DiceBearOptionValue, DiceBearOptions, DiceBearStyle } from "../types/avatar";
 
-const styles = ["lorelei", "notionists", "thumbs"] as const;
+const styles = ["adventurer"] as const;
 const flipValues = ["none", "horizontal", "vertical", "both"] as const;
 const fillValues = ["solid", "linear", "radial"] as const;
 const orderValues = ["random", "fixed"] as const;
 
 type StyleRules = { components: readonly string[]; colors: readonly string[]; variants: Record<string, readonly string[]> };
 
+/** Builds the `variantNN` names one Adventurer component declares. */
+function numbered(count: number): string[] {
+  return Array.from({ length: count }, (_, index) => `variant${String(index + 1).padStart(2, "0")}`);
+}
+
+/** Builds the `long01`/`short01` hair names Adventurer declares, in definition order. */
+function adventurerHair(): string[] {
+  return [
+    ...Array.from({ length: 26 }, (_, index) => `long${String(index + 1).padStart(2, "0")}`),
+    ...Array.from({ length: 19 }, (_, index) => `short${String(index + 1).padStart(2, "0")}`),
+  ];
+}
+
 const STYLE_RULES: Record<DiceBearStyle, StyleRules> = {
-  lorelei: {
-    components: ["beard", "earrings", "eyebrows", "eyes", "freckles", "glasses", "hair", "hairAccessories", "head", "mouth", "nose"],
-    colors: ["earrings", "eyebrows", "eyes", "freckles", "glasses", "hair", "hairAccessories", "mouth", "nose", "outline", "skin"],
-    variants: { beard: ["variant01"], earrings: ["variant01"], eyebrows: ["variant01"], eyes: ["variant01"], freckles: ["variant01"], glasses: ["variant01"], hair: ["variant01"], hairAccessories: ["flowers"], head: ["variant01"], mouth: ["happy01"], nose: ["variant01"] },
-  },
-  notionists: {
-    components: ["beard", "clothes", "clothesGraphic", "eyebrows", "eyes", "gesture", "glasses", "hair", "head", "mouth", "nose"],
-    colors: ["ink", "paper"],
-    variants: { beard: ["variant01"], clothes: ["variant01"], clothesGraphic: ["variant01"], eyebrows: ["variant01"], eyes: ["variant01"], gesture: ["variant01"], glasses: ["variant01"], hair: ["variant01"], head: ["variant01"], mouth: ["variant01"], nose: ["variant01"] },
-  },
-  thumbs: {
-    components: ["body", "eyes", "head", "mouth", "animation"],
-    colors: ["background", "eyes", "mouth", "shape"],
-    variants: { body: ["variant01"], eyes: ["variant01"], head: ["variant01"], mouth: ["variant01"], animation: ["variant01"] },
+  adventurer: {
+    components: ["details", "earrings", "eyebrows", "eyes", "glasses", "hair", "head", "mouth"],
+    colors: ["earrings", "eyes", "glasses", "hair", "ink", "lips", "sclera", "skin", "teeth", "throat", "tongue", "uvula"],
+    variants: {
+      details: ["birthmark", "blush", "freckles", "mustache"],
+      earrings: numbered(6),
+      eyebrows: numbered(15),
+      eyes: numbered(26),
+      glasses: numbered(5),
+      hair: adventurerHair(),
+      head: ["default"],
+      mouth: numbered(30),
+    },
   },
 };
 

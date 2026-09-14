@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils/index";
 
 import { Field } from "./field";
 
@@ -34,6 +35,7 @@ export function SelectField({
   placeholder = "Chọn…",
   disabled = false,
   className,
+  triggerClassName,
 }: {
   name: string;
   label: string;
@@ -46,6 +48,8 @@ export function SelectField({
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /** Restates the trigger's own size and radius, for a screen on the design system's control scale. */
+  triggerClassName?: string;
 }) {
   return (
     <Field
@@ -65,7 +69,7 @@ export function SelectField({
           id={name}
           aria-invalid={error !== undefined}
           aria-describedby={error !== undefined ? `${name}-error` : undefined}
-          className="w-full"
+          className={cn("w-full", triggerClassName)}
         >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>

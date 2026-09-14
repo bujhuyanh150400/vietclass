@@ -99,22 +99,91 @@ export function isCurrentPath(item: NavigationLinkItem, pathname: string): boole
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
+/** One step in the path a reader took to reach the current screen. */
+export type BreadcrumbCrumb = {
+  label: string;
+  /** Absent on the crumb naming the current screen, which is not a link to itself. */
+  href?: string;
+};
+
 /**
- * Returns the label of the destination the given path belongs to, falling back to
- * the product name when the path is outside the navigation entirely.
+ * The screens that live beneath a navigation destination, named exactly as their
+ * own page metadata titles name them.
+ *
+ * A numeric segment in the key stands for any record identifier — `:id` — so one
+ * entry covers every class, teacher and student. The labels are duplicated from
+ * each route's `metadata.title` rather than derived from it because that metadata
+ * is server-side and the topbar follows client-side navigation.
  */
-export function currentNavigationLabel(pathname: string): string {
+const SUB_ROUTE_LABELS: Record<string, string> = {
+  "/academic/subjects/new": "Thêm môn học",
+  "/academic/subjects/:id": "Sửa môn học",
+  "/academic/rooms/new": "Thêm phòng học",
+  "/academic/rooms/:id": "Sửa phòng học",
+  "/academic/classes/new": "Thêm lớp học",
+  "/academic/classes/:id": "Chi tiết lớp học",
+  "/academic/classes/:id/edit": "Sửa lớp học",
+  "/academic/teachers/new": "Thêm giáo viên",
+  "/academic/teachers/:id": "Sửa hồ sơ giáo viên",
+  "/academic/students/new": "Thêm học sinh",
+  "/academic/students/:id": "Sửa hồ sơ học sinh",
+  "/account/avatar": "Đổi ảnh đại diện",
+};
+
+/** Replaces every record identifier in a path with `:id`, to look it up as one route. */
+function toRoutePattern(pathname: string): string {
+  return pathname.replace(/\/\d+(?=\/|$)/g, "/:id");
+}
+
+/**
+ * Returns the trail of crumbs leading to the given path.
+ *
+ * A list screen is one crumb, the same label the sidebar highlights. A screen
+ * beneath it adds its own name, and every crumb above the last is a link back — so
+ * a reader deep in "Sửa lớp học" can see they are inside "Lớp học" and get back to
+ * it without the browser's own back button.
+ *
+ * Only paths this build actually ships are named. An unrecognised descendant falls
+ * back to its parent's single crumb rather than inventing a label for it, which is
+ * the behaviour the topbar had before it showed a trail at all.
+ */
+export function currentNavigationTrail(pathname: string): BreadcrumbCrumb[] {
+  const pattern = toRoutePattern(pathname);
+  const trail: BreadcrumbCrumb[] = [];
+
   for (const group of NAVIGATION) {
     for (const item of group.items) {
-      if (item.kind === "upcoming") {
+      if (item.kind === "upcoming" || !isCurrentPath(item, pathname)) {
         continue;
       }
 
-      if (isCurrentPath(item, pathname)) {
-        return item.label;
+      trail.push({ label: item.label, href: item.href });
+
+      // Each ancestor between the list and the current screen that this build
+      // names, so a three-deep route reads as three crumbs rather than two.
+      const segments = pathname.slice(item.href.length).split("/").filter(Boolean);
+
+      for (let depth = 1; depth <= segments.length; depth += 1) {
+        const href = `${item.href}/${segments.slice(0, depth).join("/")}`;
+        const label = SUB_ROUTE_LABELS[toRoutePattern(href)];
+
+        if (label !== undefined) {
+          trail.push({ label, href });
+        }
       }
+
+      // The current screen names itself; it is not a link back to itself.
+      const last = trail[trail.length - 1];
+
+      if (last !== undefined) {
+        delete last.href;
+      }
+
+      return trail;
     }
   }
 
-  return "VietClasses";
+  const orphan = SUB_ROUTE_LABELS[pattern];
+
+  return [{ label: orphan ?? "VietClasses" }];
 }

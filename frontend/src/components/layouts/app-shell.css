@@ -396,6 +396,37 @@
     background: var(--vc-shell-tint);
   }
 
+  /* The trail naming the current screen. Only the last crumb — the `h1` — is
+     allowed to take the width and ellipsise; the ancestors keep their full label
+     or disappear, because a crumb cut to "Lớp h…" helps nobody. */
+  .vc-app-shell .vc-app-breadcrumb {
+    min-width: 0;
+    gap: 2px;
+  }
+
+  .vc-app-shell .vc-app-breadcrumb-link {
+    flex: none;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--vc-shell-muted);
+    white-space: nowrap;
+  }
+
+  .vc-app-shell .vc-app-breadcrumb-link:hover {
+    color: var(--vc-text);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .vc-app-shell .vc-app-breadcrumb-separator {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    margin-inline: 4px;
+    color: var(--vc-shell-muted);
+  }
+
   .vc-app-shell .vc-app-header-title {
     min-width: 0;
     overflow: hidden;
@@ -493,6 +524,12 @@
 
     .vc-app-shell .vc-app-header-title {
       font-size: 14px;
+    }
+
+    /* A phone topbar has room for one label. The ancestors drop out rather than
+       squeezing the screen's own name down to an ellipsis. */
+    .vc-app-shell .vc-app-breadcrumb > span {
+      display: none;
     }
 
     .vc-app-shell .vc-app-content {

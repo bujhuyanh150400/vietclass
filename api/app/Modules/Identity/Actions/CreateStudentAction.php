@@ -8,16 +8,15 @@ use App\Modules\FileManagement\Enums\FileError;
 use App\Modules\FileManagement\Enums\FileLinkType;
 use App\Modules\FileManagement\Repositories\FileLinkRepository;
 use App\Modules\FileManagement\Services\FileUploader;
-use App\Modules\Identity\Enums\GuardianRelationship;
 use App\Modules\Identity\Enums\IdentityError;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\Profile;
 use App\Modules\Identity\Models\StudentProfile;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Repositories\ProfileRepository;
-use App\Modules\Identity\Repositories\StudentGuardianRepository;
 use App\Modules\Identity\Repositories\StudentRepository;
 use App\Modules\Identity\Repositories\UserRepository;
+use App\Modules\Identity\Services\StudentGuardianRoster;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
@@ -35,21 +34,25 @@ final class CreateStudentAction
     public function __construct(
         private readonly StudentRepository $students,
         private readonly ProfileRepository $profiles,
-        private readonly StudentGuardianRepository $guardians,
+        private readonly StudentGuardianRoster $guardianRoster,
         private readonly UserRepository $users,
         private readonly FileUploader $fileUploader,
         private readonly FileLinkRepository $fileLinks,
     ) {}
 
     /**
-     * Create a student together with the shared profile, login account, and guardian
-     * beneath them.
+     * Create a student together with the shared profile, login account, and everybody
+     * the payload links them to.
      *
-     * Every record is written in one transaction. The guardian is resolved before the
-     * student's own profile is created, so a student entered with the same phone number
-     * as their guardian can never match their own freshly-created row and be recorded as
-     * their own guardian. The guardian is matched by phone number first, so two siblings
-     * entered from two forms resolve to one guardian profile instead of two.
+     * Every record is written in one transaction, and the guardian roster is applied
+     * last — once the student row exists for the links to point at. A student entered
+     * with the same phone number as one of their guardians cannot be recorded as their
+     * own guardian: `StudentGuardianRoster` refuses the student's own profile, and the
+     * phone match only ever returns a profile eligible to act as a guardian.
+     *
+     * A payload with no roster leaves the student with nobody linked rather than with
+     * an empty guardian profile, so connecting somebody later is an addition instead of
+     * a correction.
      *
      * @param  array<string, mixed>  $attributes
      * @return ActionResult<StudentProfile, IdentityError|FileError>
@@ -64,8 +67,6 @@ final class CreateStudentAction
                     role: UserRole::Student,
                 );
 
-                $guardianProfile = $this->resolveGuardianProfile($attributes);
-
                 $profile = $this->profiles->create([
                     ...Arr::only($attributes, self::PROFILE_KEYS),
                     'user_id' => $user->id,
@@ -78,10 +79,9 @@ final class CreateStudentAction
                     'profile_id' => $profile->id,
                 ]);
 
-                $this->guardians->linkPrimary(
-                    studentProfileId: $student->profile_id,
-                    guardianProfileId: $guardianProfile->id,
-                    relationship: GuardianRelationship::from((int) $attributes['guardian_relationship']),
+                $this->guardianRoster->apply(
+                    studentProfileId: (int) $student->profile_id,
+                    roster: $attributes['guardians'] ?? [],
                 );
 
                 return $student;
@@ -123,35 +123,5 @@ final class CreateStudentAction
         if (($avatar['type'] ?? 'none') === 'dicebear') {
             $profile->forceFill(['avatar_config' => $avatar])->save();
         }
-    }
-
-    /**
-     * Return the profile to record as guardian, reusing an existing one when both the
-     * phone number and the guardian name already belong to somebody eligible to be a
-     * guardian. A guardian entered without a phone number always gets a profile of
-     * their own, because there is nothing to match on.
-     *
-     * @param  array<string, mixed>  $attributes
-     */
-    private function resolveGuardianProfile(array $attributes): Profile
-    {
-        $phone = $attributes['guardian_phone'] ?? null;
-
-        if ($phone !== null) {
-            $existing = $this->profiles->findGuardianByPhoneAndName(
-                (string) $phone,
-                (string) $attributes['guardian_name'],
-            );
-
-            if ($existing instanceof Profile) {
-                return $existing;
-            }
-        }
-
-        return $this->profiles->create([
-            'full_name' => $attributes['guardian_name'],
-            'phone' => $phone,
-            'gender' => $attributes['guardian_gender'],
-        ]);
     }
 }

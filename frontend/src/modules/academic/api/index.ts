@@ -1,5 +1,6 @@
 export * from "./classes-api";
 export * from "./enrollments-api";
+export * from "./guardians-api";
 export * from "./rooms-api";
 export * from "./students-api";
 export * from "./subjects-api";

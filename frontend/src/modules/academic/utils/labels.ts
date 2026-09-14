@@ -29,8 +29,18 @@ export const TEACHER_STATUS_LABELS: Record<TeacherStatus, string> = {
 export const GUARDIAN_RELATIONSHIP_LABELS: Record<GuardianRelationship, string> = {
   0: "Bố",
   1: "Mẹ",
-  2: "Người giám hộ khác",
+  // Everybody who is neither parent — a grandparent, an adult sibling, somebody
+  // court-appointed — under the name of the role itself. There is no separate "Khác":
+  // it would sit next to this one meaning the same thing.
+  2: "Người giám hộ",
 };
+
+/** The relationship choices a guardian picker offers. */
+export const GUARDIAN_RELATIONSHIP_CHOICES: { value: GuardianRelationship; label: string }[] = [
+  { value: 0, label: GUARDIAN_RELATIONSHIP_LABELS[0] },
+  { value: 1, label: GUARDIAN_RELATIONSHIP_LABELS[1] },
+  { value: 2, label: GUARDIAN_RELATIONSHIP_LABELS[2] },
+];
 
 /** Where a student currently stands with their studies. */
 export const STUDENT_STATUS_LABELS: Record<StudentStatus, string> = {

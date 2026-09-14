@@ -1,75 +1,177 @@
 "use client";
 
-import { Dices, Save } from "lucide-react";
+import { ImagePlus, Save, Trash2, Undo2 } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { FilePondInput, fileContentUrl, type FilePondProcess, type ManagedFile } from "@/modules/files";
 
-import type { AvatarSelection, AvatarValue } from "../types/avatar";
-import { DiceBearFields, diceBear } from "./dicebear-fields";
+import type { AvatarDraft, AvatarValue } from "../types/avatar";
+import { AvatarDraftField } from "./avatar-draft-field";
 import { UserAvatar } from "./user-avatar";
 
-/** Converts a controlled selection into a renderable value using the active image library. */
-function previewValue(value: AvatarSelection, files: ManagedFile[]): AvatarValue {
-  if (value.type === "none") return null;
-  if (value.type === "dicebear") return value;
-  const file = files.find((candidate) => candidate.id === value.file_id);
-  return file ? { type: "file", file_id: file.id, content_url: fileContentUrl(file.id) } : null;
-}
-
-/** Presents the controlled avatar chooser; data fetching and mutations stay in its container. */
+/**
+ * Changes the avatar on a profile that already exists.
+ *
+ * It picks an avatar exactly the way the create screens do — one 152px frame, a
+ * toggle between an uploaded photo and a generated face — because a reader who has
+ * seen one of those screens should not have to learn a second way of doing the same
+ * thing. What it adds is the thing only an existing profile has: a picture already on
+ * file, which must be visible before anything replaces it.
+ *
+ * So the block rests on that picture and does nothing until asked. `draft` is the
+ * pending change and `null` means there is none, which is what keeps the save button
+ * from offering to write back what is already stored. Removing the avatar is staged
+ * the same way rather than applied on click, so one button commits and no button
+ * surprises.
+ *
+ * Presentational: the upload, the validation and the mutation all stay in its
+ * container.
+ */
 export function AvatarEditor({
-  value,
-  availableFiles,
-  canSelectFile,
-  onChange,
-  onUpload,
+  current,
+  name,
+  draft,
+  canUpload,
+  onDraftChange,
   onSave,
   isPending = false,
   error,
 }: {
-  value: AvatarSelection;
-  availableFiles: ManagedFile[];
-  canSelectFile: boolean;
-  onChange: (value: AvatarSelection) => void;
-  onUpload?: FilePondProcess;
+  /** The avatar stored on the profile right now. */
+  current: AvatarValue;
+  /** Whose avatar this is, for the initials shown when there is no picture. */
+  name: string;
+  /** The change waiting to be saved, or `null` while nothing has been chosen. */
+  draft: AvatarDraft | null;
+  /** Whether a file can be stored for this profile — see `AvatarDraftField`. */
+  canUpload: boolean;
+  onDraftChange: (draft: AvatarDraft | null) => void;
   onSave: () => void;
   isPending?: boolean;
   error?: string | null;
 }) {
+  const removing = draft?.type === "none";
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Ảnh đại diện</CardTitle>
-        <CardDescription>Chọn ảnh đã tải lên hoặc tạo ảnh DiceBear ngay trên thiết bị.</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-6">
-        {error ? <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert> : null}
-        <div className="flex flex-wrap items-center gap-4">
-          <UserAvatar value={previewValue(value, availableFiles)} name="Ảnh đại diện" alt="Xem trước ảnh đại diện" size="lg" loading="eager" />
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Kiểu ảnh đại diện">
-            <Button type="button" variant={value.type === "none" ? "default" : "outline"} onClick={() => onChange({ type: "none" })}>Không dùng ảnh</Button>
-            <Button type="button" variant={value.type === "file" ? "default" : "outline"} disabled={!canSelectFile} onClick={() => onChange(availableFiles[0] ? { type: "file", file_id: availableFiles[0].id } : { type: "none" })}>Ảnh đã tải</Button>
-            <Button type="button" variant={value.type === "dicebear" ? "default" : "outline"} onClick={() => onChange(value.type === "dicebear" ? value : diceBear())}><Dices aria-hidden="true" />DiceBear</Button>
-          </div>
+    <section className="rounded-sheet border border-vc-rule bg-card shadow-vc-sheet">
+      <div className="p-7 max-md:px-4 max-md:py-5">
+        <div className="mb-[22px] grid gap-[3px]">
+          <h2 className="text-lg leading-[1.45] font-semibold tracking-[-0.01em]">Ảnh đại diện</h2>
+          {/* Said plainly because this block has its own save button and, on an edit
+              screen, sits under a form that has another one. */}
+          <p className="text-[11px] leading-[1.6] text-muted-foreground">
+            Ảnh lưu riêng, chỉ áp dụng khi bấm Lưu ảnh đại diện.
+          </p>
+
         </div>
 
-        {value.type === "file" || (value.type === "none" && canSelectFile) ? <div className="grid gap-3">
-          <div className="grid gap-2"><Label>Ảnh có sẵn</Label><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {availableFiles.map((file) => <Button key={file.id} type="button" variant={value.type === "file" && value.file_id === file.id ? "default" : "outline"} className="h-auto justify-start" onClick={() => onChange({ type: "file", file_id: file.id })}><UserAvatar value={{ type: "file", file_id: file.id, content_url: fileContentUrl(file.id) }} name={file.display_name} alt="" size="sm" />{file.display_name}</Button>)}
-            {availableFiles.length === 0 ? <p className="col-span-full text-sm text-muted-foreground">Chưa có ảnh nào trong thư viện.</p> : null}
-          </div></div>
-          {onUpload ? <div className="grid gap-2"><Label>Tải ảnh mới</Label><FilePondInput mode="avatar" disabled={!canSelectFile || isPending} labelIdle={'Kéo ảnh vào đây hoặc <span class="filepond--label-action">chọn ảnh</span>'} process={onUpload} /></div> : null}
-        </div> : null}
+        <div className="grid gap-4">
+          {error === null || error === undefined ? null : (
+            <Alert variant="destructive" aria-live="polite">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-        {!canSelectFile ? <Alert><AlertDescription>Hồ sơ chưa có tài khoản nên chỉ dùng được Không dùng ảnh hoặc DiceBear.</AlertDescription></Alert> : null}
+          {canUpload ? null : (
+            <Alert>
+              <AlertDescription>
+                Hồ sơ chưa có tài khoản để sở hữu tệp, nên chỉ chọn được avatar mẫu.
+              </AlertDescription>
+            </Alert>
+          )}
 
-        {value.type === "dicebear" ? <DiceBearFields value={value} onChange={onChange} /> : null}
-        <Button type="button" className="w-fit" disabled={isPending} onClick={onSave}><Save aria-hidden="true" />{isPending ? "Đang lưu..." : "Lưu ảnh đại diện"}</Button>
-      </CardContent>
-    </Card>
+          {draft === null ? (
+            <div className="grid justify-items-center gap-5 text-center">
+              <div className="relative grid size-[152px] place-items-center rounded-full border border-vc-control bg-card shadow-[0_4px_0_var(--vc-shell-rule)]">
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-2.5 rounded-full border border-dashed border-vc-rule"
+                />
+                <UserAvatar
+                  value={current}
+                  name={name}
+                  alt="Ảnh đại diện đang dùng"
+                  className="absolute inset-2 size-auto"
+                  loading="eager"
+                />
+              </div>
+
+              <div className="grid w-full max-w-[260px] gap-2.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isPending}
+                  className="h-11 w-full rounded-control border-vc-control text-[11px]"
+                  // An empty draft rather than the stored avatar: the picker offers an
+                  // upload and a generated face, and neither can be built back out of
+                  // a stored file id. Starting blank says so honestly.
+                  onClick={() => onDraftChange({ type: "none" })}
+                >
+                  <ImagePlus aria-hidden="true" className="size-4" />
+                  Đổi ảnh đại diện
+                </Button>
+
+                {current === null ? null : (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={isPending}
+                    className="h-9 w-full rounded-control text-[11px] text-muted-foreground"
+                    onClick={() => onDraftChange({ type: "none" })}
+                  >
+                    <Trash2 aria-hidden="true" className="size-4" />
+                    Gỡ ảnh, dùng chữ cái đầu
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="grid justify-items-center gap-3.5">
+              <AvatarDraftField
+                bare
+                value={draft}
+                name={name}
+                allowUpload={canUpload}
+                disabled={isPending}
+                onChange={onDraftChange}
+              />
+
+              {!removing || current === null ? null : (
+                <p className="max-w-[260px] text-center text-[10px] leading-[1.6] text-muted-foreground">
+                  Chưa chọn ảnh mới, nên lưu bây giờ sẽ gỡ ảnh đang dùng.
+                </p>
+              )}
+
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isPending}
+                className="h-9 rounded-control text-[11px] text-muted-foreground"
+                onClick={() => onDraftChange(null)}
+              >
+                <Undo2 aria-hidden="true" className="size-4" />
+                {current === null ? "Thôi, để sau" : "Giữ ảnh hiện tại"}
+              </Button>
+
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* The same bottom edge `FormSheet` gives a form, so the two blocks on an edit
+          screen end the same way — but a plain row, because this is not a form and
+          must never be submitted by the one above it. */}
+      <div className="flex min-h-[78px] flex-wrap items-center justify-end gap-2.5 rounded-b-sheet border-t border-vc-rule px-5 py-4 max-md:px-4 max-md:py-3.5 lg:px-8">
+        <Button
+          type="button"
+          disabled={isPending || draft === null}
+          className="h-11 min-w-[155px] gap-2 rounded-control border border-vc-wood font-semibold shadow-vc-raised has-[>svg]:px-[15px]"
+          onClick={onSave}
+        >
+          <Save aria-hidden="true" className="size-[19px]" />
+          {isPending ? "Đang lưu…" : "Lưu ảnh đại diện"}
+        </Button>
+      </div>
+    </section>
   );
 }

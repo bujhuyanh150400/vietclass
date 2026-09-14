@@ -40,6 +40,7 @@ export function DateField({
   placeholder = "Chọn ngày…",
   disabled = false,
   className,
+  triggerClassName,
 }: {
   name: string;
   label: string;
@@ -51,6 +52,8 @@ export function DateField({
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /** Restates the trigger's own size and radius, for a screen on the design system's control scale. */
+  triggerClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const selected = parseValue(value);
@@ -76,6 +79,7 @@ export function DateField({
             className={cn(
               "w-full justify-start font-normal",
               selected === undefined && "text-muted-foreground",
+              triggerClassName,
             )}
           >
             <CalendarIcon />

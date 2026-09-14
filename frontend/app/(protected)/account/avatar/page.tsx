@@ -14,5 +14,6 @@ export default function AccountAvatarPage() {
   }
   if (!currentUser.data) return <Alert variant="destructive"><AlertTitle>Không tải được tài khoản</AlertTitle><AlertDescription>Vui lòng tải lại trang rồi thử lại.</AlertDescription></Alert>;
 
-  return <ProfileAvatarEditorContainer profileId={currentUser.data.profile_id} ownerUserId={currentUser.data.id} initialAvatar={currentUser.data.avatar} />;
+  return <ProfileAvatarEditorContainer profileId={currentUser.data.profile_id} ownerUserId={currentUser.data.id} initialAvatar={currentUser.data.avatar} name={currentUser.data.username} />;
+
 }

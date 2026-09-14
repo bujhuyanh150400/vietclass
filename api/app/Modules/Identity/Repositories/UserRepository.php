@@ -48,12 +48,13 @@ final class UserRepository extends BaseRepository
             ->when(
                 $query->hasSearch(),
                 fn (Builder $builder): Builder => $builder->where(
-                    fn (Builder $scoped): Builder => $scoped
-                        ->where('username', 'ilike', $query->searchLike())
-                        ->orWhereHas(
+                    function (Builder $scoped) use ($query): void {
+                        $this->whereAnyUnaccentedLike($scoped, ['username'], (string) $query->searchLike());
+                        $scoped->orWhereHas(
                             'profile',
-                            fn (Builder $profile): Builder => $profile->where('full_name', 'ilike', $query->searchLike()),
-                        ),
+                            fn (Builder $profile): Builder => $this->whereAnyUnaccentedLike($profile, ['full_name'], (string) $query->searchLike()),
+                        );
+                    },
                 ),
             )
             ->orderBy('username')

@@ -78,7 +78,26 @@ test('each supported DiceBear style replaces a file link with safe configuration
             ->where('type', FileLinkType::ProfileAvatar)
             ->where('foreign_id', $this->profile->id)
             ->exists())->toBeFalse();
-})->with(['lorelei', 'notionists', 'thumbs']);
+})->with(['adventurer']);
+
+test('the Adventurer style accepts the hair variant the sample picker sets', function (string $variant): void {
+    $this->withToken($this->token)->putJson("/api/v1/profiles/{$this->profile->id}/avatar", [
+        'type' => 'dicebear',
+        'style' => 'adventurer',
+        'seed' => 'stableSeed',
+        'options' => ['hairVariant' => $variant],
+    ])->assertOk()
+        ->assertJsonPath('data.options.hairVariant', $variant);
+})->with(['long01', 'long26', 'short01', 'short19']);
+
+test('the Adventurer style refuses a hair variant its definition does not declare', function (string $variant): void {
+    $this->withToken($this->token)->putJson("/api/v1/profiles/{$this->profile->id}/avatar", [
+        'type' => 'dicebear',
+        'style' => 'adventurer',
+        'seed' => 'stableSeed',
+        'options' => ['hairVariant' => $variant],
+    ])->assertJsonValidationErrorFor('avatar');
+})->with(['long27', 'short20', 'variant01', 'khongcothat']);
 
 test('the avatar union accepts reordered JSON fields', function (): void {
     $file = ManagedFile::factory()->for($this->owner, 'owner')->create();
@@ -90,10 +109,10 @@ test('the avatar union accepts reordered JSON fields', function (): void {
     ])->assertOk();
 
     $this->withToken($this->token)->putJson($path, [
-        'options' => ['hairVariant' => 'variant01'],
+        'options' => ['hairVariant' => 'long01'],
         'seed' => 'stableSeed',
         'type' => 'dicebear',
-        'style' => 'lorelei',
+        'style' => 'adventurer',
     ])->assertOk();
 });
 
@@ -163,28 +182,28 @@ test('the avatar request rejects unknown, invalid, and oversized DiceBear input'
 
     $this->withToken($this->token)->putJson($path, [
         'type' => 'dicebear',
-        'style' => 'lorelei',
+        'style' => 'adventurer',
         'seed' => 'seed',
         'options' => ['title' => 'unsafe'],
     ])->assertUnprocessable()->assertJsonValidationErrorFor('avatar');
 
     $this->withToken($this->token)->putJson($path, [
         'type' => 'dicebear',
-        'style' => 'lorelei',
+        'style' => 'adventurer',
         'seed' => 'seed',
         'options' => ['hairVariant' => 'madeUpVariant'],
     ])->assertUnprocessable()->assertJsonValidationErrorFor('avatar');
 
     $this->withToken($this->token)->putJson($path, [
         'type' => 'dicebear',
-        'style' => 'lorelei',
+        'style' => 'adventurer',
         'seed' => 'seed',
         'options' => ['rotate' => 361],
     ])->assertUnprocessable()->assertJsonValidationErrorFor('avatar');
 
     $this->withToken($this->token)->putJson($path, [
         'type' => 'dicebear',
-        'style' => 'lorelei',
+        'style' => 'adventurer',
         'seed' => str_repeat('a', 16 * 1024),
         'options' => [],
     ])->assertUnprocessable()->assertJsonValidationErrorFor('avatar');
@@ -198,7 +217,7 @@ test('an accountless profile can select none or DiceBear but never a file', func
 
     $this->withToken($token)->putJson($path, ['type' => 'none'])->assertOk();
     $this->withToken($token)->putJson($path, [
-        'type' => 'dicebear', 'style' => 'thumbs', 'seed' => 'seed', 'options' => [],
+        'type' => 'dicebear', 'style' => 'adventurer', 'seed' => 'seed', 'options' => [],
     ])->assertOk();
     $this->withToken($token)->putJson($path, [
         'type' => 'file', 'file_id' => ManagedFile::factory()->create()->id,

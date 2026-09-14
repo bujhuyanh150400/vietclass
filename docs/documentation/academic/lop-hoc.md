@@ -1,6 +1,6 @@
 # Quản lý lớp học
 
-Last Verified: 2026-09-01
+Last Verified: 2026-09-14
 
 ## Tổng quan
 
@@ -44,6 +44,8 @@ Mọi endpoint nằm dưới tiền tố `/api/v1` và cần header `Authorizati
 Trạng thái: `0` Đang hoạt động, `1` Kết thúc. Khối lớp: `0` Tiền tiểu học, `1`–`12` theo số lớp.
 
 Danh sách nhận thêm `q` để tìm theo mã hoặc tên lớp; `status[]`, `subject_id[]`, `teacher_id[]`, `grade_level[]` để lọc; cùng `page`, `per_page`, `sort`, `direction`. Cột sắp xếp cho phép: `id`, `code`, `name`, `start_at`, `created_at`.
+
+Từ khóa tìm kiếm **bỏ dấu tiếng Việt và không phân biệt hoa thường**: gõ `Hung` tìm ra `Hùng`, gõ `Do Thi Uoc` tìm ra `Đỗ Thị Ước`. Gõ đầy đủ dấu vẫn tìm được như thường. Ký tự `%` và `_` gõ vào được hiểu là ký tự thật, không phải ký tự đại diện.
 
 ## Kết quả mong đợi
 

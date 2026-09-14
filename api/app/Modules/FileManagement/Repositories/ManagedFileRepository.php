@@ -52,10 +52,10 @@ final class ManagedFileRepository extends BaseRepository
             ->with(['owner.profile', 'links'])
             ->when(
                 $query->hasSearch(),
-                fn (Builder $files): Builder => $files->where(
-                    fn (Builder $names): Builder => $names
-                        ->where('display_name', 'ilike', $query->searchLike())
-                        ->orWhere('original_name', 'ilike', $query->searchLike()),
+                fn (Builder $files): Builder => $this->whereAnyUnaccentedLike(
+                    $files,
+                    ['display_name', 'original_name'],
+                    (string) $query->searchLike(),
                 ),
             )
             ->when(

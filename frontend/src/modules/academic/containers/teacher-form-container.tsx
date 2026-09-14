@@ -141,7 +141,9 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
           profileId={teacher.profile_id}
           ownerUserId={teacher.user_id}
           initialAvatar={teacher.avatar}
+          name={teacher.full_name}
         />
+
       ) : (
         <AvatarDraftField value={avatar} onChange={setAvatar} disabled={isSubmitting} />
       )}

@@ -136,6 +136,38 @@ export const teacherEditSchema = z.object({
 export type TeacherFormInput = z.input<typeof teacherEditSchema>;
 export type TeacherFormValues = z.output<typeof teacherEditSchema>;
 
+/**
+ * One person on the roster the student form is building.
+ *
+ * Somebody already on file is carried as their `profile_id`; somebody being typed in
+ * has none yet and carries the typed fields instead. Both keep `name` and `phone`
+ * filled, because the roster draws every row the same way and a row that could not
+ * name who it links to would be a row a reader cannot check.
+ */
+// No `.default()` on any field: every row is built complete by the picker, so making
+// them optional would only split the draft into an input shape and an output shape
+// that the roster field would then have to reconcile on every render.
+export const guardianDraftSchema = z.object({
+  /** A stable key for the row while it is only in the form. */
+  key: z.string().min(1),
+  /** The profile being linked, or null while the person is still being typed in. */
+  profile_id: z.number().int().positive().nullable(),
+  name: z
+    .string()
+    .min(1, { error: "Vui lòng nhập họ và tên phụ huynh." })
+    .max(255, { error: "Tên phụ huynh không được vượt quá 255 ký tự." }),
+  phone: optionalPhone,
+  gender: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+  relationship: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+  is_primary: z.boolean(),
+});
+
+/** One row of the student form's guardian roster. */
+export type GuardianDraft = z.infer<typeof guardianDraftSchema>;
+
+/** How many people one student may be linked to, matching the API's own cap. */
+export const MAX_GUARDIANS = 10;
+
 /** The profile fields shared by creating and editing a student. */
 const studentProfileShape = {
   full_name: z
@@ -146,13 +178,10 @@ const studentProfileShape = {
   dob: optionalDate.default(""),
   gender: z.union([z.literal(0), z.literal(1), z.literal(2)]),
   grade_level: gradeLevel,
-  guardian_name: z
-    .string()
-    .min(1, { error: "Vui lòng nhập tên phụ huynh." })
-    .max(255, { error: "Tên phụ huynh không được vượt quá 255 ký tự." }),
-  guardian_gender: z.union([z.literal(0), z.literal(1), z.literal(2)]),
-  guardian_relationship: z.union([z.literal(0), z.literal(1), z.literal(2)]),
-  guardian_phone: optionalPhone.default(""),
+  guardians: z
+    .array(guardianDraftSchema)
+    .max(MAX_GUARDIANS, { error: `Chỉ liên kết được tối đa ${MAX_GUARDIANS} phụ huynh.` })
+    .default([]),
   address: z.string().max(2000).default(""),
   note: z.string().max(2000).default(""),
   status: z.union([z.literal(0), z.literal(1), z.literal(2)]),

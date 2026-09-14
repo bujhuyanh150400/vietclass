@@ -34,7 +34,12 @@ export function Field({
   const hintId = `${name}-hint`;
 
   return (
-    <div className={cn("grid gap-1.5", className)}>
+    // `content-start` because a field sits in a grid row as tall as its tallest
+    // neighbour, and its own rows are auto-sized: left to stretch, a field with no hint
+    // beside one with a hint divides the spare height between its label and its control
+    // — so the two labels no longer sit on the same line and the two controls no longer
+    // start at the same height. Measured at 10px of drift for one hint.
+    <div className={cn("grid content-start gap-1.5", className)}>
       <Label htmlFor={name} className={cn(error !== undefined && "text-destructive")}>
         {label}
         {required ? (

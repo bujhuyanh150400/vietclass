@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Identity\Enums\IdentityFeature;
+use App\Modules\Identity\Http\Controllers\GuardianController;
 use App\Modules\Identity\Http\Controllers\ProfileAvatarController;
 use App\Modules\Identity\Http\Controllers\StudentController;
 use App\Modules\Identity\Http\Controllers\TeacherController;
@@ -45,6 +46,12 @@ Route::middleware('auth:sanctum')->group(function (): void {
             ->whereNumber('teacher')
             ->middleware(Authorize::using(IdentityFeature::TeacherUpdate))
             ->name('change-password');
+    });
+
+    Route::prefix('guardians')->name('guardians.')->group(function (): void {
+        Route::get('options', [GuardianController::class, 'options'])
+            ->middleware(Authorize::using(IdentityFeature::GuardianList))
+            ->name('options');
     });
 
     Route::prefix('students')->name('students.')->group(function (): void {

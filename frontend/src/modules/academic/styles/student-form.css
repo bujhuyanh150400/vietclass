@@ -1,0 +1,18 @@
+@layer components {
+  /*
+   * Squared 22px paper for the column a form sheet puts its identity fields in.
+   *
+   * The login screen's `.vc-paper` is exercise-book paper — 22px cells with a
+   * heavier rule every fifth — which is right for a full-page surface but too busy
+   * inside a form. This is the same 22px pitch with only the minor grid, so the
+   * column reads as a sheet of graph paper set into the page without competing
+   * with the fields printed on it.
+   */
+  .vc-form-grid-paper {
+    background-color: var(--background);
+    background-image:
+      linear-gradient(to right, var(--vc-grid-minor) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--vc-grid-minor) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+}

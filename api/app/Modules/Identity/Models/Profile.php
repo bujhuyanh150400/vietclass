@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
@@ -85,6 +86,20 @@ final class Profile extends Model
     public function studentProfile(): HasOne
     {
         return $this->hasOne(StudentProfile::class, 'profile_id');
+    }
+
+    /**
+     * Return the students who list this profile as one of their guardians.
+     *
+     * A guardian has no role table of its own, so this relation is the only way to
+     * ask whether a profile is already acting as somebody's guardian — which is what
+     * separates the guardians on file from every other profile in the directory.
+     *
+     * @return HasMany<StudentGuardian, $this>
+     */
+    public function guardianLinks(): HasMany
+    {
+        return $this->hasMany(StudentGuardian::class, 'guardian_profile_id');
     }
 
     /**

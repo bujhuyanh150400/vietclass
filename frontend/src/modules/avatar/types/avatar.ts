@@ -1,5 +1,12 @@
-/** The three local DiceBear definition files accepted by the API. */
-export type DiceBearStyle = "lorelei" | "notionists" | "thumbs";
+/**
+ * The local DiceBear definition files accepted by the API.
+ *
+ * One style, because the sample-avatar picker is the only thing that builds a
+ * DiceBear avatar and it builds nothing else. It stays a named union rather than a
+ * bare literal so adding a second style is a one-line change here, in
+ * `schemas/avatar-schema.ts`, in `utils/dicebear.ts`, and in `api/config/avatar.php`.
+ */
+export type DiceBearStyle = "adventurer";
 
 /** Scalar values permitted inside a server-validated DiceBear option object. */
 export type DiceBearOptionValue = string | number | boolean;

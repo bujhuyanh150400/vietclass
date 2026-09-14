@@ -1,6 +1,6 @@
 # Quản lý tệp
 
-Last Verified: 2026-09-10
+Last Verified: 2026-09-14
 
 ## Tổng quan
 
@@ -51,6 +51,8 @@ Mọi endpoint nằm dưới tiền tố `/api/v1` và cần header `Authorizati
 | Sửa hạn mức | `PUT /system/file-quotas` với `quotas.admin`, `quotas.teacher`, `quotas.student`, `quotas.guardian` tính theo byte |
 
 Danh sách nhận `search` (tìm theo tên tệp), `category`, `uploaded_from`, `uploaded_to`, `trash` (`active` mặc định hoặc `trashed`), `link_type`, `owner_user_id` (chỉ Quản trị viên), cùng `page`, `per_page` (tối đa 200), `sort` và `direction`. Cột sắp xếp cho phép: `id`, `original_name`, `display_name`, `size_bytes`, `created_at`.
+
+Từ khóa tìm kiếm **bỏ dấu tiếng Việt và không phân biệt hoa thường**: gõ `bao cao` tìm ra `Báo cáo.pdf`. Ký tự `%` và `_` gõ vào được hiểu là ký tự thật, không phải ký tự đại diện.
 
 Trên trình duyệt tại `/files`:
 

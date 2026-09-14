@@ -1,6 +1,6 @@
 # Quản lý môn học
 
-Last Verified: 2026-09-01
+Last Verified: 2026-09-14
 
 ## Tổng quan
 
@@ -38,6 +38,8 @@ Mọi endpoint nằm dưới tiền tố `/api/v1` và cần header `Authorizati
 | Xóa | `DELETE /subjects/{id}` |
 
 Danh sách nhận thêm `q` để tìm theo tên, `is_active` để lọc theo trạng thái, cùng `page`, `per_page`, `sort`, `direction`. Cột sắp xếp cho phép: `id`, `name`, `created_at`.
+
+Từ khóa tìm kiếm **bỏ dấu tiếng Việt và không phân biệt hoa thường**: gõ `Hung` tìm ra `Hùng`, gõ `Do Thi Uoc` tìm ra `Đỗ Thị Ước`. Gõ đầy đủ dấu vẫn tìm được như thường. Ký tự `%` và `_` gõ vào được hiểu là ký tự thật, không phải ký tự đại diện.
 
 ## Kết quả mong đợi
 

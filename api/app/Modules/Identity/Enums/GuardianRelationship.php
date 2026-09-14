@@ -5,8 +5,12 @@ namespace App\Modules\Identity\Enums;
 use App\Core\Support\IntBackedEnum;
 
 /**
- * Quan hệ của người giám hộ với học sinh. Không phải phụ huynh nào cũng là bố hoặc
- * mẹ, nên trường hợp thứ ba là bắt buộc chứ không phải phần dư.
+ * Quan hệ của một người với học sinh trong bảng liên kết `student_guardians`.
+ *
+ * Không phải người liên hệ nào cũng là bố hoặc mẹ: ông bà, anh chị đã thành niên hay
+ * người được tòa chỉ định đều có thể là người nhà trường phải gọi. `Guardian` gom hết
+ * những trường hợp đó dưới đúng tên gọi của vai trò, nên danh sách chỉ có ba lựa chọn
+ * chứ không kèm một ô "Khác" không nói thêm được điều gì.
  */
 enum GuardianRelationship: int
 {
@@ -14,5 +18,5 @@ enum GuardianRelationship: int
 
     case Father = 0;
     case Mother = 1;
-    case Other = 2;
+    case Guardian = 2;
 }

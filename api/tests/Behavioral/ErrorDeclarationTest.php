@@ -4,6 +4,8 @@ use App\Core\Contracts\ErrorDeclarationEnum;
 use App\Modules\Academic\Enums\AcademicError;
 use App\Modules\Academic\Enums\AcademicFeature;
 use App\Modules\Auth\Enums\AuthError;
+use App\Modules\Identity\Enums\IdentityError;
+use App\Modules\Identity\Enums\IdentityFeature;
 use App\Modules\Identity\Enums\UserRole;
 
 test('auth errors expose stable string declaration codes', function (): void {
@@ -25,6 +27,21 @@ test('academic room errors expose stable declarations and HTTP statuses', functi
         ->and(AcademicError::RoomInUse->httpStatus())->toBe(409)
         ->and(AcademicError::RoomInactive->value)->toBe('ACADEMIC-020')
         ->and(AcademicError::RoomInactive->httpStatus())->toBe(422);
+});
+
+test('the guardian lookup failure exposes a stable declaration and HTTP status', function (): void {
+    expect(IdentityError::GuardianNotFound)
+        ->toBeInstanceOf(ErrorDeclarationEnum::class)
+        ->and(IdentityError::GuardianNotFound->value)->toBe('IDENTITY-007')
+        ->and(IdentityError::GuardianNotFound->httpStatus())->toBe(404);
+});
+
+test('the guardian directory permission is available to administrators by default', function (): void {
+    $features = collect(IdentityFeature::cases())->keyBy->value;
+
+    expect($features->keys()->all())->toContain('guardian.list')
+        ->and($features['guardian.list']->defaultRoles())->toBe([UserRole::Admin])
+        ->and($features['guardian.list']->group())->toBe('guardian');
 });
 
 test('academic room permissions are available to administrators by default', function (): void {

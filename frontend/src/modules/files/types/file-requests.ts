@@ -43,8 +43,8 @@ export type UpdateFileQuotasRequest = {
   quotas: FileQuotaMap;
 };
 
-/** The only local DiceBear styles the API accepts. */
-export type DiceBearStyle = "lorelei" | "notionists" | "thumbs";
+/** The only local DiceBear style the API accepts. */
+export type DiceBearStyle = "adventurer";
 
 /** Scalar values permitted inside the server-validated DiceBear option object. */
 export type DiceBearOptionValue = string | number | boolean;

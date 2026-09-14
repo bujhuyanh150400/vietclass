@@ -48,21 +48,54 @@ type StudentProfileRequest = {
   dob: string | null;
   gender: Gender;
   grade_level: GradeLevel;
-  guardian_name: string;
-  guardian_gender: Gender;
-  guardian_relationship: GuardianRelationship;
-  guardian_phone: string | null;
   address: string | null;
   note: string | null;
   status: StudentStatus;
 };
 
-/** Payload accepted by the student create endpoint. */
-export type CreateStudentRequest = StudentProfileRequest & {
-  username: string;
-  password: string;
-  avatar?: AvatarCreateSelection;
+/**
+ * One person on a student's guardian roster.
+ *
+ * Each entry is one of two shapes, told apart by which keys it carries: an
+ * identifier links somebody already on file, while a name and gender record somebody
+ * new. Sending keys from both is refused, so the unused half is omitted rather than
+ * nulled. `relationship` is required either way.
+ *
+ * `is_primary` marks the main contact. At most one entry may carry it; when none
+ * does, the API takes the first.
+ */
+export type StudentGuardianEntry =
+  | {
+      guardian_profile_id: number;
+      relationship: GuardianRelationship;
+      is_primary?: boolean;
+    }
+  | {
+      name: string;
+      gender: Gender;
+      phone?: string | null;
+      relationship: GuardianRelationship;
+      is_primary?: boolean;
+    };
+
+/**
+ * The guardian half of a student payload.
+ *
+ * The API reads the roster as the complete list of who the student is linked to, so
+ * leaving somebody out unlinks them. The key is optional as a whole: omitting it
+ * entirely leaves every existing link alone, while an empty array says "nobody".
+ */
+type StudentGuardianRequest = {
+  guardians?: StudentGuardianEntry[];
 };
+
+/** Payload accepted by the student create endpoint. */
+export type CreateStudentRequest = StudentProfileRequest &
+  StudentGuardianRequest & {
+    username: string;
+    password: string;
+    avatar?: AvatarCreateSelection;
+  };
 
 /**
  * One profile create request together with the image a `file` avatar uploads. The
@@ -73,8 +106,12 @@ export type CreateProfileSubmission<TPayload> = {
   avatar_file?: File;
 };
 
-/** Payload accepted by the student update endpoint. */
-export type UpdateStudentRequest = StudentProfileRequest;
+/**
+ * Payload accepted by the student update endpoint, which takes the same roster the
+ * create endpoint does: adding, removing, and moving the main contact are all
+ * expressed by sending the list the student should end up with.
+ */
+export type UpdateStudentRequest = StudentProfileRequest & StudentGuardianRequest;
 
 type ClassRequest = {
   name: string;

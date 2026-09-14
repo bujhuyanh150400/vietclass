@@ -5,16 +5,18 @@ namespace App\Modules\Identity\Http\Requests\Students;
 use App\Modules\FileManagement\Rules\ManagedFileUpload;
 use App\Modules\Identity\Enums\Gender;
 use App\Modules\Identity\Enums\GradeLevel;
-use App\Modules\Identity\Enums\GuardianRelationship;
 use App\Modules\Identity\Enums\StudentStatus;
 use App\Modules\Identity\Http\Requests\Concerns\DecodesMultipartPayload;
+use App\Modules\Identity\Http\Requests\Concerns\ValidatesGuardianRoster;
 use App\Modules\Identity\Rules\AvatarSelection;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 final class StoreStudentRequest extends FormRequest
 {
     use DecodesMultipartPayload;
+    use ValidatesGuardianRoster;
 
     /**
      * Allow the request; route middleware already decided who may create a student.
@@ -28,6 +30,10 @@ final class StoreStudentRequest extends FormRequest
      * Define the validated student payload, which creates a profile and its login
      * account together.
      *
+     * Guardians arrive as the `guardians` roster described by `ValidatesGuardianRoster`.
+     * An absent or empty roster creates the student with nobody linked, so connecting
+     * somebody later is an addition rather than a correction.
+     *
      * @return array<string, array<int, mixed>>
      */
     public function rules(): array
@@ -40,10 +46,7 @@ final class StoreStudentRequest extends FormRequest
             'dob' => ['sometimes', 'nullable', 'date_format:Y-m-d', 'before:today'],
             'gender' => ['required', 'integer', Rule::in(Gender::values())],
             'grade_level' => ['required', 'integer', Rule::in(GradeLevel::values())],
-            'guardian_name' => ['required', 'string', 'max:255'],
-            'guardian_gender' => ['required', 'integer', Rule::in(Gender::values())],
-            'guardian_relationship' => ['required', 'integer', Rule::in(GuardianRelationship::values())],
-            'guardian_phone' => ['sometimes', 'nullable', 'string', 'regex:/^0[0-9]{9,10}$/'],
+            ...$this->guardianRosterRules(),
             'address' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'note' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'status' => ['sometimes', 'integer', Rule::in(StudentStatus::values())],
@@ -68,8 +71,18 @@ final class StoreStudentRequest extends FormRequest
         return [
             'username.unique' => 'Có tài khoản đã dùng tên đăng nhập này, vui lòng chọn tên khác.',
             'phone.regex' => 'Số điện thoại không hợp lệ.',
-            'guardian_phone.regex' => 'Số điện thoại phụ huynh không hợp lệ.',
+            ...$this->guardianRosterMessages(),
             'dob.before' => 'Ngày sinh phải trước ngày hôm nay.',
         ];
+    }
+
+    /**
+     * Apply the roster rules that span more than one key.
+     *
+     * @return array<int, callable>
+     */
+    public function after(): array
+    {
+        return [fn (Validator $validator) => $this->validateGuardianRoster($validator)];
     }
 }

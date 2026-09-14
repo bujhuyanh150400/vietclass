@@ -3,6 +3,7 @@ export type {
   Enrollment,
   Gender,
   GradeLevel,
+  GuardianOption,
   GuardianRelationship,
   Option,
   Room,

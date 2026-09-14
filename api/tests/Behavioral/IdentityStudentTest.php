@@ -32,9 +32,11 @@ function studentPayload(array $overrides = []): array
         'full_name' => 'Phạm Thùy Linh',
         'gender' => Gender::Female->value,
         'grade_level' => GradeLevel::Grade9->value,
-        'guardian_name' => 'Phạm Văn D',
-        'guardian_gender' => Gender::Male->value,
-        'guardian_relationship' => GuardianRelationship::Father->value,
+        'guardians' => [[
+            'name' => 'Phạm Văn D',
+            'gender' => Gender::Male->value,
+            'relationship' => GuardianRelationship::Father->value,
+        ]],
         ...$overrides,
     ];
 }
@@ -66,9 +68,10 @@ test('a student payload never reports a credential back', function () {
         ->and($response->getContent())->not->toContain('matkhau123');
 });
 
-test('a guardian name is required while student contact details are not', function () {
-    $this->postJson('/api/v1/students', studentPayload(['guardian_name' => null]))
-        ->assertJsonValidationErrorFor('guardian_name');
+test('a roster entry needs a name while student contact details do not', function () {
+    $this->postJson('/api/v1/students', studentPayload([
+        'guardians' => [['gender' => Gender::Male->value, 'relationship' => GuardianRelationship::Father->value]],
+    ]))->assertJsonValidationErrorFor('guardians.0.name');
 
     $this->postJson('/api/v1/students', studentPayload())
         ->assertCreated()
@@ -91,9 +94,17 @@ test('student and guardian phone numbers are checked for shape', function () {
         ->assertJsonValidationErrorFor('phone')
         ->assertJsonPath('errors.phone.0', 'Số điện thoại không hợp lệ.');
 
-    $this->postJson('/api/v1/students', studentPayload(['guardian_phone' => 'abc']))
-        ->assertJsonValidationErrorFor('guardian_phone')
-        ->assertJsonPath('errors.guardian_phone.0', 'Số điện thoại phụ huynh không hợp lệ.');
+    $this->postJson('/api/v1/students', studentPayload([
+        'guardians' => [[
+            'name' => 'Phạm Văn D',
+            'gender' => Gender::Male->value,
+            'relationship' => GuardianRelationship::Father->value,
+            'phone' => 'abc',
+        ]],
+    ]))
+        // Named through `assertJsonValidationErrors` rather than a JSON path, because
+        // the error key itself contains dots and a path would read them as nesting.
+        ->assertJsonValidationErrors(['guardians.0.phone' => 'Số điện thoại phụ huynh không hợp lệ.']);
 });
 
 test('a duplicate login name is reported against the username field', function () {
@@ -118,9 +129,11 @@ test('updating a student cannot change the login name', function () {
         'full_name' => 'Tên mới',
         'gender' => Gender::Male->value,
         'grade_level' => GradeLevel::Grade10->value,
-        'guardian_name' => 'Phụ huynh mới',
-        'guardian_gender' => Gender::Female->value,
-        'guardian_relationship' => GuardianRelationship::Mother->value,
+        'guardians' => [[
+            'name' => 'Phụ huynh mới',
+            'gender' => Gender::Female->value,
+            'relationship' => GuardianRelationship::Mother->value,
+        ]],
         'status' => StudentStatus::Paused->value,
         'username' => 'hs_khac',
     ])
@@ -150,6 +163,30 @@ test('the student list is paginated and searchable across profile and guardian',
     $this->getJson('/api/v1/students?q=Ng%C3%B4%20V%C4%83n')->assertOk()->assertJsonPath('meta.total', 1);
     $this->getJson('/api/v1/students?q=hs_chau')->assertOk()->assertJsonPath('meta.total', 1);
 });
+
+test('the student list matches a name typed without its tone marks', function (string $term, int $expected) {
+    $student = StudentProfile::factory()->create([
+        'profile_id' => Profile::factory()->forRole(UserRole::Student)->create(['full_name' => 'Ngô Bảo Châu'])->id,
+    ]);
+    $student->guardianLinks()->create([
+        'guardian_profile_id' => Profile::factory()->create(['full_name' => 'Nguyễn Văn Hùng'])->id,
+        'relationship' => GuardianRelationship::Father,
+        'is_primary' => true,
+    ]);
+    StudentProfile::factory()->create([
+        'profile_id' => Profile::factory()->forRole(UserRole::Student)->create(['full_name' => 'Đỗ Thị Ước'])->id,
+    ]);
+
+    $this->getJson('/api/v1/students?q='.urlencode($term))
+        ->assertOk()
+        ->assertJsonPath('meta.total', $expected);
+})->with([
+    'the student\'s own name, unmarked' => ['Bao Chau', 1],
+    'the student\'s own name, marked' => ['Bảo Châu', 1],
+    'a guardian name, unmarked' => ['Nguyen Van Hung', 1],
+    'a letter no naive tone strip handles' => ['Do Thi Uoc', 1],
+    'a term matching nobody' => ['Khong Ai', 0],
+]);
 
 test('the student list finds a student by the id printed as their code', function () {
     $target = StudentProfile::factory()->create([

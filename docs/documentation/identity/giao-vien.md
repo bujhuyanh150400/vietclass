@@ -1,6 +1,6 @@
 # Quản lý giáo viên
 
-Last Verified: 2026-09-10
+Last Verified: 2026-09-14
 
 ## Tổng quan
 
@@ -46,6 +46,8 @@ Trường tùy chọn khi tạo và sửa: `address`, `color_identification`. Kh
 Giới tính: `0` Nam, `1` Nữ, `2` Khác.
 
 Danh sách nhận thêm `q` để tìm theo họ tên, số điện thoại, email hoặc tên đăng nhập; `status[]` để lọc theo trạng thái làm việc; `is_active` để lọc theo trạng thái tài khoản; cùng `page`, `per_page`, `sort`, `direction`. Cột sắp xếp cho phép: `id`, `full_name`, `joined_at`, `created_at`.
+
+Từ khóa tìm kiếm **bỏ dấu tiếng Việt và không phân biệt hoa thường**: gõ `Hung` tìm ra `Hùng`, gõ `Do Thi Uoc` tìm ra `Đỗ Thị Ước`. Gõ đầy đủ dấu vẫn tìm được như thường. Ký tự `%` và `_` gõ vào được hiểu là ký tự thật, không phải ký tự đại diện.
 
 ## Kết quả mong đợi
 

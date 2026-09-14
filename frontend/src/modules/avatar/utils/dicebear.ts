@@ -1,17 +1,19 @@
 import { Avatar, Style, type StyleOptions } from "@dicebear/core";
-import loreleiDefinition from "@dicebear/styles/lorelei.json";
-import notionistsDefinition from "@dicebear/styles/notionists.json";
-import thumbsDefinition from "@dicebear/styles/thumbs.json";
+import adventurerDefinition from "@dicebear/styles/adventurer.json";
 
 import type { DiceBearAvatar, DiceBearStyle } from "../types/avatar";
 
 const STYLES: Record<DiceBearStyle, Style> = {
-  lorelei: new Style(loreleiDefinition),
-  notionists: new Style(notionistsDefinition),
-  thumbs: new Style(thumbsDefinition),
+  adventurer: new Style(adventurerDefinition),
 };
 
-/** Renders one persisted local definition as an image-safe data URI, or nothing when it is invalid. */
+/**
+ * Renders one persisted local definition as an image-safe data URI, or nothing when
+ * it is invalid.
+ *
+ * A configuration naming a style this build does not carry lands in the catch and
+ * renders as nothing, which `UserAvatar` shows as the person's initials.
+ */
 export function renderDiceBear(config: DiceBearAvatar): string | null {
   try {
     const options: StyleOptions = { seed: config.seed, ...config.options };

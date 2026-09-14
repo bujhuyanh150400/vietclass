@@ -1,77 +1,85 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
-import { useFileList, useUploadFile, type FilePondProcess } from "@/modules/files";
-import { useCurrentUser } from "@/modules/identity";
 
 import { AvatarEditor } from "../components/avatar-editor";
-import { useUpdateProfileAvatar } from "../hooks/use-avatar";
-import { avatarSelectionSchema } from "../schemas/avatar-schema";
-import type { AvatarSelection, AvatarValue } from "../types/avatar";
+import { AvatarDraftError, useSaveProfileAvatar } from "../hooks/use-save-profile-avatar";
+import type { AvatarDraft, AvatarValue } from "../types/avatar";
 
-/** Converts a resource avatar into the direct update payload without carrying a content route back to the API. */
-function selectionFromValue(value: AvatarValue): AvatarSelection {
-  if (value === null) return { type: "none" };
-  if (value.type === "file") return { type: "file", file_id: value.file_id };
-  return value;
-}
-
-/** Reduces API and transport failures to one display-safe sentence. */
+/** Reduces refusals, API failures, and transport failures to one display-safe sentence. */
 function messageFor(error: unknown): string {
+  if (error instanceof AvatarDraftError) {
+    return error.message;
+  }
+
   return isApiClientError(error) ? error.message : "Không thể cập nhật ảnh đại diện. Vui lòng thử lại.";
 }
 
-/** Owns the profile-scoped image library, upload flow, avatar update, and cache refreshes. */
+/**
+ * Owns the save behind the standalone profile avatar editor.
+ *
+ * The two steps a stored avatar takes — upload the image, then point the profile at
+ * it — live in `useSaveProfileAvatar`, because the student edit screen persists the
+ * avatar the same way from inside its own form.
+ *
+ * `current` is held in state rather than read from the prop, because the prop is the
+ * page's own server data and the save that changes it is this component's: keeping the
+ * result is what makes the portrait show the new face before the page refetches.
+ */
 export function ProfileAvatarEditorContainer({
   profileId,
   ownerUserId,
   initialAvatar,
+  name = "Ảnh đại diện",
 }: {
   profileId: number;
   ownerUserId?: number | null;
   initialAvatar: AvatarValue;
+  /** Whose avatar this is, for the initials shown when there is no picture. */
+  name?: string;
 }) {
-  const currentUser = useCurrentUser(true);
-  const isAdmin = currentUser.data?.role === 0;
-  const canSelectFile = typeof ownerUserId === "number" && ownerUserId > 0;
-  const files = useFileList({ category: "image", trash: "active", per_page: 100, owner_user_id: isAdmin ? ownerUserId ?? undefined : undefined }, canSelectFile && currentUser.isSuccess);
-  const upload = useUploadFile();
-  const update = useUpdateProfileAvatar();
+  // A stored file belongs to a user. Without one there is nothing to own an upload,
+  // so the picker drops its upload tab and offers only a generated face.
+  const canUpload = typeof ownerUserId === "number" && ownerUserId > 0;
+  const avatar = useSaveProfileAvatar();
   const showToast = useToast();
-  const [selection, setSelection] = useState<AvatarSelection>(() => selectionFromValue(initialAvatar));
+  const [current, setCurrent] = useState<AvatarValue>(initialAvatar);
+  const [draft, setDraft] = useState<AvatarDraft | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  /** Uploads one constrained FilePond image then selects the durable library item without saving the avatar yet. */
-  const processUpload = useCallback<FilePondProcess>((file, handlers) => {
-    if (!canSelectFile) {
-      handlers.error("Hồ sơ này chưa có tài khoản để sở hữu tệp.");
-      return;
-    }
-    const controller = new AbortController();
-    void upload.mutateAsync({ request: { file, owner_user_id: isAdmin ? ownerUserId ?? undefined : undefined }, onProgress: handlers.progress, signal: controller.signal })
-      .then((uploaded) => { setSelection({ type: "file", file_id: uploaded.id }); handlers.load(String(uploaded.id)); showToast({ title: "Đã tải ảnh lên. Hãy lưu để áp dụng." }); })
-      .catch((reason: unknown) => handlers.error(messageFor(reason)));
-    return { abort: () => { controller.abort(); handlers.abort(); } };
-  }, [canSelectFile, isAdmin, ownerUserId, showToast, upload]);
-
-  /** Validates and persists the current direct union, keeping an uploaded library file if selection fails. */
+  /** Persists the pending choice and keeps whatever the profile now holds. */
   async function saveAvatar(): Promise<void> {
-    setError(null);
-    const parsed = avatarSelectionSchema.safeParse(selection);
-    if (!parsed.success) {
-      setError("Cấu hình ảnh đại diện không hợp lệ.");
+    if (draft === null) {
       return;
     }
+
+    setError(null);
+
     try {
-      await update.mutateAsync({ profileId, avatar: parsed.data });
+      setCurrent(await avatar.save({ profileId, ownerUserId, draft }));
+      setDraft(null);
       showToast({ title: "Đã cập nhật ảnh đại diện." });
     } catch (reason) {
       setError(messageFor(reason));
     }
   }
 
-  return <AvatarEditor value={selection} availableFiles={files.data?.data ?? []} canSelectFile={canSelectFile} onChange={setSelection} onUpload={processUpload} onSave={() => { void saveAvatar(); }} isPending={upload.isPending || update.isPending} error={error ?? (files.isError ? messageFor(files.error) : null)} />;
+  return (
+    <AvatarEditor
+      current={current}
+      name={name}
+      draft={draft}
+      canUpload={canUpload}
+      onDraftChange={(next) => {
+        setError(null);
+        setDraft(next);
+      }}
+      onSave={() => void saveAvatar()}
+      isPending={avatar.isPending}
+      error={error}
+    />
+  );
 }

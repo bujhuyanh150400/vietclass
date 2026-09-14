@@ -40,14 +40,13 @@ final class TeacherRepository extends BaseRepository
                 fn (Builder $builder): Builder => $builder->whereHas(
                     'profile',
                     fn (Builder $profile): Builder => $profile->where(
-                        fn (Builder $scoped): Builder => $scoped
-                            ->where('full_name', 'ilike', $query->searchLike())
-                            ->orWhere('phone', 'ilike', $query->searchLike())
-                            ->orWhere('email', 'ilike', $query->searchLike())
-                            ->orWhereHas(
+                        function (Builder $scoped) use ($query): void {
+                            $this->whereAnyUnaccentedLike($scoped, ['full_name', 'phone', 'email'], (string) $query->searchLike());
+                            $scoped->orWhereHas(
                                 'user',
-                                fn (Builder $user): Builder => $user->where('username', 'ilike', $query->searchLike()),
-                            ),
+                                fn (Builder $user): Builder => $this->whereAnyUnaccentedLike($user, ['username'], (string) $query->searchLike()),
+                            );
+                        },
                     ),
                 ),
             )
@@ -83,7 +82,7 @@ final class TeacherRepository extends BaseRepository
                 $query->hasSearch(),
                 fn (Builder $builder): Builder => $builder->whereHas(
                     'profile',
-                    fn (Builder $profile): Builder => $profile->where('full_name', 'ilike', $query->searchLike()),
+                    fn (Builder $profile): Builder => $this->whereAnyUnaccentedLike($profile, ['full_name'], (string) $query->searchLike()),
                 ),
             )
             ->orderBy(

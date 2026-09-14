@@ -24,13 +24,16 @@ enum IdentityError: string implements ErrorDeclarationEnum
     /** The authenticated account may not update this profile. */
     case ProfileForbidden = 'IDENTITY-006';
 
+    /** No profile eligible to act as a guardian carries the given identifier. */
+    case GuardianNotFound = 'IDENTITY-007';
+
     /**
      * Return the HTTP status this business failure reaches the API boundary with.
      */
     public function httpStatus(): int
     {
         return match ($this) {
-            self::TeacherNotFound, self::StudentNotFound, self::UserNotFound, self::ProfileNotFound => 404,
+            self::TeacherNotFound, self::StudentNotFound, self::UserNotFound, self::ProfileNotFound, self::GuardianNotFound => 404,
             self::AccountNotProvisioned => 409,
             self::ProfileForbidden => 403,
         };

@@ -35,6 +35,16 @@ export type Option = {
   label: string;
 };
 
+/**
+ * One guardian already on file, as the guardian picker endpoint reports it.
+ *
+ * It carries the phone number on top of the shared option shape because two
+ * guardians routinely share a name and the number is what tells them apart.
+ */
+export type GuardianOption = Option & {
+  phone: string | null;
+};
+
 /** A subject classes can be taught in. */
 export type Subject = {
   id: number;

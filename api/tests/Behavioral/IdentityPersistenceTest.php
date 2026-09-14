@@ -100,5 +100,8 @@ test('identity enums keep the stored integer contract', function () {
         ->and(UserRole::Guardian->value)->toBe(3)
         ->and(TeacherStatus::values())->toBe([0, 1])
         ->and(GuardianRelationship::values())->toBe([0, 1, 2])
-        ->and(GuardianRelationship::Mother->value)->toBe(1);
+        ->and(GuardianRelationship::Mother->value)->toBe(1)
+        // Renamed from `Other` at the same stored value, so no row had to be migrated
+        // when the third choice stopped being a catch-all and became the guardian role.
+        ->and(GuardianRelationship::Guardian->value)->toBe(2);
 });

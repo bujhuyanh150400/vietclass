@@ -142,7 +142,7 @@ test('deleting a student profile removes its guardian links but keeps the guardi
     StudentGuardian::query()->create([
         'student_profile_id' => $student->profile_id,
         'guardian_profile_id' => $guardian->id,
-        'relationship' => GuardianRelationship::Other,
+        'relationship' => GuardianRelationship::Guardian,
         'is_primary' => true,
     ]);
 

@@ -48,4 +48,32 @@ abstract class BaseRepository
 
         return DB::table($table);
     }
+
+    /**
+     * Match a typed search term against any of several columns, ignoring both letter
+     * case and Vietnamese tone marks.
+     *
+     * A reader searching for "Nguyễn Văn Hùng" types "Hung", so folding only the stored
+     * value is not enough — both sides go through `unaccent()`, which also lets a term
+     * typed *with* its marks keep matching. The dictionary leaves `%` and `_` alone, so
+     * the wildcard escaping `ListQuery::searchLike()` applied survives it.
+     *
+     * Every search in the application matches a term against a set of columns, so the
+     * whole `OR` group is built here rather than one column at a time: it keeps the
+     * group parenthesised, which is what stops a later `AND` filter from binding to the
+     * last `OR` branch alone.
+     *
+     * Column names are interpolated into raw SQL, so they must be literals the caller
+     * writes, never values that reached the application from a request.
+     *
+     * @param  list<string>  $columns
+     */
+    protected function whereAnyUnaccentedLike(Builder $builder, array $columns, string $pattern): Builder
+    {
+        return $builder->where(function (Builder $match) use ($columns, $pattern): void {
+            foreach ($columns as $column) {
+                $match->orWhereRaw("unaccent({$column}) ilike unaccent(?)", [$pattern]);
+            }
+        });
+    }
 }

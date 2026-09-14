@@ -1,6 +1,6 @@
 # Quản lý phòng học
 
-Last Verified: 2026-09-01
+Last Verified: 2026-09-14
 Related Task: `.tasks/schedule-phase-1-rooms.md`
 
 ## Tổng quan
@@ -47,6 +47,8 @@ Mọi endpoint cần header `Authorization: Bearer <token>`.
 | Xóa | `DELETE /api/v1/rooms/{id}` |
 
 Danh sách nhận `q` để tìm theo tên, `status` để lọc theo một trạng thái, và `page`, `per_page`, `sort`, `direction` để phân trang và sắp xếp. Cột sắp xếp cho phép: `id`, `name`, `capacity`, `created_at`.
+
+Từ khóa tìm kiếm **bỏ dấu tiếng Việt và không phân biệt hoa thường**: gõ `Hung` tìm ra `Hùng`, gõ `Do Thi Uoc` tìm ra `Đỗ Thị Ước`. Gõ đầy đủ dấu vẫn tìm được như thường. Ký tự `%` và `_` gõ vào được hiểu là ký tự thật, không phải ký tự đại diện.
 
 ## Kết quả mong đợi
 

@@ -37,10 +37,10 @@ final class ClassRepository extends BaseRepository
         return $this->withListRelations($this->modelQuery())
             ->when(
                 $query->hasSearch(),
-                fn (Builder $builder): Builder => $builder->where(
-                    fn (Builder $scoped): Builder => $scoped
-                        ->where('code', 'ilike', $query->searchLike())
-                        ->orWhere('name', 'ilike', $query->searchLike()),
+                fn (Builder $builder): Builder => $this->whereAnyUnaccentedLike(
+                    $builder,
+                    ['code', 'name'],
+                    (string) $query->searchLike(),
                 ),
             )
             ->when(
@@ -77,10 +77,10 @@ final class ClassRepository extends BaseRepository
             ->when($subjectId !== null, fn (Builder $builder): Builder => $builder->where('subject_id', $subjectId))
             ->when(
                 $query->hasSearch(),
-                fn (Builder $builder): Builder => $builder->where(
-                    fn (Builder $scoped): Builder => $scoped
-                        ->where('code', 'ilike', $query->searchLike())
-                        ->orWhere('name', 'ilike', $query->searchLike()),
+                fn (Builder $builder): Builder => $this->whereAnyUnaccentedLike(
+                    $builder,
+                    ['code', 'name'],
+                    (string) $query->searchLike(),
                 ),
             )
             ->orderBy('code')

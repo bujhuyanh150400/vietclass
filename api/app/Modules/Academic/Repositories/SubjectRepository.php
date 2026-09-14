@@ -35,7 +35,7 @@ final class SubjectRepository extends BaseRepository
         return $this->modelQuery()
             ->when(
                 $query->hasSearch(),
-                fn (Builder $builder): Builder => $builder->where('name', 'ilike', $query->searchLike()),
+                fn (Builder $builder): Builder => $this->whereAnyUnaccentedLike($builder, ['name'], (string) $query->searchLike()),
             )
             ->when(
                 $query->hasFilter('is_active'),
@@ -60,7 +60,7 @@ final class SubjectRepository extends BaseRepository
             ->where('is_active', true)
             ->when(
                 $query->hasSearch(),
-                fn (Builder $builder): Builder => $builder->where('name', 'ilike', $query->searchLike()),
+                fn (Builder $builder): Builder => $this->whereAnyUnaccentedLike($builder, ['name'], (string) $query->searchLike()),
             )
             ->orderBy('name')
             ->limit($query->perPage)

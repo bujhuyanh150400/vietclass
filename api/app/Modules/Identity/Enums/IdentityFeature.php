@@ -43,6 +43,9 @@ enum IdentityFeature: string implements FeatureEnum
     /** Lock or unlock a student's login account. */
     case StudentToggleActive = 'student.toggle_active';
 
+    /** Search the guardians already on file, so a student can be linked to one. */
+    case GuardianList = 'guardian.list';
+
     /** Change a profile's independently persisted avatar. */
     case ProfileAvatarUpdate = 'profile.avatar_update';
 
@@ -62,6 +65,7 @@ enum IdentityFeature: string implements FeatureEnum
             self::StudentCreate => 'Tạo hồ sơ học sinh',
             self::StudentUpdate => 'Sửa hồ sơ học sinh',
             self::StudentToggleActive => 'Khóa hoặc mở tài khoản học sinh',
+            self::GuardianList => 'Xem danh sách phụ huynh',
             self::ProfileAvatarUpdate => 'Đổi ảnh đại diện hồ sơ',
         };
     }
