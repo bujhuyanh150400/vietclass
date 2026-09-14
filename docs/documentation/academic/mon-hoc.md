@@ -15,13 +15,16 @@ Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/a
 
 ## Quy tắc nghiệp vụ
 
-- Tên môn học là duy nhất trong toàn hệ thống, tối đa 50 ký tự.
+- Tên môn học là duy nhất trong toàn hệ thống, tối đa 50 ký tự; mô tả tối đa 500 ký tự.
+- Mỗi môn phải chọn ít nhất một khối áp dụng từ Tiền tiểu học (`0`) đến Lớp 12 (`12`).
 - Môn học mới mặc định ở trạng thái đang hoạt động.
 - Chỉ môn học đang hoạt động mới xuất hiện trong danh sách chọn khi tạo hoặc sửa lớp.
 - Không khóa được môn học khi còn lớp **đang hoạt động** dạy môn đó. Lớp đã kết thúc không cản trở việc khóa, vì khóa môn sau khi lớp cuối cùng kết thúc chính là việc nên làm.
 - Mở khóa môn học luôn được phép.
 - Không xóa được môn học khi còn **bất kỳ** lớp nào tham chiếu, kể cả lớp đã kết thúc.
-- Sửa môn học không đổi được trạng thái khóa. Việc khóa và mở có endpoint riêng vì nó mang quy tắc về các lớp đang dùng môn.
+- Không thể bỏ một khối nếu còn lớp **đang hoạt động** dùng môn ở khối đó. Lớp đã kết thúc vẫn được giữ như lịch sử.
+- Tạo hoặc sửa cặp môn/khối của lớp, cũng như mở lại lớp đã kết thúc, chỉ thành công khi môn đang hoạt động và áp dụng cho khối đó.
+- Sửa môn học có thể đổi trạng thái; endpoint trạng thái riêng vẫn được giữ cho thao tác nhanh tại danh sách.
 
 ## Hướng dẫn thao tác
 
@@ -31,20 +34,20 @@ Mọi endpoint nằm dưới tiền tố `/api/v1` và cần header `Authorizati
 | --- | --- |
 | Xem danh sách | `GET /subjects` |
 | Lấy danh sách chọn | `GET /subjects/options` |
-| Tạo | `POST /subjects` với `name`, tùy chọn `description`, `is_active` |
+| Tạo | `POST /subjects` với `name`, `grade_levels`, tùy chọn `description`, `is_active` |
 | Xem chi tiết | `GET /subjects/{id}` |
-| Sửa | `PUT /subjects/{id}` với `name`, tùy chọn `description` |
+| Sửa | `PUT /subjects/{id}` với `name`, `grade_levels`, `is_active`, tùy chọn `description` |
 | Khóa hoặc mở | `PATCH /subjects/{id}/active` với `is_active` |
 | Xóa | `DELETE /subjects/{id}` |
 
-Danh sách nhận thêm `q` để tìm theo tên, `is_active` để lọc theo trạng thái, cùng `page`, `per_page`, `sort`, `direction`. Cột sắp xếp cho phép: `id`, `name`, `created_at`.
+Danh sách nhận thêm `q` để tìm theo tên, `is_active` để lọc theo trạng thái, `grade_level` để lọc một khối, cùng `page`, `per_page`, `sort`, `direction`. Cột sắp xếp cho phép: `id`, `name`, `created_at`, `active_classes_count`.
 
 Từ khóa tìm kiếm **bỏ dấu tiếng Việt và không phân biệt hoa thường**: gõ `Hung` tìm ra `Hùng`, gõ `Do Thi Uoc` tìm ra `Đỗ Thị Ước`. Gõ đầy đủ dấu vẫn tìm được như thường. Ký tự `%` và `_` gõ vào được hiểu là ký tự thật, không phải ký tự đại diện.
 
 ## Kết quả mong đợi
 
 - Danh sách trả về envelope `data` kèm `meta` gồm `current_page`, `per_page`, `total`, `last_page`.
-- Mỗi môn học trong danh sách kèm `active_classes_count` — số lớp đang hoạt động dùng môn đó, tức là con số quyết định việc khóa có được phép hay không.
+- Mỗi môn học trong danh sách kèm `grade_levels` và `active_classes_count` — số lớp đang hoạt động dùng môn đó, tức là con số quyết định việc khóa có được phép hay không.
 - Tạo thành công trả `201` cùng bản ghi vừa tạo.
 - Khóa, mở và sửa trả `200` cùng bản ghi sau khi cập nhật.
 - Xóa thành công trả `204` và không còn bản ghi.

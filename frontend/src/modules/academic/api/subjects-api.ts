@@ -1,7 +1,7 @@
 import { browserRequest, browserRequestList } from "@/lib/api/browser-request";
 import type { Page } from "@/lib/api/contracts";
 
-import type { Option, Subject } from "../types/academic";
+import type { GradeLevel, Option, Subject } from "../types/academic";
 import type { SubjectRequest } from "../types/academic-requests";
 
 /** Query parameters accepted by the subject list endpoint. */
@@ -9,9 +9,10 @@ export type SubjectListParams = {
   q?: string;
   page?: number;
   per_page?: number;
-  sort?: "id" | "name" | "created_at";
+  sort?: "id" | "name" | "created_at" | "active_classes_count";
   direction?: "asc" | "desc";
   is_active?: boolean | 0 | 1;
+  grade_level?: GradeLevel;
 };
 
 /** Query parameters accepted by the subject option endpoint. */
@@ -40,7 +41,7 @@ export async function createSubject(body: SubjectRequest): Promise<Subject> {
   return browserRequest<Subject>("/api/v1/subjects", { method: "POST", body });
 }
 
-/** Changes a subject's name or description. */
+/** Changes a subject's details, applicability, and active status. */
 export async function updateSubject(id: number, body: SubjectRequest): Promise<Subject> {
   return browserRequest<Subject>(`/api/v1/subjects/${id}`, { method: "PUT", body });
 }

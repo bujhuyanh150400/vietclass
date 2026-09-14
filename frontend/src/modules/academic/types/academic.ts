@@ -50,6 +50,7 @@ export type Subject = {
   id: number;
   name: string;
   description: string | null;
+  grade_levels: GradeLevel[];
   is_active: boolean;
   active_classes_count?: number;
   created_at: string | null;

@@ -6,6 +6,7 @@ use App\Core\Data\ListQuery;
 use App\Core\Repositories\BaseRepository;
 use App\Modules\Academic\Enums\ClassStatus;
 use App\Modules\Academic\Models\Subject;
+use App\Modules\Identity\Enums\GradeLevel;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -40,6 +41,13 @@ final class SubjectRepository extends BaseRepository
             ->when(
                 $query->hasFilter('is_active'),
                 fn (Builder $builder): Builder => $builder->where('is_active', $query->filter('is_active')),
+            )
+            ->when(
+                $query->hasFilter('grade_level'),
+                fn (Builder $builder): Builder => $builder->whereJsonContains(
+                    'grade_levels',
+                    [(int) $query->filter('grade_level')],
+                ),
             )
             ->withCount([
                 'classes as active_classes_count' => fn (Builder $builder): Builder => $builder
@@ -78,6 +86,32 @@ final class SubjectRepository extends BaseRepository
                     ->where('status', ClassStatus::Active),
             ])
             ->find($subjectId);
+    }
+
+    /**
+     * Find and lock one subject while a related class or applicability change is checked.
+     */
+    public function findByIdForUpdate(int $subjectId): ?Subject
+    {
+        return $this->modelQuery()->lockForUpdate()->find($subjectId);
+    }
+
+    /**
+     * Return the running class grades a proposed subject configuration would exclude.
+     *
+     * @param  list<int>  $gradeLevels
+     * @return list<int>
+     */
+    public function activeClassGradesOutside(Subject $subject, array $gradeLevels): array
+    {
+        return $subject->classes()
+            ->where('status', ClassStatus::Active)
+            ->whereNotIn('grade_level', $gradeLevels)
+            ->pluck('grade_level')
+            ->map(static fn (mixed $gradeLevel): int => $gradeLevel instanceof GradeLevel
+                ? $gradeLevel->value
+                : (int) $gradeLevel)
+            ->all();
     }
 
     /**

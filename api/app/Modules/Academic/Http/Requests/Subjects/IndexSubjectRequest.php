@@ -3,7 +3,9 @@
 namespace App\Modules\Academic\Http\Requests\Subjects;
 
 use App\Core\Http\Requests\Concerns\PaginatesQuery;
+use App\Modules\Identity\Enums\GradeLevel;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class IndexSubjectRequest extends FormRequest
 {
@@ -27,6 +29,7 @@ final class IndexSubjectRequest extends FormRequest
         return [
             ...$this->paginationRules(),
             'is_active' => ['sometimes', 'boolean'],
+            'grade_level' => ['sometimes', 'integer', Rule::in(GradeLevel::values())],
         ];
     }
 
@@ -37,7 +40,7 @@ final class IndexSubjectRequest extends FormRequest
      */
     protected function sortableColumns(): array
     {
-        return ['id', 'name', 'created_at'];
+        return ['id', 'name', 'created_at', 'active_classes_count'];
     }
 
     /**
@@ -47,6 +50,6 @@ final class IndexSubjectRequest extends FormRequest
      */
     protected function filterKeys(): array
     {
-        return ['is_active'];
+        return ['is_active', 'grade_level'];
     }
 }

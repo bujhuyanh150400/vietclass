@@ -163,7 +163,8 @@ Academic-process data, in dependency order: subject, class, enrolment, plus the 
 | --- | --- | --- |
 | `id` | BIGINT auto-increment primary key | Subject identifier. |
 | `name` | VARCHAR(50), unique | The fork enforced this only in its service layer. |
-| `description` | TEXT, nullable | Free-text description. |
+| `description` | TEXT, nullable | Free-text description, limited to 500 characters by the API. |
+| `grade_levels` | JSONB, default `'[]'`, GIN (`jsonb_path_ops`) index | Explicit exception to the normal JSONB rule: this is a validated, sorted numeric array of the supported grades `0`–`12`, and the GIN index serves the subject-list grade filter. |
 | `is_active` | BOOLEAN, default `true`, indexed | An inactive subject cannot be assigned to a new class. |
 | `created_at`, `updated_at` | timestamps | Record lifecycle. |
 

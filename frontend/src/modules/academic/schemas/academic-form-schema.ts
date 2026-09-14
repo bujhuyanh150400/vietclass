@@ -66,8 +66,15 @@ export const subjectFormSchema = z.object({
     .max(50, { error: "Tên môn học không được vượt quá 50 ký tự." }),
   description: z
     .string()
-    .max(2000, { error: "Mô tả không được vượt quá 2000 ký tự." })
+    .max(500, { error: "Mô tả không được vượt quá 500 ký tự." })
     .default(""),
+  grade_levels: z
+    .array(gradeLevel)
+    .min(1, { error: "Vui lòng chọn ít nhất một khối áp dụng." })
+    .refine((values) => new Set(values).size === values.length, {
+      error: "Mỗi khối chỉ được chọn một lần.",
+    }),
+  is_active: z.boolean(),
 });
 
 export type SubjectFormInput = z.input<typeof subjectFormSchema>;

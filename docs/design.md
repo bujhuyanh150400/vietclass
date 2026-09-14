@@ -398,7 +398,7 @@ Ranh giới: `EmptyState` dành cho ô bảng hoặc lưới, không phải toà
 - Không có chế độ tối, và variant `dark` bất hoạt theo thiết kế.
 - Khối chú thích đầu `frontend/src/modules/identity/styles/login.css` nói rằng nó vào bundle qua `@import` trong `src/styles.css`. Điều đó không còn đúng: `styles.css` không import nó, và nó được `login-view.tsx` import. Chú thích cần sửa; mục 6 mô tả hành vi hiện tại đã xác minh.
 - Môn học, Phòng học, Lớp học, Giáo viên, sổ lớp và các màn biểu mẫu không có tiêu đề riêng — `<h1>` của chúng là nhãn ở topbar (mục 8). Điều đó đúng về khả năng tiếp cận nhưng có nghĩa là tiêu đề của những màn này chỉ cao `15px` ở topbar, không có mô tả và không có chỗ đặt hành động chính. Màn nào được redesign tiếp thì nhận page heading riêng ở `<h2>` theo mẫu mục 7.2. Chỉ nên hạ topbar xuống `<span>` để mỗi màn tự sở hữu `<h1>` khi **mọi** màn đã có tiêu đề riêng; làm nửa vời một lần rồi đã phải hoàn nguyên.
-- Chỉ màn danh sách học sinh dùng bộ hình học ở mục 2.5. Môn học, Phòng học, Lớp học, Giáo viên và sổ lớp vẫn dùng `DataTable` + `DataTableToolbar`, còn Tệp dùng toolbar riêng của module files — tất cả giữ radius của thư viện thành phần. Vì vậy hai ngôn ngữ thị giác đang cùng tồn tại trong ứng dụng.
+- Danh sách học sinh và Môn học dùng bộ hình học ở mục 2.5: heading cấp trang, `ListSheet`, toolbar điều khiển và pager đánh số. Các màn Phòng học, Lớp học, Giáo viên và sổ lớp vẫn dùng `DataTable` + `DataTableToolbar`, còn Tệp dùng toolbar riêng của module files — vì vậy hai ngôn ngữ thị giác vẫn cùng tồn tại ở những màn chưa redesign.
 
 ## 15. Tham chiếu
 

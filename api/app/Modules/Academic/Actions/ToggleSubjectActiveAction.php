@@ -5,9 +5,10 @@ namespace App\Modules\Academic\Actions;
 use App\Core\Data\ActionResult;
 use App\Core\Exceptions\ActionError;
 use App\Modules\Academic\Enums\AcademicError;
-use App\Modules\Academic\Enums\ClassStatus;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Academic\Repositories\SubjectRepository;
+use App\Modules\Academic\Services\SubjectUsageGuard;
+use Illuminate\Support\Facades\DB;
 
 final class ToggleSubjectActiveAction
 {
@@ -16,6 +17,7 @@ final class ToggleSubjectActiveAction
      */
     public function __construct(
         private readonly SubjectRepository $subjects,
+        private readonly SubjectUsageGuard $usage,
     ) {}
 
     /**
@@ -31,29 +33,26 @@ final class ToggleSubjectActiveAction
     public function handle(int $subjectId, bool $isActive): ActionResult
     {
         try {
-            $subject = $this->subjects->findById($subjectId);
+            $subject = DB::transaction(function () use ($subjectId, $isActive): Subject {
+                $subject = $this->subjects->findByIdForUpdate($subjectId);
 
-            if (! $subject instanceof Subject) {
-                throw new ActionError(
-                    message: 'Không tìm thấy môn học.',
-                    code: AcademicError::SubjectNotFound,
-                );
-            }
-
-            if (! $isActive) {
-                $activeClasses = $this->subjects->countClasses($subject, ClassStatus::Active);
-
-                if ($activeClasses > 0) {
+                if (! $subject instanceof Subject) {
                     throw new ActionError(
-                        message: "Môn học đang được dùng bởi {$activeClasses} lớp đang hoạt động, không thể khóa.",
-                        code: AcademicError::SubjectInUse,
+                        message: 'Không tìm thấy môn học.',
+                        code: AcademicError::SubjectNotFound,
                     );
                 }
-            }
 
-            return ActionResult::success(
-                $this->subjects->update($subject, ['is_active' => $isActive]),
-            );
+                $this->usage->ensureCanUpdate(
+                    subject: $subject,
+                    gradeLevels: array_map('intval', $subject->grade_levels ?? []),
+                    isActive: $isActive,
+                );
+
+                return $this->subjects->update($subject, ['is_active' => $isActive]);
+            });
+
+            return ActionResult::success($subject);
         } catch (ActionError $error) {
             return ActionResult::error(
                 error: $error->code(),

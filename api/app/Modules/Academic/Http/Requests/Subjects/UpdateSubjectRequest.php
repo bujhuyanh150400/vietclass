@@ -2,6 +2,7 @@
 
 namespace App\Modules\Academic\Http\Requests\Subjects;
 
+use App\Modules\Identity\Enums\GradeLevel;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -16,8 +17,7 @@ final class UpdateSubjectRequest extends FormRequest
     }
 
     /**
-     * Define the validated subject payload, excluding the locked state, which has its
-     * own endpoint because it carries a rule about the classes using the subject.
+     * Define the validated subject payload sent by the editing form.
      *
      * @return array<string, array<int, mixed>>
      */
@@ -30,7 +30,10 @@ final class UpdateSubjectRequest extends FormRequest
                 'max:50',
                 Rule::unique('subjects', 'name')->ignore($this->route('subject')),
             ],
-            'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'grade_levels' => ['required', 'array', 'min:1'],
+            'grade_levels.*' => ['required', 'integer', 'distinct', Rule::in(GradeLevel::values())],
+            'is_active' => ['required', 'boolean'],
         ];
     }
 

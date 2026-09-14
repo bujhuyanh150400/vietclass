@@ -7,6 +7,8 @@ use App\Core\Exceptions\ActionError;
 use App\Modules\Academic\Enums\AcademicError;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Academic\Repositories\SubjectRepository;
+use App\Modules\Academic\Services\SubjectUsageGuard;
+use Illuminate\Support\Facades\DB;
 
 final class UpdateSubjectAction
 {
@@ -15,31 +17,44 @@ final class UpdateSubjectAction
      */
     public function __construct(
         private readonly SubjectRepository $subjects,
+        private readonly SubjectUsageGuard $usage,
     ) {}
 
     /**
-     * Change a subject's name or description.
+     * Change subject details, its applicability list, and its active status atomically.
      *
-     * Locking and unlocking is deliberately not part of this operation: it carries a
-     * rule about the classes using the subject, and that rule lives in exactly one
-     * place, ToggleSubjectActiveAction.
-     *
-     * @param  array{name: string, description?: string|null}  $attributes
+     * @param  array{name: string, description?: string|null, grade_levels: list<int>, is_active: bool}  $attributes
      * @return ActionResult<Subject, AcademicError>
      */
     public function handle(int $subjectId, array $attributes): ActionResult
     {
         try {
-            $subject = $this->subjects->findById($subjectId);
+            $subject = DB::transaction(function () use ($subjectId, $attributes): Subject {
+                $subject = $this->subjects->findByIdForUpdate($subjectId);
 
-            if (! $subject instanceof Subject) {
-                throw new ActionError(
-                    message: 'Không tìm thấy môn học.',
-                    code: AcademicError::SubjectNotFound,
+                if (! $subject instanceof Subject) {
+                    throw new ActionError(
+                        message: 'Không tìm thấy môn học.',
+                        code: AcademicError::SubjectNotFound,
+                    );
+                }
+
+                $gradeLevels = array_values(array_unique(array_map('intval', $attributes['grade_levels'])));
+                sort($gradeLevels);
+
+                $this->usage->ensureCanUpdate(
+                    subject: $subject,
+                    gradeLevels: $gradeLevels,
+                    isActive: (bool) $attributes['is_active'],
                 );
-            }
 
-            return ActionResult::success($this->subjects->update($subject, $attributes));
+                return $this->subjects->update($subject, [
+                    ...$attributes,
+                    'grade_levels' => $gradeLevels,
+                ]);
+            });
+
+            return ActionResult::success($subject);
         } catch (ActionError $error) {
             return ActionResult::error(
                 error: $error->code(),

@@ -73,6 +73,12 @@ enum AcademicError: string implements ErrorDeclarationEnum
     /** The room is unavailable and cannot be assigned to a new schedule. */
     case RoomInactive = 'ACADEMIC-020';
 
+    /** Active classes still use grades the requested subject configuration removes. */
+    case SubjectGradeInUse = 'ACADEMIC-021';
+
+    /** A class grade is outside the selected subject's applicability range. */
+    case SubjectGradeUnavailable = 'ACADEMIC-022';
+
     /**
      * Return the HTTP status this business failure reaches the API boundary with.
      */
@@ -91,7 +97,8 @@ enum AcademicError: string implements ErrorDeclarationEnum
             self::ClassFull,
             self::EnrollmentNotActive,
             self::StudentAlreadyEnrolled,
-            self::RoomInUse => 409,
+            self::RoomInUse,
+            self::SubjectGradeInUse => 409,
 
             self::SubjectInactive,
             self::TeacherInactive,
@@ -100,7 +107,8 @@ enum AcademicError: string implements ErrorDeclarationEnum
             self::LeftBeforeEnrolled,
             self::TransferSubjectMismatch,
             self::TransferTargetNotActive,
-            self::RoomInactive => 422,
+            self::RoomInactive,
+            self::SubjectGradeUnavailable => 422,
         };
     }
 }

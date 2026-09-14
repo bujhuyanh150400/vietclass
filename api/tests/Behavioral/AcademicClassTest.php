@@ -50,6 +50,19 @@ test('a class cannot be opened against a locked subject', function () {
     $this->assertDatabaseCount('classes', 0);
 });
 
+test('a class cannot be opened for a grade its subject does not apply to', function () {
+    $subject = Subject::factory()->create(['grade_levels' => [GradeLevel::Grade1->value]]);
+
+    $this->postJson('/api/v1/classes', classPayload([
+        'subject_id' => $subject->id,
+        'grade_level' => GradeLevel::Grade9->value,
+    ]))
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'Môn học này không áp dụng cho khối 9.');
+
+    $this->assertDatabaseCount('classes', 0);
+});
+
 test('a class cannot be opened under a teacher who has left', function () {
     $teacher = TeacherProfile::factory()->inactive()->create();
 
@@ -174,6 +187,26 @@ test('keeping the existing subject and teacher is allowed even once they are loc
         ->and($class->fresh()->max_students)->toBe(25);
 });
 
+test('a class cannot change to a grade its subject does not apply to', function () {
+    $subject = Subject::factory()->create(['grade_levels' => [GradeLevel::Grade1->value]]);
+    $class = SchoolClass::factory()->create([
+        'subject_id' => $subject->id,
+        'grade_level' => GradeLevel::Grade1,
+    ]);
+
+    $this->putJson("/api/v1/classes/{$class->id}", [
+        'name' => $class->name,
+        'subject_id' => $subject->id,
+        'teacher_id' => $class->teacher_id,
+        'grade_level' => GradeLevel::Grade9->value,
+        'max_students' => $class->max_students,
+    ])
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'Môn học này không áp dụng cho khối 9.');
+
+    expect($class->fresh()->grade_level)->toBe(GradeLevel::Grade1);
+});
+
 test('ending a class closes every enrolment still open and stamps the end date', function () {
     $class = SchoolClass::factory()->create();
     $open = ClassEnrollment::factory()->count(2)->create(['class_id' => $class->id]);
@@ -218,6 +251,20 @@ test('reopening a class restores the status but not the closed enrolments', func
         ->assertJsonPath('data.active_students_count', 0);
 
     expect($enrollment->fresh()->left_at)->not->toBeNull();
+});
+
+test('a class cannot reopen once its subject no longer applies to its grade', function () {
+    $subject = Subject::factory()->create(['grade_levels' => [GradeLevel::Grade1->value]]);
+    $class = SchoolClass::factory()->ended()->create([
+        'subject_id' => $subject->id,
+        'grade_level' => GradeLevel::Grade9,
+    ]);
+
+    $this->patchJson("/api/v1/classes/{$class->id}/status", ['status' => ClassStatus::Active->value])
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'Môn học này không áp dụng cho khối 9.');
+
+    expect($class->fresh()->status)->toBe(ClassStatus::Ended);
 });
 
 test('the class list reports its subject, teacher, and headcount', function () {

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Academic\Http\Requests\Subjects;
 
+use App\Modules\Identity\Enums\GradeLevel;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,7 +25,9 @@ final class StoreSubjectRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:50', Rule::unique('subjects', 'name')],
-            'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'grade_levels' => ['required', 'array', 'min:1'],
+            'grade_levels.*' => ['required', 'integer', 'distinct', Rule::in(GradeLevel::values())],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }

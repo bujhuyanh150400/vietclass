@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Modules\Academic\Models\Subject;
+use App\Modules\Identity\Enums\GradeLevel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -23,6 +24,7 @@ class SubjectFactory extends Factory
         return [
             'name' => 'Môn '.fake()->unique()->word(),
             'description' => fake()->optional()->sentence(),
+            'grade_levels' => GradeLevel::values(),
             'is_active' => true,
         ];
     }

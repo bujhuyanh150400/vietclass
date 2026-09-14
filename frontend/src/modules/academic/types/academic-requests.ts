@@ -12,6 +12,8 @@ import type {
 export type SubjectRequest = {
   name: string;
   description: string | null;
+  grade_levels: GradeLevel[];
+  is_active: boolean;
 };
 
 /** Payload accepted by the room create and update endpoints. */

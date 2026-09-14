@@ -20,6 +20,7 @@ Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/a
 - **Mã lớp và ngày khai giảng không đổi được sau khi tạo.** Gửi kèm hai trường này khi sửa thì chúng bị bỏ qua, không phải bị từ chối.
 - Lớp mới luôn ở trạng thái đang hoạt động.
 - Chỉ mở được lớp với môn học đang hoạt động và giáo viên đang làm việc.
+- Khối của lớp phải nằm trong các khối áp dụng của môn học. Quy tắc này cũng được kiểm tra khi đổi môn, đổi khối hoặc mở lại lớp đã kết thúc.
 - Đổi sang môn khác hoặc giáo viên khác cũng phải chọn môn đang hoạt động và giáo viên đang làm việc. Giữ nguyên môn và giáo viên hiện tại thì luôn được, kể cả khi môn đã bị khóa hoặc giáo viên đã nghỉ — nếu không thì một lớp đang chạy sẽ không sửa nổi bất cứ thứ gì khác.
 - Sĩ số tối đa không được đặt thấp hơn số học sinh đang học trong lớp. Bằng đúng số hiện tại thì được.
 - Ngày kết thúc không được trước ngày khai giảng.
@@ -66,6 +67,7 @@ Trên trình duyệt:
 - Trùng mã lớp trả `422` gắn vào `code`: `Mã lớp này đã tồn tại. Vui lòng đặt mã khác.`
 - Ngày kết thúc trước ngày khai giảng trả `422` gắn vào `end_at`: `Ngày kết thúc không thể trước ngày khai giảng.`
 - Môn học đã khóa trả `422`: `Môn học này đã bị khóa, không thể mở lớp mới.` hoặc `... không thể gán cho lớp.`
+- Môn học không áp dụng cho khối của lớp trả `422`.
 - Giáo viên đã nghỉ trả `422`: `Giáo viên này không còn làm việc, không thể phụ trách lớp.`
 - Hạ sĩ số dưới số học sinh hiện tại trả `422`: `Sĩ số tối đa (N) không thể nhỏ hơn số học sinh đang học trong lớp (M).`
 - Không tìm thấy lớp trả `404`: `Không tìm thấy lớp học.`

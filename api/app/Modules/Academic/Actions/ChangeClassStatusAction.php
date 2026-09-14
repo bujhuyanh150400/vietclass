@@ -7,7 +7,10 @@ use App\Core\Exceptions\ActionError;
 use App\Modules\Academic\Enums\AcademicError;
 use App\Modules\Academic\Enums\ClassStatus;
 use App\Modules\Academic\Models\SchoolClass;
+use App\Modules\Academic\Models\Subject;
 use App\Modules\Academic\Repositories\ClassRepository;
+use App\Modules\Academic\Repositories\SubjectRepository;
+use App\Modules\Academic\Services\SubjectUsageGuard;
 use Illuminate\Support\Facades\DB;
 
 final class ChangeClassStatusAction
@@ -17,6 +20,8 @@ final class ChangeClassStatusAction
      */
     public function __construct(
         private readonly ClassRepository $classes,
+        private readonly SubjectRepository $subjects,
+        private readonly SubjectUsageGuard $usage,
     ) {}
 
     /**
@@ -57,6 +62,27 @@ final class ChangeClassStatusAction
 
                     return;
                 }
+
+                $subject = $this->subjects->findByIdForUpdate((int) $class->subject_id);
+
+                if (! $subject instanceof Subject) {
+                    throw new ActionError(
+                        message: 'Không tìm thấy môn học.',
+                        code: AcademicError::SubjectNotFound,
+                    );
+                }
+
+                if (! $subject->is_active) {
+                    throw new ActionError(
+                        message: 'Môn học này đã bị khóa, không thể mở lại lớp.',
+                        code: AcademicError::SubjectInactive,
+                    );
+                }
+
+                $this->usage->ensureSupportsGrade(
+                    subject: $subject,
+                    gradeLevel: $class->grade_level->value,
+                );
 
                 $this->classes->update($class, ['status' => $status]);
             });

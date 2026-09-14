@@ -1,6 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
+import { parseAsBoolean, parseAsNumberLiteral, parseAsStringLiteral, useQueryStates } from "nuqs";
 
 import { useResourceList, type ResourceListViewModel } from "@/hooks/use-resource-list";
 
@@ -15,18 +17,80 @@ import {
   type SubjectListParams,
 } from "../api";
 import { academicQueryKeys } from "./academic-query-keys";
-import type { Option, Subject } from "../types/academic";
+import type { GradeLevel, Option, Subject } from "../types/academic";
 import type { SubjectRequest } from "../types/academic-requests";
+import { GRADE_LEVELS } from "../utils/labels";
+import {
+  SUBJECT_LIST_SORTS,
+  SUBJECT_TABLE_PAGE_SIZES,
+  activeSubjectFilterCount,
+  buildSubjectListParams,
+  type SubjectFilterState,
+  type SubjectListSort,
+} from "../utils/subject-list-controls";
+
+/** List data plus the URL-backed catalogue controls. */
+export type SubjectListViewModel = ResourceListViewModel<Subject> & {
+  filters: SubjectFilterState;
+  filterCount: number;
+  sort: SubjectListSort;
+  tablePageSize: number;
+  setGradeLevel: (gradeLevel: GradeLevel | null) => void;
+  setActive: (isActive: boolean | null) => void;
+  setSort: (sort: SubjectListSort) => void;
+  setTablePageSize: (pageSize: number) => void;
+  clearFilters: () => void;
+  clearConditions: () => void;
+};
 
 /**
  * Loads the subject list for the current search and page.
  */
-export function useSubjectList(): ResourceListViewModel<Subject> {
-  return useResourceList<Subject, SubjectListParams>({
+export function useSubjectList(): SubjectListViewModel {
+  const [controls, setControls] = useQueryStates({
+    grade_level: parseAsNumberLiteral(GRADE_LEVELS),
+    is_active: parseAsBoolean,
+    sort: parseAsStringLiteral(SUBJECT_LIST_SORTS).withDefault("newest"),
+    per_page: parseAsNumberLiteral(SUBJECT_TABLE_PAGE_SIZES).withDefault(10),
+  }, { history: "replace", clearOnDefault: true });
+  const filters: SubjectFilterState = { gradeLevel: controls.grade_level, isActive: controls.is_active };
+  const list = useResourceList<Subject, SubjectListParams>({
     queryKey: academicQueryKeys.subjects.list,
     fetcher: fetchSubjects,
     emptyMessage: "Chưa có môn học nào khớp với tìm kiếm.",
+    extraParams: buildSubjectListParams({ ...filters, sort: controls.sort }),
+    perPage: controls.per_page,
   });
+
+  /** Updates a filter and returns the reader to the first result page. */
+  const setGradeLevel = useCallback((gradeLevel: GradeLevel | null) => {
+    void setControls({ grade_level: gradeLevel });
+    list.query.setPage(1);
+  }, [list.query, setControls]);
+  const setActive = useCallback((isActive: boolean | null) => {
+    void setControls({ is_active: isActive });
+    list.query.setPage(1);
+  }, [list.query, setControls]);
+  const setSort = useCallback((sort: SubjectListSort) => {
+    void setControls({ sort: sort === "newest" ? null : sort });
+    list.query.setPage(1);
+  }, [list.query, setControls]);
+  const setTablePageSize = useCallback((pageSize: number) => {
+    if (!SUBJECT_TABLE_PAGE_SIZES.includes(pageSize as (typeof SUBJECT_TABLE_PAGE_SIZES)[number])) return;
+    void setControls({ per_page: pageSize === 10 ? null : pageSize as (typeof SUBJECT_TABLE_PAGE_SIZES)[number] });
+    list.query.setPage(1);
+  }, [list.query, setControls]);
+  const clearFilters = useCallback(() => {
+    void setControls({ grade_level: null, is_active: null });
+    list.query.setPage(1);
+  }, [list.query, setControls]);
+  const clearConditions = useCallback(() => {
+    list.query.reset();
+    void setControls({ grade_level: null, is_active: null, sort: null });
+  }, [list.query, setControls]);
+
+  return { ...list, filters, filterCount: activeSubjectFilterCount(filters), sort: controls.sort,
+    tablePageSize: controls.per_page, setGradeLevel, setActive, setSort, setTablePageSize, clearFilters, clearConditions };
 }
 
 /**

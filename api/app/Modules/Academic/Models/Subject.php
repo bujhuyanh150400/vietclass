@@ -8,14 +8,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'description', 'is_active'])]
+#[Fillable(['name', 'description', 'grade_levels', 'is_active'])]
 final class Subject extends Model
 {
     /** @use HasFactory<SubjectFactory> */
     use HasFactory;
 
-    /** @var array<string, bool> */
+    /** @var array<string, bool|string> */
     protected $attributes = [
+        'grade_levels' => '[]',
         'is_active' => true,
     ];
 
@@ -35,6 +36,7 @@ final class Subject extends Model
     protected function casts(): array
     {
         return [
+            'grade_levels' => 'array',
             'is_active' => 'boolean',
         ];
     }

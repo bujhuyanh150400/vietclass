@@ -86,6 +86,15 @@ export function SubjectsContainer() {
         search={list.query.q}
         onSearchChange={list.query.setSearch}
         onPageChange={list.query.setPage}
+        filters={list.filters}
+        filterCount={list.filterCount}
+        sort={list.sort}
+        tablePageSize={list.tablePageSize}
+        onGradeLevelChange={list.setGradeLevel}
+        onActiveChange={list.setActive}
+        onClearFilters={list.clearFilters}
+        onSortChange={list.setSort}
+        onTablePageSizeChange={list.setTablePageSize}
         onToggleActive={(target) => open({ kind: "toggle", subject: target })}
         onDelete={(target) => open({ kind: "delete", subject: target })}
       />

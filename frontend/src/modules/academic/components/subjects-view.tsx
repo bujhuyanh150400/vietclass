@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { ArrowDownAZ, ArrowDownZA, ArrowUpDown, MoreHorizontal, Plus } from "lucide-react";
 
 import {
   DataTable,
   DataTablePagination,
-  DataTableToolbar,
   EmptyState,
+  FilterPopover,
+  FilterSection,
+  ListSheet,
+  ListToolbar,
+  SortPopover,
   type DataTableColumn,
   type DataTableState,
 } from "@/components/shared/data-table";
@@ -22,7 +26,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { PageMeta } from "@/lib/api/contracts";
 
-import type { Subject } from "../types/academic";
+import type { GradeLevel, Subject } from "../types/academic";
+import { GRADE_LEVEL_LABELS, GRADE_LEVELS } from "../utils/labels";
+import type { SubjectFilterState, SubjectListSort } from "../utils/subject-list-controls";
 
 /** What the subject list screen renders and reports back. */
 export type SubjectsViewProps = {
@@ -31,6 +37,15 @@ export type SubjectsViewProps = {
   search: string;
   onSearchChange: (value: string) => void;
   onPageChange: (page: number) => void;
+  filters: SubjectFilterState;
+  filterCount: number;
+  sort: SubjectListSort;
+  tablePageSize: number;
+  onGradeLevelChange: (gradeLevel: GradeLevel | null) => void;
+  onActiveChange: (isActive: boolean | null) => void;
+  onClearFilters: () => void;
+  onSortChange: (sort: SubjectListSort) => void;
+  onTablePageSizeChange: (pageSize: number) => void;
   onToggleActive: (subject: Subject) => void;
   onDelete: (subject: Subject) => void;
 };
@@ -50,37 +65,41 @@ export function SubjectsView({
   search,
   onSearchChange,
   onPageChange,
+  filters, filterCount, sort, tablePageSize, onGradeLevelChange, onActiveChange, onClearFilters, onSortChange, onTablePageSizeChange,
   onToggleActive,
   onDelete,
 }: SubjectsViewProps) {
   const columns: DataTableColumn<Subject>[] = [
     {
       key: "name",
-      header: "Tên môn học",
-      cell: (subject) => <span className="font-medium">{subject.name}</span>,
-    },
-    {
-      key: "description",
-      header: "Mô tả",
-      hideOnMobile: true,
+      header: "Môn học",
       cell: (subject) => (
-        <span className="text-muted-foreground">{subject.description ?? "—"}</span>
+        <div className="grid min-w-0 gap-0.5">
+          <span className="truncate font-medium">{subject.name}</span>
+          <span className="truncate text-xs text-muted-foreground">{subject.description ?? "Chưa có mô tả"}</span>
+        </div>
       ),
     },
     {
+      key: "grade_levels",
+      header: "Khối áp dụng",
+      hideOnMobile: true,
+      cell: (subject) => <div className="flex flex-wrap gap-1">{subject.grade_levels.slice(0, 3).map((gradeLevel) => <span key={gradeLevel} className="rounded-control border border-vc-control bg-card px-2 py-1 font-mono text-[10px]" title={GRADE_LEVEL_LABELS[gradeLevel]}>{gradeLevel === 0 ? "Tiền TH" : gradeLevel}</span>)}{subject.grade_levels.length > 3 ? <span className="rounded-control border border-vc-control px-2 py-1 text-[10px]">+{subject.grade_levels.length - 3}</span> : null}</div>,
+    },
+    {
       key: "classes",
-      header: "Lớp đang hoạt động",
+      header: "Lớp học",
       hideOnMobile: true,
       className: "w-44",
-      cell: (subject) => <span>{subject.active_classes_count ?? 0} lớp</span>,
+      cell: (subject) => <span className="font-mono">{subject.active_classes_count ?? 0} lớp</span>,
     },
     {
       key: "status",
       header: "Trạng thái",
       className: "w-36",
       cell: (subject) => (
-        <Badge variant={subject.is_active ? "default" : "secondary"}>
-          {subject.is_active ? "Đang mở" : "Đã khóa"}
+        <Badge variant={subject.is_active ? "default" : "secondary"} className="rounded-control">
+          {subject.is_active ? "Hoạt động" : "Ngừng hoạt động"}
         </Badge>
       ),
     },
@@ -155,25 +174,47 @@ export function SubjectsView({
 
   return (
     <div className="grid gap-6">
-      <div className="flex justify-end">
-        <Button asChild>
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <div className="flex flex-col md:flex-row md:items-end md:gap-4">
+            <h2 className="text-[28px] leading-tight font-semibold tracking-[-0.02em] md:text-4xl">Môn học</h2>
+            <p className="mt-1 text-[13px] font-semibold text-muted-foreground md:mt-0 md:mb-1.5"><strong className="font-mono text-[15px] text-foreground">{meta.total}</strong> môn</p>
+          </div>
+          <p className="mt-1.5 text-xs text-muted-foreground md:text-sm">Quản lý môn học, khối áp dụng và các lớp đang sử dụng.</p>
+        </div>
+        <Button asChild className="h-11 rounded-control border border-vc-wood shadow-vc-raised">
           <Link href="/academic/subjects/new">
             <Plus aria-hidden="true" />
-            Thêm môn học
+            <span className="max-md:sr-only">Thêm môn học</span>
           </Link>
         </Button>
       </div>
 
-      <DataTableToolbar
-        search={search}
-        onSearchChange={onSearchChange}
-        searchLabel="Tìm kiếm"
-        searchPlaceholder="Tên môn học"
-      />
-
-      <DataTable columns={columns} state={listState} rowKey={(subject) => subject.id} />
-
-      <DataTablePagination meta={meta} onPageChange={onPageChange} />
+      <ListSheet
+        toolbar={<ListToolbar search={search} onSearchChange={onSearchChange} searchPlaceholder="Tìm tên môn học…" searchAriaLabel="Tìm kiếm môn học" size="control" align="start">
+          <FilterPopover compact count={filterCount} onClear={onClearFilters} note="Thay đổi được áp dụng ngay.">
+            <FilterSection label="Khối áp dụng">
+              <div className="flex flex-wrap gap-1.5">
+                {GRADE_LEVELS.map((gradeLevel) => <button key={gradeLevel} type="button" aria-pressed={filters.gradeLevel === gradeLevel} onClick={() => onGradeLevelChange(filters.gradeLevel === gradeLevel ? null : gradeLevel)} className="h-7 rounded-control border px-2 text-[11px] hover:bg-orange-50 aria-pressed:border-vc-orange/50 aria-pressed:bg-orange-50 aria-pressed:text-vc-orange-deep">{gradeLevel === 0 ? "Tiền TH" : `Khối ${gradeLevel}`}</button>)}
+              </div>
+            </FilterSection>
+            <FilterSection label="Trạng thái" last>
+              <div className="grid grid-cols-3 overflow-hidden rounded-control border">
+                {([[null, "Tất cả"], [true, "Đang mở"], [false, "Đã khóa"]] as const).map(([value, label]) => <button key={label} type="button" aria-pressed={filters.isActive === value} onClick={() => onActiveChange(value)} className="h-8 border-r text-xs last:border-r-0 hover:bg-orange-50 aria-pressed:bg-orange-50 aria-pressed:font-medium aria-pressed:text-vc-orange-deep">{label}</button>)}
+              </div>
+            </FilterSection>
+          </FilterPopover>
+          <SortPopover compact value={sort} isActive={sort !== "newest"} onChange={onSortChange} options={[
+            { value: "name-asc", label: "Tên A–Z", icon: <ArrowDownAZ aria-hidden="true" className="size-3.5" /> },
+            { value: "name-desc", label: "Tên Z–A", icon: <ArrowDownZA aria-hidden="true" className="size-3.5" /> },
+            { value: "classes-desc", label: "Nhiều lớp đang chạy", icon: <ArrowUpDown aria-hidden="true" className="size-3.5" /> },
+            { value: "newest", label: "Mới tạo gần đây", icon: <ArrowUpDown aria-hidden="true" className="size-3.5" /> },
+          ]} />
+        </ListToolbar>}
+        pager={<DataTablePagination meta={meta} onPageChange={onPageChange} numbered unit="môn học" pageSize={tablePageSize} pageSizeOptions={[10, 20, 50, 100]} onPageSizeChange={onTablePageSizeChange} />}
+      >
+        <DataTable columns={columns} state={listState} rowKey={(subject) => subject.id} />
+      </ListSheet>
     </div>
   );
 }

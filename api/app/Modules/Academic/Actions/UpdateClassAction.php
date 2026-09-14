@@ -9,6 +9,7 @@ use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Academic\Repositories\ClassRepository;
 use App\Modules\Academic\Repositories\SubjectRepository;
+use App\Modules\Academic\Services\SubjectUsageGuard;
 use App\Modules\Identity\Enums\TeacherStatus;
 use App\Modules\Identity\Models\TeacherProfile;
 use App\Modules\Identity\Repositories\TeacherRepository;
@@ -21,6 +22,7 @@ final class UpdateClassAction
     public function __construct(
         private readonly ClassRepository $classes,
         private readonly SubjectRepository $subjects,
+        private readonly SubjectUsageGuard $usage,
         private readonly TeacherRepository $teachers,
     ) {}
 
@@ -63,15 +65,18 @@ final class UpdateClassAction
     }
 
     /**
-     * Refuse a move to a subject that is no longer offered.
+     * Refuse a subject or grade change that is no longer offered for the selected grade.
      *
      * @param  array<string, mixed>  $attributes
      */
     private function guardSubject(SchoolClass $class, array $attributes): void
     {
         $subjectId = (int) ($attributes['subject_id'] ?? $class->subject_id);
+        $gradeLevel = (int) ($attributes['grade_level'] ?? $class->grade_level->value);
+        $changesSubject = $subjectId !== (int) $class->subject_id;
+        $changesGrade = $gradeLevel !== $class->grade_level->value;
 
-        if ($subjectId === (int) $class->subject_id) {
+        if (! $changesSubject && ! $changesGrade) {
             return;
         }
 
@@ -90,6 +95,8 @@ final class UpdateClassAction
                 code: AcademicError::SubjectInactive,
             );
         }
+
+        $this->usage->ensureSupportsGrade(subject: $subject, gradeLevel: $gradeLevel);
     }
 
     /**

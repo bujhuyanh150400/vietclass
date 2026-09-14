@@ -6,6 +6,7 @@ use App\Modules\Academic\Actions\ToggleSubjectActiveAction;
 use App\Modules\Academic\Enums\AcademicError;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\Subject;
+use App\Modules\Identity\Enums\GradeLevel;
 use App\Modules\Identity\Enums\UserRole;
 use App\Modules\Identity\Models\User;
 
@@ -25,7 +26,7 @@ test('the subject list is paginated with the shared meta envelope', function () 
         ->assertJsonPath('meta.total', 3)
         ->assertJsonPath('meta.last_page', 2)
         ->assertJsonStructure([
-            'data' => [['id', 'name', 'description', 'is_active', 'active_classes_count', 'created_at', 'updated_at']],
+            'data' => [['id', 'name', 'description', 'grade_levels', 'is_active', 'active_classes_count', 'created_at', 'updated_at']],
             'meta' => ['current_page', 'per_page', 'total', 'last_page'],
         ]);
 });
@@ -52,6 +53,24 @@ test('the subject list searches by name and filters by locked state', function (
         ->assertJsonPath('data.0.name', 'Toán cơ bản');
 });
 
+test('the subject list filters by applicable grade and sorts by running class count', function () {
+    $popular = Subject::factory()->create(['grade_levels' => [GradeLevel::Grade9->value]]);
+    $other = Subject::factory()->create(['grade_levels' => [GradeLevel::Grade9->value]]);
+    Subject::factory()->create(['grade_levels' => [GradeLevel::Grade8->value]]);
+
+    SchoolClass::factory()->count(2)->create(['subject_id' => $popular->id]);
+    SchoolClass::factory()->create(['subject_id' => $other->id]);
+
+    $this->getJson('/api/v1/subjects?grade_level='.GradeLevel::Grade9->value)
+        ->assertOk()
+        ->assertJsonPath('meta.total', 2);
+
+    $this->getJson('/api/v1/subjects?sort=active_classes_count&direction=desc')
+        ->assertOk()
+        ->assertJsonPath('data.0.id', $popular->id)
+        ->assertJsonPath('data.0.active_classes_count', 2);
+});
+
 test('a literal wildcard in the search term matches itself', function () {
     Subject::factory()->create(['name' => 'Toán 100%']);
     Subject::factory()->create(['name' => 'Ngữ văn']);
@@ -65,12 +84,34 @@ test('a subject is created and reported back', function () {
     $this->postJson('/api/v1/subjects', [
         'name' => 'Vật lý',
         'description' => 'Khối trung học phổ thông',
+        'grade_levels' => [10, 11, 12],
     ])
         ->assertCreated()
         ->assertJsonPath('data.name', 'Vật lý')
+        ->assertJsonPath('data.grade_levels', [10, 11, 12])
         ->assertJsonPath('data.is_active', true);
 
     $this->assertDatabaseHas('subjects', ['name' => 'Vật lý', 'is_active' => true]);
+});
+
+test('a subject requires at least one applicable grade', function () {
+    $this->postJson('/api/v1/subjects', [
+        'name' => 'Mỹ thuật',
+        'description' => 'Môn tự chọn',
+        'is_active' => true,
+    ])->assertJsonValidationErrorFor('grade_levels');
+});
+
+test('a created subject reports its applicable grades', function () {
+    $this->postJson('/api/v1/subjects', [
+        'name' => 'Âm nhạc',
+        'description' => 'Môn tự chọn',
+        'grade_levels' => [0, 6, 12],
+        'is_active' => false,
+    ])
+        ->assertCreated()
+        ->assertJsonPath('data.grade_levels', [0, 6, 12])
+        ->assertJsonPath('data.is_active', false);
 });
 
 test('a duplicate subject name is reported against the name field', function () {
@@ -87,20 +128,55 @@ test('a subject name may be kept while editing its other fields', function () {
     $this->putJson("/api/v1/subjects/{$subject->id}", [
         'name' => 'Sinh học',
         'description' => 'Đã cập nhật',
+        'grade_levels' => [GradeLevel::Grade6->value, GradeLevel::Grade7->value],
+        'is_active' => true,
     ])
         ->assertOk()
         ->assertJsonPath('data.description', 'Đã cập nhật');
 });
 
-test('updating a subject cannot change its locked state', function () {
+test('editing a subject can change its active status', function () {
     $subject = Subject::factory()->create(['name' => 'Địa lý']);
 
     $this->putJson("/api/v1/subjects/{$subject->id}", [
         'name' => 'Địa lý',
+        'grade_levels' => GradeLevel::values(),
         'is_active' => false,
-    ])->assertOk();
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.is_active', false);
 
-    expect($subject->fresh()->is_active)->toBeTrue();
+    expect($subject->fresh()->is_active)->toBeFalse();
+});
+
+test('editing a subject cannot remove a grade used by a running class', function () {
+    $class = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $subject = $class->subject;
+
+    $this->putJson("/api/v1/subjects/{$subject->id}", [
+        'name' => $subject->name,
+        'description' => $subject->description,
+        'grade_levels' => [GradeLevel::Grade8->value, GradeLevel::Grade10->value],
+        'is_active' => true,
+    ])
+        ->assertStatus(409)
+        ->assertJsonPath('message', 'Môn học đang được dùng bởi 1 lớp đang hoạt động ở khối 9, không thể bỏ khối này.');
+
+    expect($subject->fresh()->grade_levels)->toContain(GradeLevel::Grade9->value);
+});
+
+test('editing a subject may remove a grade used only by ended classes', function () {
+    $class = SchoolClass::factory()->ended()->create(['grade_level' => GradeLevel::Grade9]);
+    $subject = $class->subject;
+
+    $this->putJson("/api/v1/subjects/{$subject->id}", [
+        'name' => $subject->name,
+        'description' => $subject->description,
+        'grade_levels' => [GradeLevel::Grade8->value, GradeLevel::Grade10->value],
+        'is_active' => true,
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.grade_levels', [GradeLevel::Grade8->value, GradeLevel::Grade10->value]);
 });
 
 test('a subject is locked and unlocked through its own endpoint', function () {
