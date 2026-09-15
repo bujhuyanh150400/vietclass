@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { DashboardView } from "@/modules/dashboard";
+import { DashboardView } from "@/modules/system";
 
 export const metadata: Metadata = {
   title: "Trang chủ",

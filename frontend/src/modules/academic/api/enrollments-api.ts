@@ -25,7 +25,7 @@ export async function fetchEnrollments(
   classId: number,
   params: EnrollmentListParams,
 ): Promise<Page<Enrollment>> {
-  return browserRequestList<Enrollment>(`/api/v1/classes/${classId}/enrollments`, { params });
+  return browserRequestList<Enrollment>(`/api/v1/academic/classes/${classId}/enrollments`, { params });
 }
 
 /** Fetches the students who may still be added to a class. */
@@ -34,7 +34,7 @@ export async function fetchAvailableStudents(
   params: StudentListParams,
 ): Promise<Page<Student>> {
   return browserRequestList<Student>(
-    `/api/v1/classes/${classId}/available-students`,
+    `/api/v1/academic/classes/${classId}/available-students`,
     { params },
   );
 }
@@ -44,7 +44,7 @@ export async function enrolStudents(
   classId: number,
   body: EnrolStudentsRequest,
 ): Promise<Enrollment[]> {
-  return browserRequest<Enrollment[]>(`/api/v1/classes/${classId}/enrollments`, {
+  return browserRequest<Enrollment[]>(`/api/v1/academic/classes/${classId}/enrollments`, {
     method: "POST",
     body,
   });
@@ -55,7 +55,7 @@ export async function updateEnrollment(
   id: number,
   body: UpdateEnrollmentRequest,
 ): Promise<Enrollment> {
-  return browserRequest<Enrollment>(`/api/v1/enrollments/${id}`, { method: "PUT", body });
+  return browserRequest<Enrollment>(`/api/v1/academic/enrollments/${id}`, { method: "PUT", body });
 }
 
 /** Moves a student to another class of the same subject. */
@@ -63,7 +63,7 @@ export async function transferEnrollment(
   id: number,
   body: TransferEnrollmentRequest,
 ): Promise<Enrollment> {
-  return browserRequest<Enrollment>(`/api/v1/enrollments/${id}/transfer`, {
+  return browserRequest<Enrollment>(`/api/v1/academic/enrollments/${id}/transfer`, {
     method: "POST",
     body,
   });
@@ -71,7 +71,7 @@ export async function transferEnrollment(
 
 /** Ends a student's membership of a class. */
 export async function leaveClass(id: number, body: LeaveClassRequest): Promise<Enrollment> {
-  return browserRequest<Enrollment>(`/api/v1/enrollments/${id}/leave`, {
+  return browserRequest<Enrollment>(`/api/v1/academic/enrollments/${id}/leave`, {
     method: "POST",
     body,
   });

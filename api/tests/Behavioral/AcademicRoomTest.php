@@ -12,8 +12,8 @@ use App\Modules\Academic\Enums\AcademicError;
 use App\Modules\Academic\Enums\ClassroomFacility;
 use App\Modules\Academic\Enums\RoomStatus;
 use App\Modules\Academic\Models\Room;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Auth\Models\User;
 
 beforeEach(function (): void {
     $admin = User::factory()->create(['role' => UserRole::Admin]);
@@ -123,7 +123,7 @@ test('the room list uses the shared pagination envelope and status filter', func
     Room::factory()->create(['name' => 'Phòng A', 'status' => RoomStatus::Active]);
     Room::factory()->create(['name' => 'Phòng B', 'status' => RoomStatus::Inactive]);
 
-    $this->getJson('/api/v1/rooms?per_page=1&status=0')
+    $this->getJson('/api/v1/academic/rooms?per_page=1&status=0')
         ->assertOk()
         ->assertJsonPath('meta.current_page', 1)
         ->assertJsonPath('meta.per_page', 1)
@@ -139,14 +139,14 @@ test('the room options endpoint returns only active rooms', function (): void {
     Room::factory()->create(['name' => 'Phòng A', 'status' => RoomStatus::Active]);
     Room::factory()->create(['name' => 'Phòng B', 'status' => RoomStatus::Maintenance]);
 
-    $this->getJson('/api/v1/rooms/options')
+    $this->getJson('/api/v1/academic/rooms/options')
         ->assertOk()
         ->assertJsonPath('data.0.label', 'Phòng A')
         ->assertJsonCount(1, 'data');
 });
 
 test('room endpoints create, show, update, change status, and delete a room', function (): void {
-    $created = $this->postJson('/api/v1/rooms', [
+    $created = $this->postJson('/api/v1/academic/rooms', [
         'name' => 'Phòng A1',
         'capacity' => 36,
         'note' => 'Tầng một',
@@ -157,11 +157,11 @@ test('room endpoints create, show, update, change status, and delete a room', fu
 
     $roomId = $created->json('data.id');
 
-    $this->getJson("/api/v1/rooms/{$roomId}")
+    $this->getJson("/api/v1/academic/rooms/{$roomId}")
         ->assertOk()
         ->assertJsonPath('data.capacity', 36);
 
-    $this->putJson("/api/v1/rooms/{$roomId}", [
+    $this->putJson("/api/v1/academic/rooms/{$roomId}", [
         'name' => 'Phòng A2',
         'capacity' => 40,
         'note' => 'Tầng hai',
@@ -170,11 +170,11 @@ test('room endpoints create, show, update, change status, and delete a room', fu
         ->assertJsonPath('data.name', 'Phòng A2')
         ->assertJsonPath('data.capacity', 40);
 
-    $this->patchJson("/api/v1/rooms/{$roomId}/status", ['status' => RoomStatus::Maintenance->value])
+    $this->patchJson("/api/v1/academic/rooms/{$roomId}/status", ['status' => RoomStatus::Maintenance->value])
         ->assertOk()
         ->assertJsonPath('data.status', RoomStatus::Maintenance->value);
 
-    $this->deleteJson("/api/v1/rooms/{$roomId}")->assertNoContent();
+    $this->deleteJson("/api/v1/academic/rooms/{$roomId}")->assertNoContent();
 
     $this->assertDatabaseMissing('rooms', ['id' => $roomId]);
 });
@@ -182,7 +182,7 @@ test('room endpoints create, show, update, change status, and delete a room', fu
 test('a duplicate room name is reported against the name field', function (): void {
     Room::factory()->create(['name' => 'Phòng A1']);
 
-    $this->postJson('/api/v1/rooms', [
+    $this->postJson('/api/v1/academic/rooms', [
         'name' => 'Phòng A1',
         'capacity' => 36,
     ])
@@ -191,14 +191,14 @@ test('a duplicate room name is reported against the name field', function (): vo
 });
 
 test('a negative room capacity is reported against the capacity field', function (): void {
-    $this->postJson('/api/v1/rooms', [
+    $this->postJson('/api/v1/academic/rooms', [
         'name' => 'Phòng A1',
         'capacity' => -1,
     ])->assertJsonValidationErrorFor('capacity');
 });
 
 test('a room accepts PostgreSQL smallint maximum capacity', function (): void {
-    $this->postJson('/api/v1/rooms', [
+    $this->postJson('/api/v1/academic/rooms', [
         'name' => 'Phòng A1',
         'capacity' => 32767,
     ])
@@ -209,12 +209,12 @@ test('a room accepts PostgreSQL smallint maximum capacity', function (): void {
 test('a room capacity above PostgreSQL smallint range is reported against the capacity field', function (): void {
     $room = Room::factory()->create();
 
-    $this->postJson('/api/v1/rooms', [
+    $this->postJson('/api/v1/academic/rooms', [
         'name' => 'Phòng A1',
         'capacity' => 32768,
     ])->assertJsonValidationErrorFor('capacity');
 
-    $this->putJson("/api/v1/rooms/{$room->id}", [
+    $this->putJson("/api/v1/academic/rooms/{$room->id}", [
         'name' => 'Phòng A2',
         'capacity' => 32768,
     ])->assertJsonValidationErrorFor('capacity');
@@ -223,7 +223,7 @@ test('a room capacity above PostgreSQL smallint range is reported against the ca
 test('a room status outside the declared states is rejected', function (): void {
     $room = Room::factory()->create();
 
-    $this->patchJson("/api/v1/rooms/{$room->id}/status", ['status' => 99])
+    $this->patchJson("/api/v1/academic/rooms/{$room->id}/status", ['status' => 99])
         ->assertJsonValidationErrorFor('status');
 });
 
@@ -233,18 +233,18 @@ test('a non-administrator cannot use any room endpoint', function (): void {
 
     $this->withToken($teacher->createToken('test')->plainTextToken);
 
-    $this->getJson('/api/v1/rooms')->assertForbidden();
-    $this->getJson('/api/v1/rooms/options')->assertForbidden();
-    $this->postJson('/api/v1/rooms', ['name' => 'Phòng A1', 'capacity' => 24])->assertForbidden();
-    $this->getJson("/api/v1/rooms/{$room->id}")->assertForbidden();
-    $this->putJson("/api/v1/rooms/{$room->id}", ['name' => 'Phòng A1', 'capacity' => 24])->assertForbidden();
-    $this->patchJson("/api/v1/rooms/{$room->id}/status", ['status' => RoomStatus::Inactive->value])
+    $this->getJson('/api/v1/academic/rooms')->assertForbidden();
+    $this->getJson('/api/v1/academic/rooms/options')->assertForbidden();
+    $this->postJson('/api/v1/academic/rooms', ['name' => 'Phòng A1', 'capacity' => 24])->assertForbidden();
+    $this->getJson("/api/v1/academic/rooms/{$room->id}")->assertForbidden();
+    $this->putJson("/api/v1/academic/rooms/{$room->id}", ['name' => 'Phòng A1', 'capacity' => 24])->assertForbidden();
+    $this->patchJson("/api/v1/academic/rooms/{$room->id}/status", ['status' => RoomStatus::Inactive->value])
         ->assertForbidden();
-    $this->deleteJson("/api/v1/rooms/{$room->id}")->assertForbidden();
+    $this->deleteJson("/api/v1/academic/rooms/{$room->id}")->assertForbidden();
 });
 
 test('a room records the facilities and location it was created with', function (): void {
-    $created = $this->postJson('/api/v1/rooms', [
+    $created = $this->postJson('/api/v1/academic/rooms', [
         'name' => 'Phòng Tin học',
         'capacity' => 32,
         'location' => 'Tầng 3 · Dãy B',
@@ -274,7 +274,7 @@ test('a room defaults to an empty facility list', function (): void {
 });
 
 test('a facility outside the declared enum is refused', function (): void {
-    $this->postJson('/api/v1/rooms', [
+    $this->postJson('/api/v1/academic/rooms', [
         'name' => 'Phòng A1',
         'capacity' => 30,
         'facilities' => [ClassroomFacility::Wifi->value + 1],
@@ -293,7 +293,7 @@ test('the facility filter returns only rooms carrying every facility asked for',
         'facilities' => [ClassroomFacility::Projector->value],
     ]);
 
-    $this->getJson('/api/v1/rooms?facilities[]=0&facilities[]=9')
+    $this->getJson('/api/v1/academic/rooms?facilities[]=0&facilities[]=9')
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.name', 'Phòng đủ');
@@ -303,13 +303,13 @@ test('the facility filter returns only rooms carrying every facility asked for',
 // apart. Without the coercion in IndexRoomRequest and the store request this filter
 // matches nothing at all, and nothing anywhere reports an error.
 test('a facility filter sent as a query string matches a room saved from a JSON body', function (): void {
-    $this->postJson('/api/v1/rooms', [
+    $this->postJson('/api/v1/academic/rooms', [
         'name' => 'Phòng Hội trường',
         'capacity' => 200,
         'facilities' => [ClassroomFacility::Speaker->value],
     ])->assertCreated();
 
-    $this->getJson('/api/v1/rooms?facilities[]=4')
+    $this->getJson('/api/v1/academic/rooms?facilities[]=4')
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.name', 'Phòng Hội trường');
@@ -318,11 +318,11 @@ test('a facility filter sent as a query string matches a room saved from a JSON 
 test('an empty facility filter narrows nothing', function (): void {
     Room::factory()->count(2)->create(['facilities' => []]);
 
-    $this->getJson('/api/v1/rooms?facilities[]=')
+    $this->getJson('/api/v1/academic/rooms?facilities[]=')
         ->assertStatus(422)
         ->assertJsonValidationErrors('facilities.0');
 
-    $this->getJson('/api/v1/rooms')
+    $this->getJson('/api/v1/academic/rooms')
         ->assertOk()
         ->assertJsonCount(2, 'data');
 });
@@ -332,7 +332,7 @@ test('the capacity range filter narrows the list at both ends', function (): voi
     Room::factory()->create(['name' => 'Phòng vừa', 'capacity' => 40]);
     Room::factory()->create(['name' => 'Phòng lớn', 'capacity' => 120]);
 
-    $this->getJson('/api/v1/rooms?capacity_min=20&capacity_max=100')
+    $this->getJson('/api/v1/academic/rooms?capacity_min=20&capacity_max=100')
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.name', 'Phòng vừa');
@@ -342,7 +342,7 @@ test('the room search also matches a location', function (): void {
     Room::factory()->create(['name' => 'Phòng A', 'location' => 'Tầng 3 · Dãy B']);
     Room::factory()->create(['name' => 'Phòng B', 'location' => 'Tầng 1 · Dãy A']);
 
-    $this->getJson('/api/v1/rooms?q=Tang 3')
+    $this->getJson('/api/v1/academic/rooms?q=Tang 3')
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.name', 'Phòng A');
@@ -351,7 +351,7 @@ test('the room search also matches a location', function (): void {
 test('the room update endpoint changes availability status alongside the other fields', function (): void {
     $room = Room::factory()->create(['name' => 'Phòng A', 'status' => RoomStatus::Active]);
 
-    $this->putJson("/api/v1/rooms/{$room->id}", [
+    $this->putJson("/api/v1/academic/rooms/{$room->id}", [
         'name' => 'Phòng A',
         'capacity' => 44,
         'status' => RoomStatus::Maintenance->value,
@@ -366,7 +366,7 @@ test('the room update endpoint changes availability status alongside the other f
 test('the room update endpoint leaves status untouched when none is submitted', function (): void {
     $room = Room::factory()->create(['name' => 'Phòng A', 'status' => RoomStatus::Maintenance]);
 
-    $this->putJson("/api/v1/rooms/{$room->id}", ['name' => 'Phòng A', 'capacity' => 44])
+    $this->putJson("/api/v1/academic/rooms/{$room->id}", ['name' => 'Phòng A', 'capacity' => 44])
         ->assertOk()
         ->assertJsonPath('data.status', RoomStatus::Maintenance->value);
 });

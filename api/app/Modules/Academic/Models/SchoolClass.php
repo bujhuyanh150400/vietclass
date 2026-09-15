@@ -3,8 +3,8 @@
 namespace App\Modules\Academic\Models;
 
 use App\Modules\Academic\Enums\ClassStatus;
-use App\Modules\Identity\Enums\GradeLevel;
-use App\Modules\Identity\Models\TeacherProfile;
+use App\Modules\Academic\Enums\GradeLevel;
+use App\Modules\Academic\Models\TeacherProfile;
 use Database\Factories\SchoolClassFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;

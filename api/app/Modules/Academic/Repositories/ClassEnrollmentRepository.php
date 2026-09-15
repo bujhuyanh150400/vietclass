@@ -5,8 +5,8 @@ namespace App\Modules\Academic\Repositories;
 use App\Core\Data\ListQuery;
 use App\Core\Repositories\BaseRepository;
 use App\Modules\Academic\Models\ClassEnrollment;
-use App\Modules\Identity\Models\Profile;
-use App\Modules\Identity\Models\StudentProfile;
+use App\Modules\Academic\Models\Profile;
+use App\Modules\Academic\Models\StudentProfile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -59,10 +59,8 @@ final class ClassEnrollmentRepository extends BaseRepository
      * over enrolments rather than a relation on the student model: it is scoped to one
      * class, which no relation on `StudentProfile` would express.
      *
-     * `StudentProfile::activeEnrollments()` does now reference this module, added so the
-     * student list can name the classes a student attends. That relation is the single
-     * sanctioned crossing from Identity into Academic; do not read it as licence to
-     * reach across for anything a query in this module can already answer.
+     * `StudentProfile::activeEnrollments()` shares this module's active-enrolment
+     * definition so the student list and class roster cannot drift apart.
      *
      * @return LengthAwarePaginator<int, StudentProfile>
      */

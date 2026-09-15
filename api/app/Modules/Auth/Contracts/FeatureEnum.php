@@ -2,7 +2,7 @@
 
 namespace App\Modules\Auth\Contracts;
 
-use App\Modules\Identity\Enums\UserRole;
+use App\Modules\Auth\Enums\UserRole;
 use BackedEnum;
 
 /**

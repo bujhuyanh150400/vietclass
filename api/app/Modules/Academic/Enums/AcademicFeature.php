@@ -3,7 +3,7 @@
 namespace App\Modules\Academic\Enums;
 
 use App\Modules\Auth\Contracts\FeatureEnum;
-use App\Modules\Identity\Enums\UserRole;
+use App\Modules\Auth\Enums\UserRole;
 use Illuminate\Support\Str;
 
 /**
@@ -14,6 +14,42 @@ use Illuminate\Support\Str;
  */
 enum AcademicFeature: string implements FeatureEnum
 {
+    /** See the teacher list. */
+    case TeacherList = 'teacher.list';
+
+    /** See one teacher profile in detail. */
+    case TeacherView = 'teacher.view';
+
+    /** Create a teacher profile together with its login account. */
+    case TeacherCreate = 'teacher.create';
+
+    /** Change a teacher profile, including its account password. */
+    case TeacherUpdate = 'teacher.update';
+
+    /** Lock or unlock a teacher's login account. */
+    case TeacherToggleActive = 'teacher.toggle_active';
+
+    /** See the student list. */
+    case StudentList = 'student.list';
+
+    /** See one student profile in detail. */
+    case StudentView = 'student.view';
+
+    /** Create a student profile together with its login account. */
+    case StudentCreate = 'student.create';
+
+    /** Change a student profile, including its account password. */
+    case StudentUpdate = 'student.update';
+
+    /** Lock or unlock a student's login account. */
+    case StudentToggleActive = 'student.toggle_active';
+
+    /** Search the guardians already on file, so a student can be linked to one. */
+    case GuardianList = 'guardian.list';
+
+    /** Change a profile's independently persisted avatar. */
+    case ProfileAvatarUpdate = 'profile.avatar_update';
+
     /** See the subject list. */
     case SubjectList = 'subject.list';
 
@@ -83,6 +119,18 @@ enum AcademicFeature: string implements FeatureEnum
     public function label(): string
     {
         return match ($this) {
+            self::TeacherList => 'Xem danh sách giáo viên',
+            self::TeacherView => 'Xem chi tiết giáo viên',
+            self::TeacherCreate => 'Tạo hồ sơ giáo viên',
+            self::TeacherUpdate => 'Sửa hồ sơ giáo viên',
+            self::TeacherToggleActive => 'Khóa hoặc mở tài khoản giáo viên',
+            self::StudentList => 'Xem danh sách học sinh',
+            self::StudentView => 'Xem chi tiết học sinh',
+            self::StudentCreate => 'Tạo hồ sơ học sinh',
+            self::StudentUpdate => 'Sửa hồ sơ học sinh',
+            self::StudentToggleActive => 'Khóa hoặc mở tài khoản học sinh',
+            self::GuardianList => 'Xem danh sách phụ huynh',
+            self::ProfileAvatarUpdate => 'Đổi ảnh đại diện hồ sơ',
             self::SubjectList => 'Xem danh sách môn học',
             self::SubjectView => 'Xem chi tiết môn học',
             self::SubjectCreate => 'Tạo môn học',
@@ -118,15 +166,16 @@ enum AcademicFeature: string implements FeatureEnum
     /**
      * Return the roles that hold this permission before any per-user override.
      *
-     * This release grants the Academic module to administrators only. Teacher access
-     * in the fork depends on schedule-conflict checks that no module implements yet,
-     * so opening it here would ship a rule that cannot be enforced. This method is
-     * the single place to widen access once the schedule module lands.
+     * Academic administration remains administrator-only, while every account may
+     * update its own avatar; the Action applies the profile ownership check.
      *
      * @return list<UserRole>
      */
     public function defaultRoles(): array
     {
-        return [UserRole::Admin];
+        return match ($this) {
+            self::ProfileAvatarUpdate => UserRole::cases(),
+            default => [UserRole::Admin],
+        };
     }
 }

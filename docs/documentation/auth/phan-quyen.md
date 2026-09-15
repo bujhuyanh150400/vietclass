@@ -61,7 +61,7 @@ Lệnh in số quyền đã đồng bộ. Nếu cơ sở dữ liệu còn quyề
 | --- | --- | --- | --- |
 | [Xác thực bearer token](authentication.md) | Tiên quyết | Phân quyền chỉ chạy sau khi request đã xác định được người dùng. | Không đăng nhập thì nhận `401` chứ không phải `403`. |
 | [Quản lý môn học](../academic/mon-hoc.md) | Hạ nguồn | Mọi endpoint môn học đều gắn quyền. | Không đủ quyền thì không thấy được dữ liệu môn học. |
-| [Quản lý giáo viên](../identity/giao-vien.md) | Hạ nguồn | Mọi endpoint giáo viên đều gắn quyền. | Không đủ quyền thì không thấy được hồ sơ giáo viên. |
+| [Quản lý giáo viên](../academic/giao-vien.md) | Hạ nguồn | Mọi endpoint giáo viên đều gắn quyền. | Không đủ quyền thì không thấy được hồ sơ giáo viên. |
 
 ## Giới hạn hiện tại
 
@@ -74,6 +74,6 @@ Lệnh in số quyền đã đồng bộ. Nếu cơ sở dữ liệu còn quyề
 ## Tham chiếu kỹ thuật
 
 - Module: `api/app/Modules/Auth/`
-- Khai báo quyền của từng module: `api/app/Modules/Academic/Enums/AcademicFeature.php`, `api/app/Modules/Identity/Enums/IdentityFeature.php`
+- Khai báo quyền của từng module: `api/app/Modules/Academic/Enums/AcademicFeature.php`, `api/app/Modules/Auth/Enums/AcademicFeature.php`
 - Kiểm thử xác định: `api/tests/Behavioral/AuthFeatureResolutionTest.php`, `api/tests/Security/AcademicAuthorizationTest.php`
 - Schema: `docs/database.md`

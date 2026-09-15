@@ -1,10 +1,10 @@
 <?php
 
-use App\Modules\FileManagement\Actions\UploadFileAction;
-use App\Modules\FileManagement\Enums\FileError;
-use App\Modules\FileManagement\Models\ManagedFile;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\Profile;
+use App\Modules\System\Actions\UploadFileAction;
+use App\Modules\System\Enums\FileError;
+use App\Modules\System\Models\ManagedFile;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Academic\Models\Profile;
 use App\Modules\System\Models\SystemSetting;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -14,13 +14,13 @@ use League\Flysystem\UnableToCreateDirectory;
 
 beforeEach(function (): void {
     Storage::fake('managed-files');
-    config()->set('file-management.disk', 'managed-files');
+    config()->set('system.files.disk', 'managed-files');
     $this->student = Profile::factory()->forRole(UserRole::Student)->create()->user;
 });
 
 test('upload stores a private object beneath the target owner prefix', function (): void {
-    $response = $this->withToken($this->student->createToken('test')->plainTextToken)->post('/api/v1/files', [
-        'file' => UploadedFile::fake()->image('avatar.jpg'),
+    $response = $this->withToken($this->student->createToken('test')->plainTextToken)->post('/api/v1/system/files', [
+        'file' => fakeJpeg('avatar.jpg'),
     ]);
 
     $response->assertCreated()
@@ -36,8 +36,8 @@ test('upload stores a private object beneath the target owner prefix', function 
 test('an administrator can upload for another existing owner', function (): void {
     $admin = Profile::factory()->forRole(UserRole::Admin)->create()->user;
 
-    $this->withToken($admin->createToken('test')->plainTextToken)->post('/api/v1/files', [
-        'file' => UploadedFile::fake()->image('avatar.jpg'),
+    $this->withToken($admin->createToken('test')->plainTextToken)->post('/api/v1/system/files', [
+        'file' => fakeJpeg('avatar.jpg'),
         'owner_user_id' => $this->student->id,
     ])->assertCreated()->assertJsonPath('data.owner.id', $this->student->id);
 
@@ -52,7 +52,7 @@ test('trashed bytes still count toward the upload quota', function (): void {
     ManagedFile::factory()->for($this->student, 'owner')->create(['size_bytes' => 500]);
     ManagedFile::factory()->for($this->student, 'owner')->trashed()->create(['size_bytes' => 400]);
 
-    $this->withToken($this->student->createToken('test')->plainTextToken)->post('/api/v1/files', [
+    $this->withToken($this->student->createToken('test')->plainTextToken)->post('/api/v1/system/files', [
         'file' => UploadedFile::fake()->createWithContent('notes.txt', str_repeat('a', 200)),
     ])->assertConflict();
 
@@ -165,7 +165,7 @@ test('usage reports active and trashed bytes for the resolved owner', function (
     ManagedFile::factory()->for($this->student, 'owner')->create(['size_bytes' => 500]);
     ManagedFile::factory()->for($this->student, 'owner')->trashed()->create(['size_bytes' => 400]);
 
-    $this->withToken($this->student->createToken('test')->plainTextToken)->getJson('/api/v1/files/usage')
+    $this->withToken($this->student->createToken('test')->plainTextToken)->getJson('/api/v1/system/files/usage')
         ->assertOk()
         ->assertJsonPath('data.owner_id', $this->student->id)
         ->assertJsonPath('data.used_bytes', 900)

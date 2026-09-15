@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Modules\Academic\Models\Subject;
-use App\Modules\Identity\Enums\GradeLevel;
+use App\Modules\Academic\Enums\GradeLevel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

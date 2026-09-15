@@ -1,11 +1,11 @@
 <?php
 
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Auth\Models\User;
 
 dataset('file quota endpoints', [
-    'view' => ['getJson', '/api/v1/system/file-quotas'],
-    'update' => ['putJson', '/api/v1/system/file-quotas'],
+    'view' => ['getJson', '/api/v1/system/settings/file-quotas'],
+    'update' => ['putJson', '/api/v1/system/settings/file-quotas'],
 ]);
 
 test('a file quota endpoint refuses a request with no bearer token', function (string $method, string $uri): void {

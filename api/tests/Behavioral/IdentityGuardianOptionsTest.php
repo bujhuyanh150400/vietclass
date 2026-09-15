@@ -1,10 +1,10 @@
 <?php
 
-use App\Modules\Identity\Enums\GuardianRelationship;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\Profile;
-use App\Modules\Identity\Models\StudentProfile;
-use App\Modules\Identity\Models\User;
+use App\Modules\Academic\Enums\GuardianRelationship;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Academic\Models\Profile;
+use App\Modules\Academic\Models\StudentProfile;
+use App\Modules\Auth\Models\User;
 
 beforeEach(function (): void {
     $this->admin = User::factory()->create(['role' => UserRole::Admin]);
@@ -34,7 +34,7 @@ test('the guardian picker lists only the guardians already on file', function ()
     // anybody's guardian, so a guardian picker must not offer it.
     Profile::factory()->create(['full_name' => 'Hoàng Văn Chưa Là Phụ Huynh']);
 
-    $response = $this->getJson('/api/v1/guardians/options')->assertOk();
+    $response = $this->getJson('/api/v1/academic/guardians/options')->assertOk();
 
     expect($response->json('data'))->toHaveCount(1);
     $response
@@ -54,7 +54,7 @@ test('the guardian picker never offers a profile that holds a student role', fun
         'is_primary' => true,
     ]);
 
-    $this->getJson('/api/v1/guardians/options')
+    $this->getJson('/api/v1/academic/guardians/options')
         ->assertOk()
         ->assertJsonCount(0, 'data');
 });
@@ -63,17 +63,17 @@ test('the guardian picker matches a typed name or phone number', function () {
     guardianOnFile('Nguyễn Thị Thu Hà', '0911111111');
     guardianOnFile('Trần Văn Hùng', '0922222222');
 
-    $this->getJson('/api/v1/guardians/options?q=Hùng')
+    $this->getJson('/api/v1/academic/guardians/options?q=Hùng')
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.label', 'Trần Văn Hùng');
 
-    $this->getJson('/api/v1/guardians/options?q=0911')
+    $this->getJson('/api/v1/academic/guardians/options?q=0911')
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.label', 'Nguyễn Thị Thu Hà');
 
-    $this->getJson('/api/v1/guardians/options?q=Không có ai tên này')
+    $this->getJson('/api/v1/academic/guardians/options?q=Không có ai tên này')
         ->assertOk()
         ->assertJsonCount(0, 'data');
 });
@@ -81,7 +81,7 @@ test('the guardian picker matches a typed name or phone number', function () {
 test('the guardian picker finds a name typed without its tone marks', function (string $term) {
     guardianOnFile('Nguyễn Văn Hùng', '0911111111');
 
-    $this->getJson('/api/v1/guardians/options?q='.urlencode($term))
+    $this->getJson('/api/v1/academic/guardians/options?q='.urlencode($term))
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.label', 'Nguyễn Văn Hùng');
@@ -98,7 +98,7 @@ test('the guardian picker folds the Vietnamese letters a naive tone strip would 
 
     // `Đ` is a distinct letter rather than `D` plus a mark, and `ươ` carries both a
     // horn and a tone; a translate() over the tone marks alone would drop these.
-    $this->getJson('/api/v1/guardians/options?q=Do Thi Uoc')
+    $this->getJson('/api/v1/academic/guardians/options?q=Do Thi Uoc')
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.label', 'Đỗ Thị Ước');
@@ -109,13 +109,13 @@ test('the guardian picker orders by name and honours the requested limit', funct
     guardianOnFile('An Văn Đầu');
     guardianOnFile('Bùi Thị Giữa');
 
-    $this->getJson('/api/v1/guardians/options')
+    $this->getJson('/api/v1/academic/guardians/options')
         ->assertOk()
         ->assertJsonPath('data.0.label', 'An Văn Đầu')
         ->assertJsonPath('data.1.label', 'Bùi Thị Giữa')
         ->assertJsonPath('data.2.label', 'Vũ Thị Cuối');
 
-    $this->getJson('/api/v1/guardians/options?limit=2')
+    $this->getJson('/api/v1/academic/guardians/options?limit=2')
         ->assertOk()
         ->assertJsonCount(2, 'data');
 });
@@ -124,7 +124,7 @@ test('a guardian search term treats a typed wildcard as a literal character', fu
     guardianOnFile('Nguyễn Thị Thu Hà', '0911111111');
 
     // Without wildcard escaping this would match every guardian on file.
-    $this->getJson('/api/v1/guardians/options?q=%')
+    $this->getJson('/api/v1/academic/guardians/options?q=%')
         ->assertOk()
         ->assertJsonCount(0, 'data');
 });
@@ -133,5 +133,5 @@ test('the guardian picker is closed to a caller without the permission', functio
     $user = User::factory()->create(['role' => $role]);
     $this->withToken($user->createToken('test')->plainTextToken);
 
-    $this->getJson('/api/v1/guardians/options')->assertForbidden();
+    $this->getJson('/api/v1/academic/guardians/options')->assertForbidden();
 })->with([UserRole::Teacher, UserRole::Student, UserRole::Guardian]);

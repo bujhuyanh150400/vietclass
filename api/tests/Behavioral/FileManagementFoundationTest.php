@@ -1,9 +1,9 @@
 <?php
 
 use App\Core\Contracts\ErrorDeclarationEnum;
-use App\Modules\FileManagement\Enums\FileError;
-use App\Modules\FileManagement\Rules\ManagedFileUpload;
-use App\Modules\FileManagement\Support\FileTypeMap;
+use App\Modules\System\Enums\FileError;
+use App\Modules\System\Rules\ManagedFileUpload;
+use App\Modules\System\Support\FileTypeMap;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Validator;
 

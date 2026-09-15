@@ -49,12 +49,9 @@ Keep this mapping current whenever schema ownership changes. Detailed columns, c
 
 | Backend scope | Schema responsibility | Current tables | Migration location |
 | --- | --- | --- | --- |
-| API / Identity | User identity and profile records: login accounts, shared personal profiles, the teaching role, the student role, and the guardian–student relationship. | `users`, `personal_access_tokens`, `profiles`, `teacher_profiles`, `student_profiles`, `student_guardians` | `api/database/migrations/` |
-| API / Auth | Permission catalogue and per-user permission overrides. Role defaults stay in code. | `features`, `feature_user` | `api/database/migrations/` |
-| API / System | Mutable system-wide configuration and the account that last changed it. | `system_settings` | `api/database/migrations/` |
-| API / FileManagement | Private file metadata, immutable ownership, and typed domain usage links. | `files`, `file_links` | `api/database/migrations/` |
-| API / Academic | Academic-process data that references Identity's `teacher_profiles` and `student_profiles`: subjects, classes, class enrolment, and the teaching rooms classes are scheduled into. | `subjects`, `classes`, `class_enrollments`, `rooms` | `api/database/migrations/` |
-| API / Schedule | No Schedule schema is registered: the module was removed and its schema is being redesigned. Rooms belong to Academic. | — | — |
+| API / Auth | Login accounts, Sanctum tokens, permission catalogue, and per-user permission overrides. Role defaults stay in code. | `users`, `personal_access_tokens`, `features`, `feature_user` | `api/database/migrations/` |
+| API / Academic | Shared personal profiles, teaching and student roles, guardian links, subjects, classes, enrolment, and teaching rooms. | `profiles`, `teacher_profiles`, `student_profiles`, `student_guardians`, `subjects`, `classes`, `class_enrollments`, `rooms` | `api/database/migrations/` |
+| API / System | Mutable system settings, private file metadata, immutable ownership, and typed domain usage links. | `system_settings`, `files`, `file_links` | `api/database/migrations/` |
 | API / framework runtime | Laravel session, cache, and queue tables. | `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs` | `api/database/migrations/` |
 | API / future modules | Each module owns its schema mapping, but all migrations remain centralized. | — | `api/database/migrations/` |
 | Admin | No Admin schema is registered yet. | — | — |

@@ -1,16 +1,16 @@
 <?php
 
-use App\Modules\Identity\Actions\ChangeTeacherPasswordAction;
-use App\Modules\Identity\Actions\GetTeacherAction;
-use App\Modules\Identity\Actions\ToggleTeacherAccountAction;
-use App\Modules\Identity\Actions\UpdateTeacherAction;
-use App\Modules\Identity\Enums\Gender;
-use App\Modules\Identity\Enums\IdentityError;
-use App\Modules\Identity\Enums\TeacherStatus;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\Profile;
-use App\Modules\Identity\Models\TeacherProfile;
-use App\Modules\Identity\Models\User;
+use App\Modules\Academic\Actions\ChangeTeacherPasswordAction;
+use App\Modules\Academic\Actions\GetTeacherAction;
+use App\Modules\Academic\Actions\ToggleTeacherAccountAction;
+use App\Modules\Academic\Actions\UpdateTeacherAction;
+use App\Modules\Academic\Enums\Gender;
+use App\Modules\Academic\Enums\AcademicPersonError;
+use App\Modules\Academic\Enums\TeacherStatus;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Academic\Models\Profile;
+use App\Modules\Academic\Models\TeacherProfile;
+use App\Modules\Auth\Models\User;
 use Illuminate\Support\Facades\Hash;
 
 beforeEach(function (): void {
@@ -34,7 +34,7 @@ function teacherPayload(array $overrides = []): array
 }
 
 test('creating a teacher creates the profile and its login account together', function () {
-    $this->postJson('/api/v1/teachers', teacherPayload())
+    $this->postJson('/api/v1/academic/teachers', teacherPayload())
         ->assertCreated()
         ->assertJsonPath('data.full_name', 'Nguyễn Văn A')
         ->assertJsonPath('data.username', 'gv_nguyen')
@@ -46,7 +46,7 @@ test('creating a teacher creates the profile and its login account together', fu
 });
 
 test('a created teacher can sign in with the password that was set', function () {
-    $this->postJson('/api/v1/teachers', teacherPayload())->assertCreated();
+    $this->postJson('/api/v1/academic/teachers', teacherPayload())->assertCreated();
 
     $this->postJson('/api/v1/auth/login', [
         'username' => 'gv_nguyen',
@@ -55,7 +55,7 @@ test('a created teacher can sign in with the password that was set', function ()
 });
 
 test('a teacher payload never reports a credential back', function () {
-    $response = $this->postJson('/api/v1/teachers', teacherPayload())->assertCreated();
+    $response = $this->postJson('/api/v1/academic/teachers', teacherPayload())->assertCreated();
 
     expect($response->json('data'))->not->toHaveKey('password')
         ->and($response->getContent())->not->toContain('matkhau123');
@@ -64,19 +64,19 @@ test('a teacher payload never reports a credential back', function () {
 test('creating a teacher is rejected field by field', function () {
     User::factory()->create(['username' => 'gv_trung']);
 
-    $this->postJson('/api/v1/teachers', teacherPayload(['username' => 'gv_trung']))
+    $this->postJson('/api/v1/academic/teachers', teacherPayload(['username' => 'gv_trung']))
         ->assertJsonValidationErrorFor('username');
 
-    $this->postJson('/api/v1/teachers', teacherPayload(['phone' => '123']))
+    $this->postJson('/api/v1/academic/teachers', teacherPayload(['phone' => '123']))
         ->assertJsonValidationErrorFor('phone')
         ->assertJsonPath('errors.phone.0', 'Số điện thoại không hợp lệ.');
 
-    $this->postJson('/api/v1/teachers', teacherPayload(['color_identification' => 'orange']))
+    $this->postJson('/api/v1/academic/teachers', teacherPayload(['color_identification' => 'orange']))
         ->assertJsonValidationErrorFor('color_identification');
 });
 
 test('no teacher or account survives a failed creation', function () {
-    $this->postJson('/api/v1/teachers', teacherPayload(['phone' => 'not-a-phone']))
+    $this->postJson('/api/v1/academic/teachers', teacherPayload(['phone' => 'not-a-phone']))
         ->assertStatus(422);
 
     $this->assertDatabaseMissing('users', ['username' => 'gv_nguyen']);
@@ -92,13 +92,13 @@ test('the teacher list is paginated and searchable across profile and account', 
         'profile_id' => Profile::factory()->forRole(UserRole::Teacher)->create(['full_name' => 'Lê Văn C'])->id,
     ]);
 
-    $this->getJson('/api/v1/teachers')
+    $this->getJson('/api/v1/academic/teachers')
         ->assertOk()
         ->assertJsonPath('meta.total', 2)
         ->assertJsonStructure(['data' => [['id', 'full_name', 'username', 'is_account_active']], 'meta']);
 
-    $this->getJson('/api/v1/teachers?q=tr%E1%BA%A7n')->assertOk()->assertJsonPath('meta.total', 1);
-    $this->getJson('/api/v1/teachers?q=gv_tran')->assertOk()->assertJsonPath('meta.total', 1);
+    $this->getJson('/api/v1/academic/teachers?q=tr%E1%BA%A7n')->assertOk()->assertJsonPath('meta.total', 1);
+    $this->getJson('/api/v1/academic/teachers?q=gv_tran')->assertOk()->assertJsonPath('meta.total', 1);
 });
 
 test('the teacher list filters by employment status and account state', function () {
@@ -107,12 +107,12 @@ test('the teacher list filters by employment status and account state', function
     $locked = TeacherProfile::factory()->create();
     $locked->profile->user->forceFill(['is_active' => false])->save();
 
-    $this->getJson('/api/v1/teachers?status[]='.TeacherStatus::Inactive->value)
+    $this->getJson('/api/v1/academic/teachers?status[]='.TeacherStatus::Inactive->value)
         ->assertOk()
         ->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.id', $left->profile_id);
 
-    $this->getJson('/api/v1/teachers?is_active=0')
+    $this->getJson('/api/v1/academic/teachers?is_active=0')
         ->assertOk()
         ->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.id', $locked->profile_id);
@@ -122,7 +122,7 @@ test('updating a teacher cannot change the login name', function () {
     $teacher = TeacherProfile::factory()->create();
     $username = $teacher->profile->user->username;
 
-    $this->putJson("/api/v1/teachers/{$teacher->profile_id}", [
+    $this->putJson("/api/v1/academic/teachers/{$teacher->profile_id}", [
         'full_name' => 'Tên mới',
         'phone' => '0911111111',
         'email' => 'moi@vietclass.test',
@@ -145,7 +145,7 @@ test('a teacher may keep their own phone and email while editing', function () {
         ])->id,
     ]);
 
-    $this->putJson("/api/v1/teachers/{$teacher->profile_id}", [
+    $this->putJson("/api/v1/academic/teachers/{$teacher->profile_id}", [
         'full_name' => 'Giữ nguyên liên hệ',
         'phone' => '0912345678',
         'email' => 'giu@vietclass.test',
@@ -158,7 +158,7 @@ test('a teacher may keep their own phone and email while editing', function () {
 test('locking a teacher account keeps the profile and its classes intact', function () {
     $teacher = TeacherProfile::factory()->create();
 
-    $this->patchJson("/api/v1/teachers/{$teacher->profile_id}/account", ['is_active' => false])
+    $this->patchJson("/api/v1/academic/teachers/{$teacher->profile_id}/account", ['is_active' => false])
         ->assertOk()
         ->assertJsonPath('data.is_account_active', false);
 
@@ -170,7 +170,7 @@ test('a locked teacher cannot sign in', function () {
     $teacher = TeacherProfile::factory()->create();
     $teacher->profile->user->forceFill(['password' => 'matkhau123'])->save();
 
-    $this->patchJson("/api/v1/teachers/{$teacher->profile_id}/account", ['is_active' => false])->assertOk();
+    $this->patchJson("/api/v1/academic/teachers/{$teacher->profile_id}/account", ['is_active' => false])->assertOk();
 
     $this->postJson('/api/v1/auth/login', [
         'username' => $teacher->profile->user->username,
@@ -181,7 +181,7 @@ test('a locked teacher cannot sign in', function () {
 test('changing a teacher password stores a hash and never the plain value', function () {
     $teacher = TeacherProfile::factory()->create();
 
-    $this->patchJson("/api/v1/teachers/{$teacher->profile_id}/password", ['password' => 'matkhaumoi1'])
+    $this->patchJson("/api/v1/academic/teachers/{$teacher->profile_id}/password", ['password' => 'matkhaumoi1'])
         ->assertNoContent();
 
     $stored = $teacher->profile->user->fresh()->password;
@@ -193,21 +193,21 @@ test('changing a teacher password stores a hash and never the plain value', func
 test('a short password is rejected', function () {
     $teacher = TeacherProfile::factory()->create();
 
-    $this->patchJson("/api/v1/teachers/{$teacher->profile_id}/password", ['password' => 'ngan'])
+    $this->patchJson("/api/v1/academic/teachers/{$teacher->profile_id}/password", ['password' => 'ngan'])
         ->assertJsonValidationErrorFor('password');
 });
 
 test('a missing teacher is reported as not found by every operation', function () {
     expect(app(GetTeacherAction::class)->handle(9999)->getError())
-        ->toBe(IdentityError::TeacherNotFound)
+        ->toBe(AcademicPersonError::TeacherNotFound)
         ->and(app(UpdateTeacherAction::class)->handle(9999, [])->getError())
-        ->toBe(IdentityError::TeacherNotFound)
+        ->toBe(AcademicPersonError::TeacherNotFound)
         ->and(app(ToggleTeacherAccountAction::class)->handle(9999, false)->getError())
-        ->toBe(IdentityError::TeacherNotFound)
+        ->toBe(AcademicPersonError::TeacherNotFound)
         ->and(app(ChangeTeacherPasswordAction::class)->handle(9999, 'matkhau123')->getError())
-        ->toBe(IdentityError::TeacherNotFound);
+        ->toBe(AcademicPersonError::TeacherNotFound);
 
-    $this->getJson('/api/v1/teachers/9999')
+    $this->getJson('/api/v1/academic/teachers/9999')
         ->assertNotFound()
         ->assertJsonPath('message', 'Không tìm thấy giáo viên.');
 });
@@ -224,7 +224,7 @@ test('the teacher option list offers only employed teachers with a usable accoun
     ]);
     $locked->profile->user->forceFill(['is_active' => false])->save();
 
-    $this->getJson('/api/v1/teachers/options')
+    $this->getJson('/api/v1/academic/teachers/options')
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.id', $available->profile_id)
@@ -233,10 +233,10 @@ test('the teacher option list offers only employed teachers with a usable accoun
 });
 
 test('a teacher payload carries a gender and no bank details', function () {
-    $this->postJson('/api/v1/teachers', teacherPayload(['gender' => null]))
+    $this->postJson('/api/v1/academic/teachers', teacherPayload(['gender' => null]))
         ->assertJsonValidationErrorFor('gender');
 
-    $response = $this->postJson('/api/v1/teachers', teacherPayload())->assertCreated();
+    $response = $this->postJson('/api/v1/academic/teachers', teacherPayload())->assertCreated();
 
     expect($response->json('data'))->not->toHaveKey('bank_bin')
         ->and($response->json('data'))->not->toHaveKey('bank_account_number')
@@ -244,13 +244,13 @@ test('a teacher payload carries a gender and no bank details', function () {
 });
 
 test('two teachers may share one phone number and one email', function () {
-    $this->postJson('/api/v1/teachers', teacherPayload([
+    $this->postJson('/api/v1/academic/teachers', teacherPayload([
         'username' => 'gv_mot',
         'phone' => '0900000001',
         'email' => 'chung@vietclass.test',
     ]))->assertCreated();
 
-    $this->postJson('/api/v1/teachers', teacherPayload([
+    $this->postJson('/api/v1/academic/teachers', teacherPayload([
         'username' => 'gv_hai',
         'phone' => '0900000001',
         'email' => 'chung@vietclass.test',
@@ -267,7 +267,7 @@ test('the teacher list sorts by the name held on the shared profile', function (
         'profile_id' => Profile::factory()->forRole(UserRole::Teacher)->create(['full_name' => 'Ẩn Danh'])->id,
     ]);
 
-    $this->getJson('/api/v1/teachers?sort=full_name&direction=asc')
+    $this->getJson('/api/v1/academic/teachers?sort=full_name&direction=asc')
         ->assertOk()
         ->assertJsonPath('data.0.full_name', 'Ẩn Danh')
         ->assertJsonPath('data.1.full_name', 'Trần Bích');
@@ -279,15 +279,15 @@ test('toggling the account or changing the password of a teacher with no login a
     ]);
 
     expect(app(ToggleTeacherAccountAction::class)->handle($teacher->profile_id, false)->getError())
-        ->toBe(IdentityError::AccountNotProvisioned)
+        ->toBe(AcademicPersonError::AccountNotProvisioned)
         ->and(app(ChangeTeacherPasswordAction::class)->handle($teacher->profile_id, 'matkhau123')->getError())
-        ->toBe(IdentityError::AccountNotProvisioned);
+        ->toBe(AcademicPersonError::AccountNotProvisioned);
 
-    $this->patchJson("/api/v1/teachers/{$teacher->profile_id}/account", ['is_active' => false])
-        ->assertStatus(IdentityError::AccountNotProvisioned->httpStatus())
+    $this->patchJson("/api/v1/academic/teachers/{$teacher->profile_id}/account", ['is_active' => false])
+        ->assertStatus(AcademicPersonError::AccountNotProvisioned->httpStatus())
         ->assertJsonPath('message', 'Giáo viên này chưa có tài khoản đăng nhập.');
 
-    $this->patchJson("/api/v1/teachers/{$teacher->profile_id}/password", ['password' => 'matkhaumoi1'])
-        ->assertStatus(IdentityError::AccountNotProvisioned->httpStatus())
+    $this->patchJson("/api/v1/academic/teachers/{$teacher->profile_id}/password", ['password' => 'matkhaumoi1'])
+        ->assertStatus(AcademicPersonError::AccountNotProvisioned->httpStatus())
         ->assertJsonPath('message', 'Giáo viên này chưa có tài khoản đăng nhập.');
 });

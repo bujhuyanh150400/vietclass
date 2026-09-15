@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { PageMeta } from "@/lib/api/contracts";
-import { UserAvatar } from "@/modules/avatar";
+import { UserAvatar } from "./user-avatar";
 
 import type { Teacher } from "../types/academic";
 import { TEACHER_STATUS_LABELS, formatDate } from "../utils/labels";

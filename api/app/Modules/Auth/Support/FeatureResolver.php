@@ -4,7 +4,7 @@ namespace App\Modules\Auth\Support;
 
 use App\Modules\Auth\Contracts\FeatureEnum;
 use App\Modules\Auth\Repositories\FeatureUserRepository;
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Models\User;
 
 /**
  * Answers whether a user holds a permission by combining the role defaults declared

@@ -6,12 +6,12 @@ use App\Modules\Academic\Actions\UpdateEnrollmentAction;
 use App\Modules\Academic\Enums\AcademicError;
 use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Academic\Models\SchoolClass;
-use App\Modules\FileManagement\Enums\FileLinkType;
-use App\Modules\FileManagement\Models\FileLink;
-use App\Modules\FileManagement\Models\ManagedFile;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\StudentProfile;
-use App\Modules\Identity\Models\User;
+use App\Modules\System\Enums\FileLinkType;
+use App\Modules\System\Models\FileLink;
+use App\Modules\System\Models\ManagedFile;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Academic\Models\StudentProfile;
+use App\Modules\Auth\Models\User;
 
 beforeEach(function (): void {
     $this->admin = User::factory()->create(['role' => UserRole::Admin]);
@@ -22,7 +22,7 @@ test('students are enrolled into a class from a shared join date', function () {
     $class = SchoolClass::factory()->create(['start_at' => now()->subMonth()->toDateString()]);
     $students = StudentProfile::factory()->count(2)->create();
 
-    $this->postJson("/api/v1/classes/{$class->id}/enrollments", [
+    $this->postJson("/api/v1/academic/classes/{$class->id}/enrollments", [
         'student_ids' => $students->pluck('profile_id')->all(),
         'enrolled_at' => now()->toDateString(),
     ])
@@ -38,7 +38,7 @@ test('the same student listed twice in one request is enrolled once', function (
     $class = SchoolClass::factory()->create();
     $student = StudentProfile::factory()->create();
 
-    $this->postJson("/api/v1/classes/{$class->id}/enrollments", [
+    $this->postJson("/api/v1/academic/classes/{$class->id}/enrollments", [
         'student_ids' => [$student->profile_id, $student->profile_id],
         'enrolled_at' => now()->toDateString(),
     ])
@@ -50,7 +50,7 @@ test('a join date cannot precede the class opening date', function () {
     $class = SchoolClass::factory()->create(['start_at' => '2026-03-01']);
     $student = StudentProfile::factory()->create();
 
-    $this->postJson("/api/v1/classes/{$class->id}/enrollments", [
+    $this->postJson("/api/v1/academic/classes/{$class->id}/enrollments", [
         'student_ids' => [$student->profile_id],
         'enrolled_at' => '2026-02-28',
     ])
@@ -65,7 +65,7 @@ test('a batch that would overfill the class is refused outright', function () {
     ClassEnrollment::factory()->create(['class_id' => $class->id]);
     $students = StudentProfile::factory()->count(2)->create();
 
-    $this->postJson("/api/v1/classes/{$class->id}/enrollments", [
+    $this->postJson("/api/v1/academic/classes/{$class->id}/enrollments", [
         'student_ids' => $students->pluck('profile_id')->all(),
         'enrolled_at' => now()->toDateString(),
     ])
@@ -78,7 +78,7 @@ test('a batch that would overfill the class is refused outright', function () {
 test('a student already studying in the class cannot be enrolled again', function () {
     $existing = ClassEnrollment::factory()->create();
 
-    $this->postJson("/api/v1/classes/{$existing->class_id}/enrollments", [
+    $this->postJson("/api/v1/academic/classes/{$existing->class_id}/enrollments", [
         'student_ids' => [$existing->student_id],
         'enrolled_at' => now()->toDateString(),
     ])
@@ -89,7 +89,7 @@ test('a student already studying in the class cannot be enrolled again', functio
 test('a student who left may be enrolled again and keeps the earlier period', function () {
     $previous = ClassEnrollment::factory()->left()->create();
 
-    $this->postJson("/api/v1/classes/{$previous->class_id}/enrollments", [
+    $this->postJson("/api/v1/academic/classes/{$previous->class_id}/enrollments", [
         'student_ids' => [$previous->student_id],
         'enrolled_at' => now()->toDateString(),
     ])->assertCreated();
@@ -106,7 +106,7 @@ test('a finished class refuses every enrolment operation', function () {
     $student = StudentProfile::factory()->create();
     $enrollment = ClassEnrollment::factory()->create(['class_id' => $class->id]);
 
-    $this->postJson("/api/v1/classes/{$class->id}/enrollments", [
+    $this->postJson("/api/v1/academic/classes/{$class->id}/enrollments", [
         'student_ids' => [$student->profile_id],
         'enrolled_at' => now()->toDateString(),
     ])->assertStatus(409)
@@ -123,12 +123,12 @@ test('a roster reports every period including the ones already left', function (
     ClassEnrollment::factory()->create(['class_id' => $class->id]);
     ClassEnrollment::factory()->left()->create(['class_id' => $class->id]);
 
-    $this->getJson("/api/v1/classes/{$class->id}/enrollments")
+    $this->getJson("/api/v1/academic/classes/{$class->id}/enrollments")
         ->assertOk()
         ->assertJsonPath('meta.total', 2)
         ->assertJsonStructure(['data' => [['id', 'student_name', 'enrolled_at', 'left_at', 'is_active']]]);
 
-    $this->getJson("/api/v1/classes/{$class->id}/enrollments?active_only=1")
+    $this->getJson("/api/v1/academic/classes/{$class->id}/enrollments?active_only=1")
         ->assertOk()
         ->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.is_active', true);
@@ -142,7 +142,7 @@ test('the available student list hides those already studying in the class', fun
     $locked = StudentProfile::factory()->create();
     $locked->profile->user->forceFill(['is_active' => false])->save();
 
-    $response = $this->getJson("/api/v1/classes/{$class->id}/available-students")->assertOk();
+    $response = $this->getJson("/api/v1/academic/classes/{$class->id}/available-students")->assertOk();
     $ids = collect($response->json('data'))->pluck('id');
 
     expect($ids)->toContain($fresh->profile_id, $returning->student_id)
@@ -160,7 +160,7 @@ test('the available student list includes a file avatar without resource queries
     ]);
     $student->profile->forceFill(['avatar_config' => ['type' => 'file']])->save();
 
-    $available = collect($this->getJson("/api/v1/classes/{$class->id}/available-students")
+    $available = collect($this->getJson("/api/v1/academic/classes/{$class->id}/available-students")
         ->assertOk()
         ->json('data'))
         ->firstWhere('id', $student->profile_id);
@@ -169,14 +169,14 @@ test('the available student list includes a file avatar without resource queries
         ->toMatchArray([
             'type' => 'file',
             'file_id' => $file->id,
-            'content_url' => "/api/v1/files/{$file->id}/content",
+            'content_url' => "/api/v1/system/files/{$file->id}/content",
         ]);
 });
 
 test('an enrolment date may be corrected on a closed period', function () {
     $enrollment = ClassEnrollment::factory()->left()->create();
 
-    $this->putJson("/api/v1/enrollments/{$enrollment->id}", [
+    $this->putJson("/api/v1/academic/enrollments/{$enrollment->id}", [
         'enrolled_at' => now()->subDays(3)->toDateString(),
         'left_at' => now()->subDay()->toDateString(),
         'note' => 'Sửa lại ngày',
@@ -189,7 +189,7 @@ test('an enrolment date may be corrected on a closed period', function () {
 test('a leave date cannot precede the join date', function () {
     $enrollment = ClassEnrollment::factory()->create(['enrolled_at' => now()->toDateString()]);
 
-    $this->putJson("/api/v1/enrollments/{$enrollment->id}", [
+    $this->putJson("/api/v1/academic/enrollments/{$enrollment->id}", [
         'enrolled_at' => now()->toDateString(),
         'left_at' => now()->subWeek()->toDateString(),
     ])
@@ -204,7 +204,7 @@ test('reopening a closed period is refused while another one is running', functi
         'student_id' => $running->student_id,
     ]);
 
-    $this->putJson("/api/v1/enrollments/{$closed->id}", [
+    $this->putJson("/api/v1/academic/enrollments/{$closed->id}", [
         'enrolled_at' => $closed->enrolled_at->toDateString(),
         'left_at' => null,
     ])
@@ -215,7 +215,7 @@ test('reopening a closed period is refused while another one is running', functi
 test('ending a membership keeps the record and appends the reason', function () {
     $enrollment = ClassEnrollment::factory()->create(['note' => 'Ghi chú cũ']);
 
-    $this->postJson("/api/v1/enrollments/{$enrollment->id}/leave", [
+    $this->postJson("/api/v1/academic/enrollments/{$enrollment->id}/leave", [
         'left_at' => now()->toDateString(),
         'reason' => 'Chuyển trường',
     ])
@@ -230,7 +230,7 @@ test('ending a membership keeps the record and appends the reason', function () 
 test('ending a membership requires a reason', function () {
     $enrollment = ClassEnrollment::factory()->create();
 
-    $this->postJson("/api/v1/enrollments/{$enrollment->id}/leave", [
+    $this->postJson("/api/v1/academic/enrollments/{$enrollment->id}/leave", [
         'left_at' => now()->toDateString(),
     ])
         ->assertJsonValidationErrorFor('reason')
@@ -251,7 +251,7 @@ test('a transfer closes the old period and opens a new one the same day', functi
         'code' => 'LOP-MOI',
     ]);
 
-    $this->postJson("/api/v1/enrollments/{$enrollment->id}/transfer", [
+    $this->postJson("/api/v1/academic/enrollments/{$enrollment->id}/transfer", [
         'class_id' => $target->id,
         'left_at' => now()->toDateString(),
     ])
@@ -270,7 +270,7 @@ test('a transfer target must teach the same subject', function () {
     $enrollment = ClassEnrollment::factory()->create();
     $other = SchoolClass::factory()->create();
 
-    $this->postJson("/api/v1/enrollments/{$enrollment->id}/transfer", [
+    $this->postJson("/api/v1/academic/enrollments/{$enrollment->id}/transfer", [
         'class_id' => $other->id,
         'left_at' => now()->toDateString(),
     ])
@@ -299,7 +299,7 @@ test('a transfer into a full class is refused and changes nothing', function () 
     ]);
     ClassEnrollment::factory()->create(['class_id' => $target->id]);
 
-    $this->postJson("/api/v1/enrollments/{$enrollment->id}/transfer", [
+    $this->postJson("/api/v1/academic/enrollments/{$enrollment->id}/transfer", [
         'class_id' => $target->id,
         'left_at' => now()->toDateString(),
     ])->assertStatus(409);
@@ -317,9 +317,9 @@ test('a missing enrolment is reported as not found', function () {
 });
 
 test('a roster for a missing class is reported as not found', function () {
-    $this->getJson('/api/v1/classes/9999/enrollments')
+    $this->getJson('/api/v1/academic/classes/9999/enrollments')
         ->assertNotFound()
         ->assertJsonPath('message', 'Không tìm thấy lớp học.');
 
-    $this->getJson('/api/v1/classes/9999/available-students')->assertNotFound();
+    $this->getJson('/api/v1/academic/classes/9999/available-students')->assertNotFound();
 });

@@ -59,12 +59,12 @@ Mọi endpoint nằm dưới tiền tố `/api/v1` và cần header `Authorizati
 
 | Thao tác | Yêu cầu |
 | --- | --- |
-| Xem danh sách lớp | `GET /classes/{id}/enrollments` |
-| Xem học sinh có thể thêm | `GET /classes/{id}/available-students` |
-| Thêm học sinh | `POST /classes/{id}/enrollments` với `student_ids`, `enrolled_at` |
-| Sửa thông tin ghi danh | `PUT /enrollments/{id}` với `enrolled_at`, tùy chọn `left_at`, `note` |
-| Chuyển lớp | `POST /enrollments/{id}/transfer` với `class_id`, `left_at` |
-| Cho nghỉ lớp | `POST /enrollments/{id}/leave` với `left_at`, `reason` |
+| Xem danh sách lớp | `GET /api/v1/academic/classes/{id}/enrollments` |
+| Xem học sinh có thể thêm | `GET /api/v1/academic/classes/{id}/available-students` |
+| Thêm học sinh | `POST /api/v1/academic/classes/{id}/enrollments` với `student_ids`, `enrolled_at` |
+| Sửa thông tin ghi danh | `PUT /api/v1/academic/enrollments/{id}` với `enrolled_at`, tùy chọn `left_at`, `note` |
+| Chuyển lớp | `POST /api/v1/academic/enrollments/{id}/transfer` với `class_id`, `left_at` |
+| Cho nghỉ lớp | `POST /api/v1/academic/enrollments/{id}/leave` với `left_at`, `reason` |
 
 Danh sách lớp nhận thêm `active_only=1` để chỉ lấy bản ghi đang học, `q` để tìm theo tên học sinh, cùng `page`, `per_page`, `sort`, `direction`. Cột sắp xếp cho phép: `id`, `enrolled_at`, `left_at`.
 
@@ -103,8 +103,8 @@ Trên trình duyệt:
 | Chức năng liên quan | Loại quan hệ | Ảnh hưởng nghiệp vụ | Người dùng quan sát được |
 | --- | --- | --- | --- |
 | [Quản lý lớp học](lop-hoc.md) | Tiên quyết | Lớp phải đang hoạt động và còn chỗ. | Lớp kết thúc thì mọi thao tác ghi danh bị chặn. |
-| [Quản lý học sinh](../identity/hoc-sinh.md) | Tiên quyết | Học sinh phải có hồ sơ và tài khoản chưa khóa. | Học sinh bị khóa không xuất hiện trong danh sách chọn. |
-| [Quản lý học sinh](../identity/hoc-sinh.md) | Hạ nguồn | Hồ sơ học sinh báo về các lớp học sinh còn đang theo học, dùng đúng định nghĩa "còn đang học" ở mục Quy tắc nghiệp vụ. | Lớp đã cho nghỉ biến mất khỏi cột Lớp đang học ở danh sách học sinh, thay vì hiện kèm nhãn. Ghi danh, chuyển lớp và cho nghỉ đều làm mới cột đó ngay. |
+| [Quản lý học sinh](../academic/hoc-sinh.md) | Tiên quyết | Học sinh phải có hồ sơ và tài khoản chưa khóa. | Học sinh bị khóa không xuất hiện trong danh sách chọn. |
+| [Quản lý học sinh](../academic/hoc-sinh.md) | Hạ nguồn | Hồ sơ học sinh báo về các lớp học sinh còn đang theo học, dùng đúng định nghĩa "còn đang học" ở mục Quy tắc nghiệp vụ. | Lớp đã cho nghỉ biến mất khỏi cột Lớp đang học ở danh sách học sinh, thay vì hiện kèm nhãn. Ghi danh, chuyển lớp và cho nghỉ đều làm mới cột đó ngay. |
 | [Phân quyền theo chức năng](../auth/phan-quyen.md) | Tiên quyết | Mỗi thao tác ghi danh có một quyền riêng. | Không đủ quyền thì nhận `403`. |
 
 ## Giới hạn hiện tại

@@ -1,10 +1,10 @@
-import type { AvatarValue } from "@/modules/avatar";
+import type { AvatarValue } from "./avatar";
 
 /**
  * Wire types for the academic API.
  *
  * Field names stay in the API's snake_case because they are part of the wire
- * contract, matching how the identity module treats `is_active`.
+ * contract, matching how the Auth module treats `is_active`.
  */
 
 /** Whether a teacher still works here. */

@@ -157,9 +157,9 @@ CSS của một tính năng **không** được import vào `styles.css`. Nó s�
 
 | Stylesheet | Được import bởi |
 | --- | --- |
-| `src/modules/identity/styles/login.css` | `src/modules/identity/components/login-view.tsx` |
+| `src/modules/auth/styles/login.css` | `src/modules/auth/components/login-view.tsx` |
 | `src/modules/academic/styles/student-form.css` | `src/modules/academic/containers/student-form-container.tsx` |
-| `src/modules/files/styles/filepond.css` | `src/modules/files/components/filepond-client.tsx` |
+| `src/modules/system/styles/filepond.css` | `src/modules/system/components/filepond-client.tsx` |
 | `src/components/layouts/app-shell.css` | `src/components/layouts/protected-shell.tsx` |
 
 Cách này vẫn đúng vì cascade layer là toàn cục theo tài liệu: `styles.css` khai báo thứ tự tầng, còn một khối `@layer components` nạp riêng vẫn được xếp vào đúng tầng đó, nằm dưới mọi utility. Vì vậy CSS tính năng luôn bọc trong `@layer components`.
@@ -246,7 +246,7 @@ CSS không diễn tả được bằng utility (mục 6).
 | Kết quả tìm kiếm | Danh sách phụ huynh khớp nằm **trong luồng** ngay dưới ô tìm, không phải overlay. Cố ý khác mock: sheet bo góc của chính nó, và một dropdown gần mép dưới sẽ bị cắt ở đó |
 | Hàng nút | `min-h-[78px]`, `border-t border-vc-rule`, canh phải. Nút primary dùng đúng công thức "phím bấm được" ở mục 7.2 (`h-11 rounded-control border-vc-wood shadow-vc-raised has-[>svg]:px-[15px]`, icon đặt `size-*` thẳng trên `svg`). Dưới `md` hàng này `sticky bottom-0` kèm bóng hướng lên, nên biểu mẫu mười lăm trường không che mất nút gửi của chính nó |
 | Page heading | `h2` `28px`, từ `md` lên `34px`, trên nó là eyebrow `10px` uppercase và `BackLink`. Là `h2` vì topbar đã giữ `h1` |
-| Khối ảnh đại diện | Một ô `152px` duy nhất, cặp nút `Tải ảnh lên` / `Avatar mẫu` quyết định cái gì chiếm ô đó: panel tròn của FilePond, hay chân dung DiceBear. FilePond được **ẩn chứ không unmount** khi đổi chế độ — huỷ instance lúc còn ảnh sẽ bỏ lại object URL của ảnh đó, nên chủ sở hữu xoá file trước (qua prop `clearToken`) rồi mới ẩn. Xem `modules/files/components/filepond-client.tsx` cho phần quét URL mà FilePond bỏ sót |
+| Khối ảnh đại diện | Một ô `152px` duy nhất, cặp nút `Tải ảnh lên` / `Avatar mẫu` quyết định cái gì chiếm ô đó: panel tròn của FilePond, hay chân dung DiceBear. FilePond được **ẩn chứ không unmount** khi đổi chế độ — huỷ instance lúc còn ảnh sẽ bỏ lại object URL của ảnh đó, nên chủ sở hữu xoá file trước (qua prop `clearToken`) rồi mới ẩn. Xem `modules/system/components/filepond-client.tsx` cho phần quét URL mà FilePond bỏ sót |
 
 ### 7.4 Màn phòng học
 
@@ -305,7 +305,7 @@ Hai điều kiện ràng buộc cách vẽ nó. Thứ nhất `.vc-app-header-tit
 crumb cha là `flex: none` và giữ nguyên nhãn — một crumb cắt thành `Lớp h…` không giúp
 ai. Thứ hai, dưới `768px` topbar chỉ đủ chỗ cho một nhãn, nên crumb cha **ẩn hẳn** thay
 vì bóp tên của màn hiện tại thành dấu chấm lửng. Route không nằm dưới mục điều hướng nào
-(`/account/avatar`) ra đúng một crumb, giống hành vi cũ.
+(`/academic/avatar`) ra đúng một crumb, giống hành vi cũ.
 
 **Ai sở hữu `<h1>`.** Topbar giữ `<h1>`, và mỗi màn có tiêu đề riêng thì bắt đầu từ
 `<h2>` dưới nó. Thang heading trong một màn nghiệp vụ vì vậy là:
@@ -418,7 +418,7 @@ Ranh giới: `EmptyState` dành cho ô bảng hoặc lưới, không phải toà
 
 - Không có token spacing, thang typography, shadow hay motion. Bổ sung khi có nhu cầu thực sự lệch khỏi thang mặc định của Tailwind.
 - Không có chế độ tối, và variant `dark` bất hoạt theo thiết kế.
-- Khối chú thích đầu `frontend/src/modules/identity/styles/login.css` nói rằng nó vào bundle qua `@import` trong `src/styles.css`. Điều đó không còn đúng: `styles.css` không import nó, và nó được `login-view.tsx` import. Chú thích cần sửa; mục 6 mô tả hành vi hiện tại đã xác minh.
+- Khối chú thích đầu `frontend/src/modules/auth/styles/login.css` nói rằng nó vào bundle qua `@import` trong `src/styles.css`. Điều đó không còn đúng: `styles.css` không import nó, và nó được `login-view.tsx` import. Chú thích cần sửa; mục 6 mô tả hành vi hiện tại đã xác minh.
 - Lớp học, Giáo viên, sổ lớp và các màn biểu mẫu chưa redesign không có tiêu đề riêng — `<h1>` của chúng là nhãn ở topbar (mục 8). Điều đó đúng về khả năng tiếp cận nhưng có nghĩa là tiêu đề của những màn này chỉ cao `15px` ở topbar, không có mô tả và không có chỗ đặt hành động chính. Màn nào được redesign tiếp thì nhận page heading riêng ở `<h2>` theo mẫu mục 7.2. Chỉ nên hạ topbar xuống `<span>` để mỗi màn tự sở hữu `<h1>` khi **mọi** màn đã có tiêu đề riêng; làm nửa vời một lần rồi đã phải hoàn nguyên.
 - Danh sách học sinh, Môn học và Phòng học dùng bộ hình học ở mục 2.5: heading cấp trang, `ListSheet`, toolbar điều khiển và pager đánh số. Các màn Lớp học, Giáo viên và sổ lớp vẫn dùng `DataTable` + `DataTableToolbar`, còn Tệp dùng toolbar riêng của module files — vì vậy hai ngôn ngữ thị giác vẫn cùng tồn tại ở những màn chưa redesign.
 

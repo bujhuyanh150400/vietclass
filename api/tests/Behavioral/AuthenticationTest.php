@@ -5,8 +5,8 @@ use App\Core\Exceptions\ActionError;
 use App\Modules\Auth\Actions\LoginAction;
 use App\Modules\Auth\Actions\LogoutAction;
 use App\Modules\Auth\Enums\AuthError;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Auth\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 

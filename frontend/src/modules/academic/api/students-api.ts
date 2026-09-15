@@ -27,19 +27,19 @@ export type StudentListParams = {
 
 /** Fetches one page of student profiles. */
 export async function fetchStudents(params: StudentListParams): Promise<Page<Student>> {
-  return browserRequestList<Student>("/api/v1/students", { params });
+  return browserRequestList<Student>("/api/v1/academic/students", { params });
 }
 
 /** Fetches one student profile. */
 export async function fetchStudent(id: number): Promise<Student> {
-  return browserRequest<Student>(`/api/v1/students/${id}`);
+  return browserRequest<Student>(`/api/v1/academic/students/${id}`);
 }
 
 /** Creates a student profile together with its login account. */
 export async function createStudent(
   submission: CreateProfileSubmission<CreateStudentRequest>,
 ): Promise<Student> {
-  return browserRequest<Student>("/api/v1/students", {
+  return browserRequest<Student>("/api/v1/academic/students", {
     method: "POST",
     body: profileCreateBody(submission),
   });
@@ -47,12 +47,12 @@ export async function createStudent(
 
 /** Changes a student profile. */
 export async function updateStudent(id: number, body: UpdateStudentRequest): Promise<Student> {
-  return browserRequest<Student>(`/api/v1/students/${id}`, { method: "PUT", body });
+  return browserRequest<Student>(`/api/v1/academic/students/${id}`, { method: "PUT", body });
 }
 
 /** Locks or unlocks a student's login account. */
 export async function setStudentAccountActive(id: number, isActive: boolean): Promise<Student> {
-  return browserRequest<Student>(`/api/v1/students/${id}/account`, {
+  return browserRequest<Student>(`/api/v1/academic/students/${id}/account`, {
     method: "PATCH",
     body: { is_active: isActive },
   });
@@ -60,7 +60,7 @@ export async function setStudentAccountActive(id: number, isActive: boolean): Pr
 
 /** Replaces the password on a student's login account. */
 export async function changeStudentPassword(id: number, password: string): Promise<void> {
-  await browserRequest<undefined>(`/api/v1/students/${id}/password`, {
+  await browserRequest<undefined>(`/api/v1/academic/students/${id}/password`, {
     method: "PATCH",
     body: { password },
   });

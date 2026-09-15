@@ -9,7 +9,7 @@ use App\Modules\Academic\Enums\AcademicError;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Repositories\ClassEnrollmentRepository;
 use App\Modules\Academic\Repositories\ClassRepository;
-use App\Modules\Identity\Models\StudentProfile;
+use App\Modules\Academic\Models\StudentProfile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 final class ListAvailableStudentsAction

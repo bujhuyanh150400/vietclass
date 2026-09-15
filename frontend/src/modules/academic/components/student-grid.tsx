@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 
 import type { DataTableState } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { UserAvatar } from "@/modules/avatar";
+import { UserAvatar } from "./user-avatar";
 
 import type { Student } from "../types/academic";
 import { GradeToken, StudentRowMenu } from "./student-cells";

@@ -8,10 +8,10 @@ use App\Modules\Academic\Enums\ClassStatus;
 use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\Subject;
-use App\Modules\Identity\Enums\GradeLevel;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\TeacherProfile;
-use App\Modules\Identity\Models\User;
+use App\Modules\Academic\Enums\GradeLevel;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Academic\Models\TeacherProfile;
+use App\Modules\Auth\Models\User;
 
 beforeEach(function (): void {
     $this->admin = User::factory()->create(['role' => UserRole::Admin]);
@@ -33,7 +33,7 @@ function classPayload(array $overrides = []): array
 }
 
 test('a class is created in the running state', function () {
-    $this->postJson('/api/v1/classes', classPayload())
+    $this->postJson('/api/v1/academic/classes', classPayload())
         ->assertCreated()
         ->assertJsonPath('data.code', 'TOAN-9A')
         ->assertJsonPath('data.status', ClassStatus::Active->value)
@@ -43,7 +43,7 @@ test('a class is created in the running state', function () {
 test('a class cannot be opened against a locked subject', function () {
     $subject = Subject::factory()->inactive()->create();
 
-    $this->postJson('/api/v1/classes', classPayload(['subject_id' => $subject->id]))
+    $this->postJson('/api/v1/academic/classes', classPayload(['subject_id' => $subject->id]))
         ->assertStatus(422)
         ->assertJsonPath('message', 'Môn học này đã bị khóa, không thể mở lớp mới.');
 
@@ -53,7 +53,7 @@ test('a class cannot be opened against a locked subject', function () {
 test('a class cannot be opened for a grade its subject does not apply to', function () {
     $subject = Subject::factory()->create(['grade_levels' => [GradeLevel::Grade1->value]]);
 
-    $this->postJson('/api/v1/classes', classPayload([
+    $this->postJson('/api/v1/academic/classes', classPayload([
         'subject_id' => $subject->id,
         'grade_level' => GradeLevel::Grade9->value,
     ]))
@@ -66,7 +66,7 @@ test('a class cannot be opened for a grade its subject does not apply to', funct
 test('a class cannot be opened under a teacher who has left', function () {
     $teacher = TeacherProfile::factory()->inactive()->create();
 
-    $this->postJson('/api/v1/classes', classPayload(['teacher_id' => $teacher->profile_id]))
+    $this->postJson('/api/v1/academic/classes', classPayload(['teacher_id' => $teacher->profile_id]))
         ->assertStatus(422)
         ->assertJsonPath('message', 'Giáo viên này không còn làm việc, không thể phụ trách lớp.');
 });
@@ -74,13 +74,13 @@ test('a class cannot be opened under a teacher who has left', function () {
 test('a duplicate class code is reported against the code field', function () {
     SchoolClass::factory()->create(['code' => 'TOAN-9A']);
 
-    $this->postJson('/api/v1/classes', classPayload())
+    $this->postJson('/api/v1/academic/classes', classPayload())
         ->assertJsonValidationErrorFor('code')
         ->assertJsonPath('errors.code.0', 'Mã lớp này đã tồn tại. Vui lòng đặt mã khác.');
 });
 
 test('a class end date cannot precede its opening date', function () {
-    $this->postJson('/api/v1/classes', classPayload([
+    $this->postJson('/api/v1/academic/classes', classPayload([
         'start_at' => '2026-03-01',
         'end_at' => '2026-02-01',
     ]))
@@ -94,7 +94,7 @@ test('the class code and opening date never change after creation', function () 
         'start_at' => '2026-01-10',
     ]);
 
-    $this->putJson("/api/v1/classes/{$class->id}", [
+    $this->putJson("/api/v1/academic/classes/{$class->id}", [
         'name' => 'Tên mới',
         'subject_id' => $class->subject_id,
         'teacher_id' => $class->teacher_id,
@@ -113,7 +113,7 @@ test('capacity cannot drop below the students already holding a place', function
     $class = SchoolClass::factory()->create(['max_students' => 10]);
     ClassEnrollment::factory()->count(3)->create(['class_id' => $class->id]);
 
-    $this->putJson("/api/v1/classes/{$class->id}", [
+    $this->putJson("/api/v1/academic/classes/{$class->id}", [
         'name' => $class->name,
         'subject_id' => $class->subject_id,
         'teacher_id' => $class->teacher_id,
@@ -130,7 +130,7 @@ test('capacity may be set to exactly the current headcount', function () {
     $class = SchoolClass::factory()->create(['max_students' => 10]);
     ClassEnrollment::factory()->count(3)->create(['class_id' => $class->id]);
 
-    $this->putJson("/api/v1/classes/{$class->id}", [
+    $this->putJson("/api/v1/academic/classes/{$class->id}", [
         'name' => $class->name,
         'subject_id' => $class->subject_id,
         'teacher_id' => $class->teacher_id,
@@ -140,7 +140,7 @@ test('capacity may be set to exactly the current headcount', function () {
 });
 
 test('a class capacity accepts the PostgreSQL smallint maximum', function () {
-    $this->postJson('/api/v1/classes', classPayload(['max_students' => 32767]))
+    $this->postJson('/api/v1/academic/classes', classPayload(['max_students' => 32767]))
         ->assertCreated()
         ->assertJsonPath('data.max_students', 32767);
 });
@@ -148,10 +148,10 @@ test('a class capacity accepts the PostgreSQL smallint maximum', function () {
 test('a class capacity above the PostgreSQL smallint range is refused as a field error', function () {
     $class = SchoolClass::factory()->create();
 
-    $this->postJson('/api/v1/classes', classPayload(['max_students' => 32768]))
+    $this->postJson('/api/v1/academic/classes', classPayload(['max_students' => 32768]))
         ->assertJsonValidationErrorFor('max_students');
 
-    $this->putJson("/api/v1/classes/{$class->id}", [
+    $this->putJson("/api/v1/academic/classes/{$class->id}", [
         'name' => $class->name,
         'subject_id' => $class->subject_id,
         'teacher_id' => $class->teacher_id,
@@ -194,7 +194,7 @@ test('a class cannot change to a grade its subject does not apply to', function 
         'grade_level' => GradeLevel::Grade1,
     ]);
 
-    $this->putJson("/api/v1/classes/{$class->id}", [
+    $this->putJson("/api/v1/academic/classes/{$class->id}", [
         'name' => $class->name,
         'subject_id' => $subject->id,
         'teacher_id' => $class->teacher_id,
@@ -217,7 +217,7 @@ test('ending a class closes every enrolment still open and stamps the end date',
     $alreadyLeft = ClassEnrollment::factory()->left()->create(['class_id' => $class->id]);
     $leftOn = $alreadyLeft->left_at->toDateString();
 
-    $this->patchJson("/api/v1/classes/{$class->id}/status", ['status' => ClassStatus::Ended->value])
+    $this->patchJson("/api/v1/academic/classes/{$class->id}/status", ['status' => ClassStatus::Ended->value])
         ->assertOk()
         ->assertJsonPath('data.status', ClassStatus::Ended->value)
         ->assertJsonPath('data.end_at', now()->toDateString())
@@ -234,7 +234,7 @@ test('ending a class closes every enrolment still open and stamps the end date',
 test('ending a class keeps an end date that was already set', function () {
     $class = SchoolClass::factory()->create(['end_at' => '2026-09-30']);
 
-    $this->patchJson("/api/v1/classes/{$class->id}/status", ['status' => ClassStatus::Ended->value])
+    $this->patchJson("/api/v1/academic/classes/{$class->id}/status", ['status' => ClassStatus::Ended->value])
         ->assertOk()
         ->assertJsonPath('data.end_at', '2026-09-30');
 });
@@ -245,7 +245,7 @@ test('reopening a class restores the status but not the closed enrolments', func
 
     app(ChangeClassStatusAction::class)->handle($class->id, ClassStatus::Ended);
 
-    $this->patchJson("/api/v1/classes/{$class->id}/status", ['status' => ClassStatus::Active->value])
+    $this->patchJson("/api/v1/academic/classes/{$class->id}/status", ['status' => ClassStatus::Active->value])
         ->assertOk()
         ->assertJsonPath('data.status', ClassStatus::Active->value)
         ->assertJsonPath('data.active_students_count', 0);
@@ -260,7 +260,7 @@ test('a class cannot reopen once its subject no longer applies to its grade', fu
         'grade_level' => GradeLevel::Grade9,
     ]);
 
-    $this->patchJson("/api/v1/classes/{$class->id}/status", ['status' => ClassStatus::Active->value])
+    $this->patchJson("/api/v1/academic/classes/{$class->id}/status", ['status' => ClassStatus::Active->value])
         ->assertStatus(422)
         ->assertJsonPath('message', 'Môn học này không áp dụng cho khối 9.');
 
@@ -272,7 +272,7 @@ test('the class list reports its subject, teacher, and headcount', function () {
     ClassEnrollment::factory()->count(2)->create(['class_id' => $class->id]);
     ClassEnrollment::factory()->left()->create(['class_id' => $class->id]);
 
-    $this->getJson('/api/v1/classes')
+    $this->getJson('/api/v1/academic/classes')
         ->assertOk()
         ->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.subject_name', $class->subject->name)
@@ -284,16 +284,16 @@ test('the class list filters by status, subject, teacher, and grade', function (
     $target = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade10]);
     SchoolClass::factory()->ended()->create(['grade_level' => GradeLevel::Grade7]);
 
-    $this->getJson('/api/v1/classes?status[]='.ClassStatus::Active->value)
+    $this->getJson('/api/v1/academic/classes?status[]='.ClassStatus::Active->value)
         ->assertOk()->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $target->id);
 
-    $this->getJson('/api/v1/classes?subject_id[]='.$target->subject_id)
+    $this->getJson('/api/v1/academic/classes?subject_id[]='.$target->subject_id)
         ->assertOk()->assertJsonPath('meta.total', 1);
 
-    $this->getJson('/api/v1/classes?teacher_id[]='.$target->teacher_id)
+    $this->getJson('/api/v1/academic/classes?teacher_id[]='.$target->teacher_id)
         ->assertOk()->assertJsonPath('meta.total', 1);
 
-    $this->getJson('/api/v1/classes?grade_level[]='.GradeLevel::Grade10->value)
+    $this->getJson('/api/v1/academic/classes?grade_level[]='.GradeLevel::Grade10->value)
         ->assertOk()->assertJsonPath('meta.total', 1);
 });
 
@@ -301,7 +301,7 @@ test('the class option list offers only running classes', function () {
     $running = SchoolClass::factory()->create(['code' => 'DANG-CHAY', 'name' => 'Lớp đang chạy']);
     SchoolClass::factory()->ended()->create(['code' => 'DA-XONG']);
 
-    $this->getJson('/api/v1/classes/options')
+    $this->getJson('/api/v1/academic/classes/options')
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.id', $running->id)
@@ -314,7 +314,7 @@ test('a missing class is reported as not found', function () {
         ->and(app(ChangeClassStatusAction::class)->handle(9999, ClassStatus::Ended)->getError())
         ->toBe(AcademicError::ClassNotFound);
 
-    $this->getJson('/api/v1/classes/9999')
+    $this->getJson('/api/v1/academic/classes/9999')
         ->assertNotFound()
         ->assertJsonPath('message', 'Không tìm thấy lớp học.');
 });

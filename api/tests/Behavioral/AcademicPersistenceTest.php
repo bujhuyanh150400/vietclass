@@ -8,9 +8,9 @@ use App\Modules\Academic\Models\Room;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Academic\Repositories\RoomRepository;
-use App\Modules\Identity\Enums\GradeLevel;
-use App\Modules\Identity\Models\StudentProfile;
-use App\Modules\Identity\Models\TeacherProfile;
+use App\Modules\Academic\Enums\GradeLevel;
+use App\Modules\Academic\Models\StudentProfile;
+use App\Modules\Academic\Models\TeacherProfile;
 use Illuminate\Database\QueryException;
 
 test('every academic factory persists a usable record', function () {

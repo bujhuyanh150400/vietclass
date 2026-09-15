@@ -2,9 +2,9 @@
 
 namespace App\Modules\Auth\Http\Resources;
 
-use App\Modules\Identity\Http\Resources\AvatarResource;
-use App\Modules\Identity\Models\Profile;
-use App\Modules\Identity\Models\User;
+use App\Modules\Academic\Http\Resources\AvatarResource;
+use App\Modules\Academic\Models\Profile;
+use App\Modules\Auth\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

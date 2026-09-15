@@ -66,3 +66,15 @@ export { ClassDetailContainer } from "./containers/class-detail-container";
 export { StudentsContainer } from "./containers/students-container";
 export { StudentFormContainer } from "./containers/student-form-container";
 export { StudentEditContainer } from "./containers/student-edit-container";
+
+export { AvatarDraftField } from "./components/avatar-draft-field";
+export { AvatarEditor } from "./components/avatar-editor";
+export { SampleAvatarDialog } from "./components/sample-avatar-dialog";
+export { UserAvatar } from "./components/user-avatar";
+export { ProfileAvatarEditorContainer } from "./containers/profile-avatar-editor-container";
+export { useUpdateProfileAvatar } from "./hooks/use-avatar";
+export { AvatarDraftError, useSaveProfileAvatar } from "./hooks/use-save-profile-avatar";
+export { avatarSelectionSchema, avatarValueSchema } from "./schemas/avatar-schema";
+export type { AvatarCreateSelection, AvatarDraft, AvatarSelection, AvatarValue, DiceBearAvatar, DiceBearOptions, DiceBearStyle } from "./types/avatar";
+export { ADVENTURER_HAIR, adventurerGender, randomAdventurer, type AvatarGender } from "./utils/adventurer";
+export { renderDiceBear } from "./utils/dicebear";

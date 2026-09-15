@@ -8,7 +8,7 @@ use App\Modules\Auth\Actions\LoginAction;
 use App\Modules\Auth\Actions\LogoutAction;
 use App\Modules\Auth\Http\Requests\LoginRequest;
 use App\Modules\Auth\Http\Resources\CurrentUserResource;
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -43,7 +43,7 @@ final class AuthController extends BaseController
             'expires_at' => $expiresAt,
             'user' => CurrentUserResource::make($data['user'])->resolve($request),
         ])->withCookie(cookie(
-            name: (string) config('identity.session_cookie'),
+            name: (string) config('authentication.session_cookie'),
             value: $data['token']->plainTextToken,
             // The cookie dies with the token it carries; path, domain, secure, and
             // SameSite come from the shared session cookie configuration.
@@ -83,7 +83,7 @@ final class AuthController extends BaseController
         }
 
         return $this->noContent()->withCookie(
-            Cookie::forget((string) config('identity.session_cookie')),
+            Cookie::forget((string) config('authentication.session_cookie')),
         );
     }
 }

@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils/index";
-import { UserAvatar } from "@/modules/avatar";
+import { UserAvatar } from "./user-avatar";
 
 import type { GradeLevel, Student } from "../types/academic";
 import { GRADE_LEVEL_LABELS } from "../utils/labels";

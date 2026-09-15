@@ -1,6 +1,6 @@
 <?php
 
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Models\User;
 
 test('it returns one generic unauthorized response for bad credentials and inactive users', function () {
     User::factory()->create([
@@ -103,7 +103,7 @@ test('it issues an HttpOnly session cookie that authenticates without the Author
         'password' => 'password',
     ])->assertOk();
 
-    $cookieName = (string) config('identity.session_cookie');
+    $cookieName = (string) config('authentication.session_cookie');
     $token = $login->json('data.token');
 
     $login->assertPlainCookie($cookieName, $token);
@@ -128,7 +128,7 @@ test('it clears the session cookie on logout and the revoked token stops working
         'password' => 'password',
     ]);
 
-    $cookieName = (string) config('identity.session_cookie');
+    $cookieName = (string) config('authentication.session_cookie');
     $token = $this->postJson('/api/v1/auth/login', [
         'username' => 'logout_user',
         'password' => 'password',
@@ -157,7 +157,7 @@ test('it prefers the Authorization header over the session cookie', function () 
 
     $this->withCredentials()
         ->withUnencryptedCookie(
-            (string) config('identity.session_cookie'),
+            (string) config('authentication.session_cookie'),
             $cookieUser->createToken('cookie')->plainTextToken,
         )
         ->withToken($headerUser->createToken('header')->plainTextToken)

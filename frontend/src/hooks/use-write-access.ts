@@ -1,6 +1,6 @@
 "use client";
 
-import { useCurrentUser, type UserRole } from "@/modules/identity";
+import { useCurrentUser, type UserRole } from "@/modules/auth";
 
 /**
  * The roles allowed to change data, as the API's own permission defaults have

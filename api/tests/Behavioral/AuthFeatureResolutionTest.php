@@ -5,9 +5,9 @@ use App\Modules\Auth\Models\Feature;
 use App\Modules\Auth\Repositories\FeatureRepository;
 use App\Modules\Auth\Support\FeatureRegistry;
 use App\Modules\Auth\Support\FeatureResolver;
-use App\Modules\FileManagement\Enums\FileManagementFeature;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\User;
+use App\Modules\System\Enums\SystemFeature;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Auth\Models\User;
 use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -61,7 +61,7 @@ test('a role holds exactly the permissions declared for it', function () {
 test('the file features are granted to every active role', function (UserRole $role) {
     $user = User::factory()->create(['role' => $role]);
 
-    expect(app(FeatureResolver::class)->allows($user, FileManagementFeature::Upload))->toBeTrue();
+    expect(app(FeatureResolver::class)->allows($user, SystemFeature::FileUpload))->toBeTrue();
 })->with(UserRole::cases());
 
 test('a granted override adds a permission the role does not carry', function () {

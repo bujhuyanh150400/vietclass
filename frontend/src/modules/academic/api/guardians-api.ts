@@ -12,5 +12,5 @@ export type GuardianOptionParams = {
 export async function fetchGuardianOptions(
   params: GuardianOptionParams,
 ): Promise<GuardianOption[]> {
-  return browserRequest<GuardianOption[]>("/api/v1/guardians/options", { params });
+  return browserRequest<GuardianOption[]>("/api/v1/academic/guardians/options", { params });
 }

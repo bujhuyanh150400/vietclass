@@ -10,8 +10,8 @@ import { isApiClientError } from "@/lib/api/api-client-error";
 import {
   CurrentUserMenuContainer,
   type CurrentUser,
-} from "@/modules/identity";
-import { SESSION_COOKIE_NAME, fetchCurrentUser } from "@/modules/identity/server";
+} from "@/modules/auth";
+import { SESSION_COOKIE_NAME, fetchCurrentUser } from "@/modules/auth/server";
 
 /** Either a verified identity or a transient failure to reach the auth service. */
 type SessionOutcome =

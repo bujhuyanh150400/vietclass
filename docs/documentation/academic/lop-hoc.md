@@ -35,12 +35,12 @@ Mọi endpoint nằm dưới tiền tố `/api/v1` và cần header `Authorizati
 
 | Thao tác | Yêu cầu |
 | --- | --- |
-| Xem danh sách | `GET /classes` |
-| Lấy danh sách chọn | `GET /classes/options` |
-| Tạo | `POST /classes` với `code`, `name`, `subject_id`, `teacher_id`, `grade_level`, `max_students`, `start_at` |
-| Xem chi tiết | `GET /classes/{id}` |
-| Sửa | `PUT /classes/{id}` với `name`, `subject_id`, `teacher_id`, `grade_level`, `max_students` |
-| Đổi trạng thái | `PATCH /classes/{id}/status` với `status` |
+| Xem danh sách | `GET /api/v1/academic/classes` |
+| Lấy danh sách chọn | `GET /api/v1/academic/classes/options` |
+| Tạo | `POST /api/v1/academic/classes` với `code`, `name`, `subject_id`, `teacher_id`, `grade_level`, `max_students`, `start_at` |
+| Xem chi tiết | `GET /api/v1/academic/classes/{id}` |
+| Sửa | `PUT /api/v1/academic/classes/{id}` với `name`, `subject_id`, `teacher_id`, `grade_level`, `max_students` |
+| Đổi trạng thái | `PATCH /api/v1/academic/classes/{id}/status` với `status` |
 
 Trạng thái: `0` Đang hoạt động, `1` Kết thúc. Khối lớp: `0` Tiền tiểu học, `1`–`12` theo số lớp.
 
@@ -78,7 +78,7 @@ Trên trình duyệt:
 | Chức năng liên quan | Loại quan hệ | Ảnh hưởng nghiệp vụ | Người dùng quan sát được |
 | --- | --- | --- | --- |
 | [Quản lý môn học](mon-hoc.md) | Tiên quyết | Lớp phải thuộc một môn đang hoạt động. | Môn đã khóa không chọn được khi mở lớp. |
-| [Quản lý giáo viên](../identity/giao-vien.md) | Tiên quyết | Lớp phải có giáo viên đang làm việc phụ trách. | Giáo viên đã nghỉ không chọn được khi mở lớp. |
+| [Quản lý giáo viên](../academic/giao-vien.md) | Tiên quyết | Lớp phải có giáo viên đang làm việc phụ trách. | Giáo viên đã nghỉ không chọn được khi mở lớp. |
 | [Ghi danh vào lớp](ghi-danh.md) | Hạ nguồn | Kết thúc lớp đóng toàn bộ ghi danh còn mở. | Sau khi kết thúc, sĩ số về `0` và không thao tác ghi danh được nữa. |
 | [Phân quyền theo chức năng](../auth/phan-quyen.md) | Tiên quyết | Quyết định ai gọi được các endpoint lớp học. | Không đủ quyền thì nhận `403`. |
 

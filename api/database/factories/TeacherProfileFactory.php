@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Modules\Identity\Enums\TeacherStatus;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\Profile;
-use App\Modules\Identity\Models\TeacherProfile;
+use App\Modules\Academic\Enums\TeacherStatus;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Academic\Models\Profile;
+use App\Modules\Academic\Models\TeacherProfile;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

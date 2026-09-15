@@ -6,8 +6,8 @@ use App\Core\Data\ActionResult;
 use App\Core\Exceptions\ActionError;
 use App\Modules\Auth\Enums\AuthError;
 use App\Modules\Auth\Repositories\PersonalAccessTokenRepository;
-use App\Modules\Identity\Models\User;
-use App\Modules\Identity\Repositories\UserRepository;
+use App\Modules\Auth\Models\User;
+use App\Modules\Auth\Repositories\UserRepository;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\NewAccessToken;
 

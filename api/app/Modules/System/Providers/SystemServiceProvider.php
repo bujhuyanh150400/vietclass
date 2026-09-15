@@ -3,6 +3,7 @@
 namespace App\Modules\System\Providers;
 
 use App\Modules\Auth\Support\FeatureRegistry;
+use App\Modules\System\Console\PurgeTrashedFilesCommand;
 use App\Modules\System\Enums\SystemFeature;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -39,6 +40,7 @@ final class SystemServiceProvider extends ServiceProvider
     private function loadConsoleRoutes(): void
     {
         if ($this->app->runningInConsole()) {
+            $this->commands([PurgeTrashedFilesCommand::class]);
             require __DIR__.'/../Routes/console.php';
         }
     }

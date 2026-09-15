@@ -17,12 +17,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useResourceForm } from "@/hooks/use-resource-form";
 import { cn } from "@/lib/utils/index";
-import {
-  AvatarDraftField,
-  randomAdventurer,
-  useSaveProfileAvatar,
-  type AvatarDraft,
-} from "@/modules/avatar";
+import { AvatarDraftField } from "../components/avatar-draft-field";
+import { useSaveProfileAvatar } from "../hooks/use-save-profile-avatar";
+import type { AvatarDraft } from "../types/avatar";
+import { randomAdventurer } from "../utils/adventurer";
 
 import { NumberedSection } from "../components/numbered-section";
 import {

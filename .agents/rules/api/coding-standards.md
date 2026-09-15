@@ -35,7 +35,7 @@ Good:
 ```php
 new ActionError(
     message: 'Thông tin đăng nhập không chính xác.',
-    code: IdentityError::InvalidCredentials,
+    code: AuthError::InvalidCredentials,
 );
 ```
 

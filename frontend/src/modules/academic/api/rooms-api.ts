@@ -28,32 +28,32 @@ export type RoomOptionParams = {
 
 /** Fetches one page of rooms. */
 export async function fetchRooms(params: RoomListParams): Promise<Page<Room>> {
-  return browserRequestList<Room>("/api/v1/rooms", { params });
+  return browserRequestList<Room>("/api/v1/academic/rooms", { params });
 }
 
 /** Fetches the rooms a schedule may be assigned to. */
 export async function fetchRoomOptions(params: RoomOptionParams): Promise<Option[]> {
-  return browserRequest<Option[]>("/api/v1/rooms/options", { params });
+  return browserRequest<Option[]>("/api/v1/academic/rooms/options", { params });
 }
 
 /** Fetches one room. */
 export async function fetchRoom(id: number): Promise<Room> {
-  return browserRequest<Room>(`/api/v1/rooms/${id}`);
+  return browserRequest<Room>(`/api/v1/academic/rooms/${id}`);
 }
 
 /** Creates a room. */
 export async function createRoom(body: RoomRequest): Promise<Room> {
-  return browserRequest<Room>("/api/v1/rooms", { method: "POST", body });
+  return browserRequest<Room>("/api/v1/academic/rooms", { method: "POST", body });
 }
 
 /** Changes a room's editable details. */
 export async function updateRoom(id: number, body: RoomRequest): Promise<Room> {
-  return browserRequest<Room>(`/api/v1/rooms/${id}`, { method: "PUT", body });
+  return browserRequest<Room>(`/api/v1/academic/rooms/${id}`, { method: "PUT", body });
 }
 
 /** Changes a room's availability status. */
 export async function changeRoomStatus(id: number, status: RoomStatus): Promise<Room> {
-  return browserRequest<Room>(`/api/v1/rooms/${id}/status`, {
+  return browserRequest<Room>(`/api/v1/academic/rooms/${id}/status`, {
     method: "PATCH",
     body: { status },
   });
@@ -61,5 +61,5 @@ export async function changeRoomStatus(id: number, status: RoomStatus): Promise<
 
 /** Removes a room with no schedule references. */
 export async function deleteRoom(id: number): Promise<void> {
-  await browserRequest<undefined>(`/api/v1/rooms/${id}`, { method: "DELETE" });
+  await browserRequest<undefined>(`/api/v1/academic/rooms/${id}`, { method: "DELETE" });
 }

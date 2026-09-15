@@ -10,8 +10,8 @@ use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Repositories\ClassEnrollmentRepository;
 use App\Modules\Academic\Repositories\ClassRepository;
-use App\Modules\Identity\Models\StudentProfile;
-use App\Modules\Identity\Repositories\StudentRepository;
+use App\Modules\Academic\Models\StudentProfile;
+use App\Modules\Academic\Repositories\StudentRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 

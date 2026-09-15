@@ -2,11 +2,11 @@
 
 namespace Database\Factories;
 
-use App\Modules\Identity\Enums\GradeLevel;
-use App\Modules\Identity\Enums\StudentStatus;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\Profile;
-use App\Modules\Identity\Models\StudentProfile;
+use App\Modules\Academic\Enums\GradeLevel;
+use App\Modules\Academic\Enums\StudentStatus;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Academic\Models\Profile;
+use App\Modules\Academic\Models\StudentProfile;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

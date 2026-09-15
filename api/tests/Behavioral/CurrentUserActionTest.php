@@ -4,7 +4,7 @@ use App\Core\Data\ActionResult;
 use App\Modules\Auth\Actions\GetCurrentUserAction;
 use App\Modules\Auth\Actions\LogoutAction;
 use App\Modules\Auth\Enums\AuthError;
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Models\User;
 
 test('current user action returns an unauthenticated failure result without a user', function (): void {
     $result = app(GetCurrentUserAction::class)->handle(user: null);

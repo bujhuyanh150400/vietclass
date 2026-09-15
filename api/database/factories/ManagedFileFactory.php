@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Modules\FileManagement\Models\ManagedFile;
-use App\Modules\Identity\Models\User;
+use App\Modules\System\Models\ManagedFile;
+use App\Modules\Auth\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

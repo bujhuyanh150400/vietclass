@@ -2,7 +2,7 @@
 
 namespace App\Modules\Academic\Models;
 
-use App\Modules\Identity\Models\StudentProfile;
+use App\Modules\Academic\Models\StudentProfile;
 use Carbon\CarbonInterface;
 use Database\Factories\ClassEnrollmentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

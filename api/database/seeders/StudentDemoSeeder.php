@@ -6,16 +6,16 @@ use App\Modules\Academic\Enums\ClassStatus;
 use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\Subject;
-use App\Modules\Identity\Enums\Gender;
-use App\Modules\Identity\Enums\GradeLevel;
-use App\Modules\Identity\Enums\GuardianRelationship;
-use App\Modules\Identity\Enums\StudentStatus;
-use App\Modules\Identity\Enums\TeacherStatus;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\Profile;
-use App\Modules\Identity\Models\StudentProfile;
-use App\Modules\Identity\Models\TeacherProfile;
-use App\Modules\Identity\Models\User;
+use App\Modules\Academic\Enums\Gender;
+use App\Modules\Academic\Enums\GradeLevel;
+use App\Modules\Academic\Enums\GuardianRelationship;
+use App\Modules\Academic\Enums\StudentStatus;
+use App\Modules\Academic\Enums\TeacherStatus;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Academic\Models\Profile;
+use App\Modules\Academic\Models\StudentProfile;
+use App\Modules\Academic\Models\TeacherProfile;
+use App\Modules\Auth\Models\User;
 use Illuminate\Database\Seeder;
 
 /**

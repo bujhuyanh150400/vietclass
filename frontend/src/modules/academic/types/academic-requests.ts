@@ -1,4 +1,4 @@
-import type { AvatarCreateSelection } from "@/modules/avatar";
+import type { AvatarCreateSelection } from "./avatar";
 
 import type {
   Gender,

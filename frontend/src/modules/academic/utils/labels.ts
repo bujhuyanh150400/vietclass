@@ -13,7 +13,7 @@ import type {
  * Vietnamese labels for the API's integer enums.
  *
  * They live here rather than on the API's PHP enums for the same reason role
- * labels live in the identity module: the API reports stable numbers, and the
+ * labels live in the Auth module: the API reports stable numbers, and the
  * words shown to a reader are a presentation decision.
  *
  * Each map is exhaustive over its union, so adding a value to the API without

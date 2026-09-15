@@ -1,7 +1,7 @@
 <?php
 
 use App\Core\Repositories\BaseRepository;
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 

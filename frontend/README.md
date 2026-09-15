@@ -50,7 +50,7 @@ need that host.
 Seed the development administrator before signing in:
 
 ```bash
-cd api && php artisan db:seed --class=IdentitySeeder
+cd api && php artisan db:seed --class=AuthAccountSeeder
 ```
 
 ## Routes
@@ -65,12 +65,14 @@ cd api && php artisan db:seed --class=IdentitySeeder
 | `/academic/classes`                    | Page | Class list, with create at `/new`.                              |
 | `/academic/classes/[classId]`          | Page | One class with its roster; edit at `/edit`.                    |
 | `/academic/students`                   | Page | Student list, with create and edit at `/new` and `/[studentId]`. |
+| `/academic/avatar`                     | Page | Avatar editor for the current account. |
+| `/system/files`                        | Page | Protected file library. |
 | `/api/auth/login`     | Route Handler | `POST` credentials, sets the session cookie, returns the current user.   |
 | `/api/auth/session`   | Route Handler | `GET` the current user for the session cookie; `401` clears the cookie.  |
 | `/api/auth/logout`    | Route Handler | `POST` to revoke the Laravel token and clear the cookie; returns `204`.  |
 | `/api/academic/*`     | Route Handler | Forwards allowlisted academic paths to Laravel with the bearer token.   |
 
-`proxy.ts` guards `/dashboard`, `/academic`, and their descendants. It only checks whether the
+`proxy.ts` guards `/dashboard`, `/academic`, `/system`, and their descendants. It only checks whether the
 session cookie is present and redirects to `/login` with a `returnTo` value; it
 makes no network call. The protected layout performs the authoritative check by
 verifying the token against Laravel.
@@ -108,7 +110,7 @@ The `@/*` alias maps to `src/*`.
 
 A module is reached only through its two public entrypoints. ESLint enforces this
 with a `no-restricted-imports` pattern, so a deep path such as
-`@/modules/identity/api/identity-server-api` is a lint error.
+`@/modules/auth/api/auth-server-api` is a lint error.
 
 | Entrypoint                       | Safe for                                     |
 | -------------------------------- | -------------------------------------------- |
@@ -117,7 +119,7 @@ with a `no-restricted-imports` pattern, so a deep path such as
 
 Shared layouts must not import a feature module. `ProtectedShell` takes the
 account menu as a `ReactNode` slot so the protected layout, not the shell,
-supplies Identity's `CurrentUserMenuContainer`.
+supplies Auth's `CurrentUserMenuContainer`.
 
 ### Client and server components
 

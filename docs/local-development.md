@@ -61,7 +61,7 @@ phiên gắn với domain, nên đăng nhập ở `localhost` không mang sang �
 
 ### 3.1 Dữ liệu minh họa cho màn học sinh
 
-`IdentitySeeder` chỉ tạo tài khoản quản trị, nên DB mới sẽ không có học sinh nào và
+`AuthAccountSeeder` chỉ tạo tài khoản quản trị, nên DB mới sẽ không có học sinh nào và
 màn danh sách học sinh đứng ở state "chưa có dữ liệu". Không có dữ liệu thì không
 kiểm chứng được bảng, chip `+N`, hay phân trang.
 

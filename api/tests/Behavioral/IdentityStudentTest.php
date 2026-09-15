@@ -3,19 +3,19 @@
 use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\Subject;
-use App\Modules\Identity\Actions\ChangeStudentPasswordAction;
-use App\Modules\Identity\Actions\GetStudentAction;
-use App\Modules\Identity\Actions\ToggleStudentAccountAction;
-use App\Modules\Identity\Actions\UpdateStudentAction;
-use App\Modules\Identity\Enums\Gender;
-use App\Modules\Identity\Enums\GradeLevel;
-use App\Modules\Identity\Enums\GuardianRelationship;
-use App\Modules\Identity\Enums\IdentityError;
-use App\Modules\Identity\Enums\StudentStatus;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\Profile;
-use App\Modules\Identity\Models\StudentProfile;
-use App\Modules\Identity\Models\User;
+use App\Modules\Academic\Actions\ChangeStudentPasswordAction;
+use App\Modules\Academic\Actions\GetStudentAction;
+use App\Modules\Academic\Actions\ToggleStudentAccountAction;
+use App\Modules\Academic\Actions\UpdateStudentAction;
+use App\Modules\Academic\Enums\Gender;
+use App\Modules\Academic\Enums\GradeLevel;
+use App\Modules\Academic\Enums\GuardianRelationship;
+use App\Modules\Academic\Enums\AcademicPersonError;
+use App\Modules\Academic\Enums\StudentStatus;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Academic\Models\Profile;
+use App\Modules\Academic\Models\StudentProfile;
+use App\Modules\Auth\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -42,7 +42,7 @@ function studentPayload(array $overrides = []): array
 }
 
 test('creating a student creates the profile and its login account together', function () {
-    $this->postJson('/api/v1/students', studentPayload())
+    $this->postJson('/api/v1/academic/students', studentPayload())
         ->assertCreated()
         ->assertJsonPath('data.full_name', 'Phạm Thùy Linh')
         ->assertJsonPath('data.username', 'hs_linh')
@@ -53,7 +53,7 @@ test('creating a student creates the profile and its login account together', fu
 });
 
 test('a created student can sign in with the password that was set', function () {
-    $this->postJson('/api/v1/students', studentPayload())->assertCreated();
+    $this->postJson('/api/v1/academic/students', studentPayload())->assertCreated();
 
     $this->postJson('/api/v1/auth/login', [
         'username' => 'hs_linh',
@@ -62,39 +62,39 @@ test('a created student can sign in with the password that was set', function ()
 });
 
 test('a student payload never reports a credential back', function () {
-    $response = $this->postJson('/api/v1/students', studentPayload())->assertCreated();
+    $response = $this->postJson('/api/v1/academic/students', studentPayload())->assertCreated();
 
     expect($response->json('data'))->not->toHaveKey('password')
         ->and($response->getContent())->not->toContain('matkhau123');
 });
 
 test('a roster entry needs a name while student contact details do not', function () {
-    $this->postJson('/api/v1/students', studentPayload([
+    $this->postJson('/api/v1/academic/students', studentPayload([
         'guardians' => [['gender' => Gender::Male->value, 'relationship' => GuardianRelationship::Father->value]],
     ]))->assertJsonValidationErrorFor('guardians.0.name');
 
-    $this->postJson('/api/v1/students', studentPayload())
+    $this->postJson('/api/v1/academic/students', studentPayload())
         ->assertCreated()
         ->assertJsonPath('data.phone', null)
         ->assertJsonPath('data.dob', null);
 });
 
 test('a date of birth must be in the past', function () {
-    $this->postJson('/api/v1/students', studentPayload(['dob' => now()->addYear()->toDateString()]))
+    $this->postJson('/api/v1/academic/students', studentPayload(['dob' => now()->addYear()->toDateString()]))
         ->assertJsonValidationErrorFor('dob')
         ->assertJsonPath('errors.dob.0', 'Ngày sinh phải trước ngày hôm nay.');
 
-    $this->postJson('/api/v1/students', studentPayload(['dob' => '2012-05-04']))
+    $this->postJson('/api/v1/academic/students', studentPayload(['dob' => '2012-05-04']))
         ->assertCreated()
         ->assertJsonPath('data.dob', '2012-05-04');
 });
 
 test('student and guardian phone numbers are checked for shape', function () {
-    $this->postJson('/api/v1/students', studentPayload(['phone' => '123']))
+    $this->postJson('/api/v1/academic/students', studentPayload(['phone' => '123']))
         ->assertJsonValidationErrorFor('phone')
         ->assertJsonPath('errors.phone.0', 'Số điện thoại không hợp lệ.');
 
-    $this->postJson('/api/v1/students', studentPayload([
+    $this->postJson('/api/v1/academic/students', studentPayload([
         'guardians' => [[
             'name' => 'Phạm Văn D',
             'gender' => Gender::Male->value,
@@ -110,12 +110,12 @@ test('student and guardian phone numbers are checked for shape', function () {
 test('a duplicate login name is reported against the username field', function () {
     User::factory()->create(['username' => 'hs_trung']);
 
-    $this->postJson('/api/v1/students', studentPayload(['username' => 'hs_trung']))
+    $this->postJson('/api/v1/academic/students', studentPayload(['username' => 'hs_trung']))
         ->assertJsonValidationErrorFor('username');
 });
 
 test('no student or account survives a failed creation', function () {
-    $this->postJson('/api/v1/students', studentPayload(['gender' => 99]))->assertStatus(422);
+    $this->postJson('/api/v1/academic/students', studentPayload(['gender' => 99]))->assertStatus(422);
 
     $this->assertDatabaseMissing('users', ['username' => 'hs_linh']);
     $this->assertDatabaseCount('student_profiles', 0);
@@ -125,7 +125,7 @@ test('updating a student cannot change the login name', function () {
     $student = StudentProfile::factory()->create();
     $username = $student->profile->user->username;
 
-    $this->putJson("/api/v1/students/{$student->profile_id}", [
+    $this->putJson("/api/v1/academic/students/{$student->profile_id}", [
         'full_name' => 'Tên mới',
         'gender' => Gender::Male->value,
         'grade_level' => GradeLevel::Grade10->value,
@@ -158,10 +158,10 @@ test('the student list is paginated and searchable across profile and guardian',
         'profile_id' => Profile::factory()->forRole(UserRole::Student)->create(['full_name' => 'Đỗ Thị F'])->id,
     ]);
 
-    $this->getJson('/api/v1/students')->assertOk()->assertJsonPath('meta.total', 2);
-    $this->getJson('/api/v1/students?q=b%E1%BA%A3o')->assertOk()->assertJsonPath('meta.total', 1);
-    $this->getJson('/api/v1/students?q=Ng%C3%B4%20V%C4%83n')->assertOk()->assertJsonPath('meta.total', 1);
-    $this->getJson('/api/v1/students?q=hs_chau')->assertOk()->assertJsonPath('meta.total', 1);
+    $this->getJson('/api/v1/academic/students')->assertOk()->assertJsonPath('meta.total', 2);
+    $this->getJson('/api/v1/academic/students?q=b%E1%BA%A3o')->assertOk()->assertJsonPath('meta.total', 1);
+    $this->getJson('/api/v1/academic/students?q=Ng%C3%B4%20V%C4%83n')->assertOk()->assertJsonPath('meta.total', 1);
+    $this->getJson('/api/v1/academic/students?q=hs_chau')->assertOk()->assertJsonPath('meta.total', 1);
 });
 
 test('the student list matches a name typed without its tone marks', function (string $term, int $expected) {
@@ -177,7 +177,7 @@ test('the student list matches a name typed without its tone marks', function (s
         'profile_id' => Profile::factory()->forRole(UserRole::Student)->create(['full_name' => 'Đỗ Thị Ước'])->id,
     ]);
 
-    $this->getJson('/api/v1/students?q='.urlencode($term))
+    $this->getJson('/api/v1/academic/students?q='.urlencode($term))
         ->assertOk()
         ->assertJsonPath('meta.total', $expected);
 })->with([
@@ -206,7 +206,7 @@ test('the student list finds a student by the id printed as their code', functio
     // the assertion is that the student is among the matches. Asserting a total of one
     // would be asserting that no phone happens to contain those digits, which is not a
     // rule this search has — and a reader typing a few digits wants both readings.
-    $this->getJson('/api/v1/students?q='.$target->profile_id)
+    $this->getJson('/api/v1/academic/students?q='.$target->profile_id)
         ->assertOk()
         ->assertJsonPath(
             'data',
@@ -214,28 +214,28 @@ test('the student list finds a student by the id printed as their code', functio
         );
 
     // The digits of a phone number still search phones rather than being read as an id.
-    $this->getJson('/api/v1/students?q=0777000111')
+    $this->getJson('/api/v1/academic/students?q=0777000111')
         ->assertOk()
         ->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.id', $target->profile_id);
 
     // An id nobody has, with digits no seeded phone or name carries, matches nothing.
-    $this->getJson('/api/v1/students?q=654321')
+    $this->getJson('/api/v1/academic/students?q=654321')
         ->assertOk()
         ->assertJsonPath('meta.total', 0);
 
     // Far past PHP's integer range: must not overflow into a valid-looking id.
-    $this->getJson('/api/v1/students?q='.str_repeat('9', 40))
+    $this->getJson('/api/v1/academic/students?q='.str_repeat('9', 40))
         ->assertOk()
         ->assertJsonPath('meta.total', 0);
 });
 
 test('the student list accepts the table page sizes exposed by the interface', function () {
-    $this->getJson('/api/v1/students?per_page=200')
+    $this->getJson('/api/v1/academic/students?per_page=200')
         ->assertOk()
         ->assertJsonPath('meta.per_page', 200);
 
-    $this->getJson('/api/v1/students?per_page=201')
+    $this->getJson('/api/v1/academic/students?per_page=201')
         ->assertJsonValidationErrorFor('per_page');
 });
 
@@ -248,20 +248,20 @@ test('the student list filters by study status, grade, and account state', funct
     $locked = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade8]);
     $locked->profile->user->forceFill(['is_active' => false])->save();
 
-    $this->getJson('/api/v1/students?status[]='.StudentStatus::Stopped->value)
+    $this->getJson('/api/v1/academic/students?status[]='.StudentStatus::Stopped->value)
         ->assertOk()->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $stopped->profile_id);
 
-    $this->getJson('/api/v1/students?grade_level[]='.GradeLevel::Grade6->value)
+    $this->getJson('/api/v1/academic/students?grade_level[]='.GradeLevel::Grade6->value)
         ->assertOk()->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $studying->profile_id);
 
-    $this->getJson('/api/v1/students?is_active=0')
+    $this->getJson('/api/v1/academic/students?is_active=0')
         ->assertOk()->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $locked->profile_id);
 });
 
 test('locking a student account keeps the profile intact', function () {
     $student = StudentProfile::factory()->create();
 
-    $this->patchJson("/api/v1/students/{$student->profile_id}/account", ['is_active' => false])
+    $this->patchJson("/api/v1/academic/students/{$student->profile_id}/account", ['is_active' => false])
         ->assertOk()
         ->assertJsonPath('data.is_account_active', false)
         ->assertJsonPath('data.status', StudentStatus::Studying->value);
@@ -272,7 +272,7 @@ test('locking a student account keeps the profile intact', function () {
 test('changing a student password stores a hash and never the plain value', function () {
     $student = StudentProfile::factory()->create();
 
-    $this->patchJson("/api/v1/students/{$student->profile_id}/password", ['password' => 'matkhaumoi1'])
+    $this->patchJson("/api/v1/academic/students/{$student->profile_id}/password", ['password' => 'matkhaumoi1'])
         ->assertNoContent();
 
     expect(Hash::check('matkhaumoi1', $student->profile->user->fresh()->password))->toBeTrue();
@@ -280,15 +280,15 @@ test('changing a student password stores a hash and never the plain value', func
 
 test('a missing student is reported as not found by every operation', function () {
     expect(app(GetStudentAction::class)->handle(9999)->getError())
-        ->toBe(IdentityError::StudentNotFound)
+        ->toBe(AcademicPersonError::StudentNotFound)
         ->and(app(UpdateStudentAction::class)->handle(9999, [])->getError())
-        ->toBe(IdentityError::StudentNotFound)
+        ->toBe(AcademicPersonError::StudentNotFound)
         ->and(app(ToggleStudentAccountAction::class)->handle(9999, false)->getError())
-        ->toBe(IdentityError::StudentNotFound)
+        ->toBe(AcademicPersonError::StudentNotFound)
         ->and(app(ChangeStudentPasswordAction::class)->handle(9999, 'matkhau123')->getError())
-        ->toBe(IdentityError::StudentNotFound);
+        ->toBe(AcademicPersonError::StudentNotFound);
 
-    $this->getJson('/api/v1/students/9999')
+    $this->getJson('/api/v1/academic/students/9999')
         ->assertNotFound()
         ->assertJsonPath('message', 'Không tìm thấy học sinh.');
 });
@@ -299,16 +299,16 @@ test('toggling the account or changing the password of a student with no login a
     ]);
 
     expect(app(ToggleStudentAccountAction::class)->handle($student->profile_id, false)->getError())
-        ->toBe(IdentityError::AccountNotProvisioned)
+        ->toBe(AcademicPersonError::AccountNotProvisioned)
         ->and(app(ChangeStudentPasswordAction::class)->handle($student->profile_id, 'matkhau123')->getError())
-        ->toBe(IdentityError::AccountNotProvisioned);
+        ->toBe(AcademicPersonError::AccountNotProvisioned);
 
-    $this->patchJson("/api/v1/students/{$student->profile_id}/account", ['is_active' => false])
-        ->assertStatus(IdentityError::AccountNotProvisioned->httpStatus())
+    $this->patchJson("/api/v1/academic/students/{$student->profile_id}/account", ['is_active' => false])
+        ->assertStatus(AcademicPersonError::AccountNotProvisioned->httpStatus())
         ->assertJsonPath('message', 'Học sinh này chưa có tài khoản đăng nhập.');
 
-    $this->patchJson("/api/v1/students/{$student->profile_id}/password", ['password' => 'matkhaumoi1'])
-        ->assertStatus(IdentityError::AccountNotProvisioned->httpStatus())
+    $this->patchJson("/api/v1/academic/students/{$student->profile_id}/password", ['password' => 'matkhaumoi1'])
+        ->assertStatus(AcademicPersonError::AccountNotProvisioned->httpStatus())
         ->assertJsonPath('message', 'Học sinh này chưa có tài khoản đăng nhập.');
 });
 
@@ -330,7 +330,7 @@ test('a student reports every guardian, with the main contact first', function (
         'is_primary' => true,
     ]);
 
-    $this->getJson('/api/v1/students')
+    $this->getJson('/api/v1/academic/students')
         ->assertOk()
         ->assertJsonCount(2, 'data.0.guardians')
         ->assertJsonPath('data.0.guardians.0.profile_id', $mother->id)
@@ -341,7 +341,7 @@ test('a student reports every guardian, with the main contact first', function (
         ->assertJsonPath('data.0.guardians.1.profile_id', $father->id)
         ->assertJsonPath('data.0.guardians.1.is_primary', false);
 
-    $this->getJson("/api/v1/students/{$student->profile_id}")
+    $this->getJson("/api/v1/academic/students/{$student->profile_id}")
         ->assertOk()
         ->assertJsonCount(2, 'data.guardians')
         ->assertJsonPath('data.guardians.0.is_primary', true);
@@ -357,14 +357,14 @@ test('a student reports the classes they still attend by code and subject', func
         'student_id' => $student->profile_id,
     ]);
 
-    $this->getJson('/api/v1/students')
+    $this->getJson('/api/v1/academic/students')
         ->assertOk()
         ->assertJsonCount(1, 'data.0.active_enrollments')
         ->assertJsonPath('data.0.active_enrollments.0.class_id', $class->id)
         ->assertJsonPath('data.0.active_enrollments.0.code', 'TOAN9-A')
         ->assertJsonPath('data.0.active_enrollments.0.subject_name', 'Toán');
 
-    $this->getJson("/api/v1/students/{$student->profile_id}")
+    $this->getJson("/api/v1/academic/students/{$student->profile_id}")
         ->assertOk()
         ->assertJsonPath('data.active_enrollments.0.code', 'TOAN9-A');
 });
@@ -372,12 +372,12 @@ test('a student reports the classes they still attend by code and subject', func
 test('a student with no guardian and no class reports empty lists, not null', function () {
     $student = StudentProfile::factory()->create();
 
-    $response = $this->getJson('/api/v1/students')->assertOk();
+    $response = $this->getJson('/api/v1/academic/students')->assertOk();
 
     expect($response->json('data.0.guardians'))->toBe([])
         ->and($response->json('data.0.active_enrollments'))->toBe([]);
 
-    $single = $this->getJson("/api/v1/students/{$student->profile_id}")->assertOk();
+    $single = $this->getJson("/api/v1/academic/students/{$student->profile_id}")->assertOk();
 
     expect($single->json('data.guardians'))->toBe([])
         ->and($single->json('data.active_enrollments'))->toBe([]);
@@ -397,7 +397,7 @@ test('a class the student has left is left out of the classes they attend', func
         'student_id' => $student->profile_id,
     ]);
 
-    $this->getJson('/api/v1/students')
+    $this->getJson('/api/v1/academic/students')
         ->assertOk()
         ->assertJsonCount(1, 'data.0.active_enrollments')
         ->assertJsonPath('data.0.active_enrollments.0.code', 'VAN9-B');
@@ -418,7 +418,7 @@ test('the student list resolves guardians and classes without a query per row', 
         DB::flushQueryLog();
         DB::enableQueryLog();
 
-        $this->getJson('/api/v1/students')->assertOk();
+        $this->getJson('/api/v1/academic/students')->assertOk();
 
         $queries = count(DB::getQueryLog());
         DB::disableQueryLog();
@@ -432,7 +432,7 @@ test('the student list resolves guardians and classes without a query per row', 
     // first request of the process and holds them after that. Warming it up here keeps
     // those four queries out of the baseline, so the comparison below is between the
     // two list renders and nothing else.
-    $this->getJson('/api/v1/students')->assertOk();
+    $this->getJson('/api/v1/academic/students')->assertOk();
 
     $forOneRow = $countQueries();
 
@@ -441,7 +441,7 @@ test('the student list resolves guardians and classes without a query per row', 
     }
     $forFiveRows = $countQueries();
 
-    $this->getJson('/api/v1/students')->assertOk()->assertJsonPath('meta.total', 5);
+    $this->getJson('/api/v1/academic/students')->assertOk()->assertJsonPath('meta.total', 5);
 
     expect($forFiveRows)->toBe($forOneRow);
 });

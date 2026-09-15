@@ -13,7 +13,9 @@ import { SelectField } from "@/components/shared/select-field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useResourceForm } from "@/hooks/use-resource-form";
-import { AvatarDraftField, ProfileAvatarEditorContainer, type AvatarDraft } from "@/modules/avatar";
+import { AvatarDraftField } from "../components/avatar-draft-field";
+import type { AvatarDraft } from "../types/avatar";
+import { ProfileAvatarEditorContainer } from "./profile-avatar-editor-container";
 
 import { useCreateTeacher, useUpdateTeacher } from "../hooks/use-teachers";
 import {

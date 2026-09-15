@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 
-import { LoginContainer } from "@/modules/identity";
-import { SESSION_COOKIE_NAME } from "@/modules/identity/server";
+import { LoginContainer } from "@/modules/auth";
+import { SESSION_COOKIE_NAME } from "@/modules/auth/server";
 
 export const metadata: Metadata = {
   title: "Đăng nhập",

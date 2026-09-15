@@ -3,7 +3,7 @@
 namespace App\Modules\System\Actions;
 
 use App\Core\Data\ActionResult;
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Models\User;
 use App\Modules\System\Repositories\SystemSettingRepository;
 
 final class UpdateFileQuotasAction

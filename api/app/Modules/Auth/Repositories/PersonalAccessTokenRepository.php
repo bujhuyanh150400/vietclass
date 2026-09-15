@@ -3,7 +3,7 @@
 namespace App\Modules\Auth\Repositories;
 
 use App\Core\Repositories\BaseRepository;
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Models\User;
 use Laravel\Sanctum\NewAccessToken;
 use Laravel\Sanctum\PersonalAccessToken;
 
@@ -31,11 +31,11 @@ final class PersonalAccessTokenRepository extends BaseRepository
     public function issue(User $user, bool $remember): NewAccessToken
     {
         $expirationDays = $remember
-            ? config('identity.remember_token_expiration_days')
-            : config('identity.token_expiration_days');
+            ? config('authentication.remember_token_expiration_days')
+            : config('authentication.token_expiration_days');
 
         return $user->createToken(
-            name: (string) config('identity.token_name'),
+            name: (string) config('authentication.token_name'),
             abilities: ['*'],
             expiresAt: now()->addDays((int) $expirationDays),
         );

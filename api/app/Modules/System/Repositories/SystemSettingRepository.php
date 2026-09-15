@@ -3,7 +3,7 @@
 namespace App\Modules\System\Repositories;
 
 use App\Core\Repositories\BaseRepository;
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Models\User;
 use App\Modules\System\Models\SystemSetting;
 
 final class SystemSettingRepository extends BaseRepository

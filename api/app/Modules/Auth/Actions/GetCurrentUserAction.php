@@ -5,7 +5,7 @@ namespace App\Modules\Auth\Actions;
 use App\Core\Data\ActionResult;
 use App\Core\Exceptions\ActionError;
 use App\Modules\Auth\Enums\AuthError;
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 final class GetCurrentUserAction

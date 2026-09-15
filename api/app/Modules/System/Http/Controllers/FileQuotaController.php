@@ -3,7 +3,7 @@
 namespace App\Modules\System\Http\Controllers;
 
 use App\Core\Http\BaseController;
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Models\User;
 use App\Modules\System\Actions\GetFileQuotasAction;
 use App\Modules\System\Actions\UpdateFileQuotasAction;
 use App\Modules\System\Http\Requests\UpdateFileQuotasRequest;

@@ -3,10 +3,9 @@
 use App\Core\Contracts\ErrorDeclarationEnum;
 use App\Modules\Academic\Enums\AcademicError;
 use App\Modules\Academic\Enums\AcademicFeature;
+use App\Modules\Academic\Enums\AcademicPersonError;
 use App\Modules\Auth\Enums\AuthError;
-use App\Modules\Identity\Enums\IdentityError;
-use App\Modules\Identity\Enums\IdentityFeature;
-use App\Modules\Identity\Enums\UserRole;
+use App\Modules\Auth\Enums\UserRole;
 
 test('auth errors expose stable string declaration codes', function (): void {
     expect(AuthError::InvalidCredentials->value)->toBe('AUTH-001');
@@ -30,14 +29,14 @@ test('academic room errors expose stable declarations and HTTP statuses', functi
 });
 
 test('the guardian lookup failure exposes a stable declaration and HTTP status', function (): void {
-    expect(IdentityError::GuardianNotFound)
+    expect(AcademicPersonError::GuardianNotFound)
         ->toBeInstanceOf(ErrorDeclarationEnum::class)
-        ->and(IdentityError::GuardianNotFound->value)->toBe('IDENTITY-007')
-        ->and(IdentityError::GuardianNotFound->httpStatus())->toBe(404);
+        ->and(AcademicPersonError::GuardianNotFound->value)->toBe('IDENTITY-007')
+        ->and(AcademicPersonError::GuardianNotFound->httpStatus())->toBe(404);
 });
 
 test('the guardian directory permission is available to administrators by default', function (): void {
-    $features = collect(IdentityFeature::cases())->keyBy->value;
+    $features = collect(AcademicFeature::cases())->keyBy->value;
 
     expect($features->keys()->all())->toContain('guardian.list')
         ->and($features['guardian.list']->defaultRoles())->toBe([UserRole::Admin])

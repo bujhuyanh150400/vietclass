@@ -1,14 +1,14 @@
 <?php
 
-use App\Modules\FileManagement\Actions\PermanentlyDeleteFileAction;
-use App\Modules\FileManagement\Actions\PurgeTrashedFilesAction;
-use App\Modules\FileManagement\Actions\RestoreFileAction;
-use App\Modules\FileManagement\Actions\TrashFileAction;
-use App\Modules\FileManagement\Enums\FileError;
-use App\Modules\FileManagement\Models\FileLink;
-use App\Modules\FileManagement\Models\ManagedFile;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\Profile;
+use App\Modules\System\Actions\PermanentlyDeleteFileAction;
+use App\Modules\System\Actions\PurgeTrashedFilesAction;
+use App\Modules\System\Actions\RestoreFileAction;
+use App\Modules\System\Actions\TrashFileAction;
+use App\Modules\System\Enums\FileError;
+use App\Modules\System\Models\FileLink;
+use App\Modules\System\Models\ManagedFile;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Academic\Models\Profile;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Log;
@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
 
 beforeEach(function (): void {
     Storage::fake('managed-files');
-    config()->set('file-management.disk', 'managed-files');
+    config()->set('system.files.disk', 'managed-files');
     $this->owner = Profile::factory()->forRole(UserRole::Student)->create()->user;
     $this->token = $this->owner->createToken('test')->plainTextToken;
 });
@@ -27,7 +27,7 @@ test('a linked file cannot be trashed or permanently deleted', function (): void
     $trashed = ManagedFile::factory()->for($this->owner, 'owner')->trashed()->create();
     FileLink::factory()->for($trashed, 'file')->create();
 
-    $this->withToken($this->token)->deleteJson("/api/v1/files/{$active->id}")
+    $this->withToken($this->token)->deleteJson("/api/v1/system/files/{$active->id}")
         ->assertConflict()
         ->assertJsonPath('message', 'Tệp đang được sử dụng.');
 
@@ -40,10 +40,10 @@ test('a linked file cannot be trashed or permanently deleted', function (): void
 test('an active unlinked file can be trashed and restored', function (): void {
     $file = ManagedFile::factory()->for($this->owner, 'owner')->create();
 
-    $this->withToken($this->token)->deleteJson("/api/v1/files/{$file->id}")->assertNoContent();
+    $this->withToken($this->token)->deleteJson("/api/v1/system/files/{$file->id}")->assertNoContent();
     expect($file->fresh()?->deleted_at)->not->toBeNull();
 
-    $this->withToken($this->token)->postJson("/api/v1/files/{$file->id}/restore")
+    $this->withToken($this->token)->postJson("/api/v1/system/files/{$file->id}/restore")
         ->assertOk()
         ->assertJsonPath('data.id', $file->id)
         ->assertJsonPath('data.trashed_at', null);
@@ -68,7 +68,7 @@ test('permanent deletion removes trashed metadata when the storage object is alr
         'path' => "users/{$this->owner->id}/missing.png",
     ]);
 
-    $this->withToken($this->token)->deleteJson("/api/v1/files/{$file->id}/permanent")->assertNoContent();
+    $this->withToken($this->token)->deleteJson("/api/v1/system/files/{$file->id}/permanent")->assertNoContent();
 
     expect(ManagedFile::withTrashed()->find($file->id))->toBeNull();
 });

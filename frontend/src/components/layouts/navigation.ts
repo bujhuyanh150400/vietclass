@@ -79,7 +79,7 @@ export const NAVIGATION: NavigationGroup[] = [
   {
     label: "Hệ thống",
     items: [
-      { kind: "link", label: "Quản lý thư viện", href: "/files", icon: "files" },
+      { kind: "link", label: "Quản lý thư viện", href: "/system/files", icon: "files" },
     ],
   },
 ];
@@ -127,7 +127,7 @@ const SUB_ROUTE_LABELS: Record<string, string> = {
   "/academic/teachers/:id": "Sửa hồ sơ giáo viên",
   "/academic/students/new": "Thêm học sinh",
   "/academic/students/:id": "Sửa hồ sơ học sinh",
-  "/account/avatar": "Đổi ảnh đại diện",
+  "/academic/avatar": "Đổi ảnh đại diện",
 };
 
 /** Replaces every record identifier in a path with `:id`, to look it up as one route. */

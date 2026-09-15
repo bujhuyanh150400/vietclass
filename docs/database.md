@@ -4,7 +4,7 @@ Last verified: 2026-09-14
 
     # nguồn sự thật
     - Migrations dưới `api/database/migrations/` là executable source of truth.
-    - Schema hiện tại gồm framework runtime, Identity, Auth, Academic, System và File Management.
+    - Schema hiện tại gồm framework runtime, Auth, Academic và System.
     - Không có bảng Schedule: module đã bị loại bỏ và schema đang được thiết kế lại.
     - Academic là adaptation có chủ đích của fork, không phải bản sao; các khác biệt được ghi tại nơi liên quan.
 
@@ -18,15 +18,11 @@ Last verified: 2026-09-14
 
 # Sơ đồ nhóm bảng và phụ thuộc
 
-- G1 – Identity & Profile
+- G1 – Auth / Tài khoản và quyền
     + Phụ thuộc: —
-- G2 – Auth & Permissions
+- G2 – Academic / Con người và học vụ
     + Phụ thuộc: G1
-- G3 – Academic / Học vụ
-    + Phụ thuộc: G1
-- G4 – System / Hệ thống
-    + Phụ thuộc: G1
-- G5 – File Management
+- G3 – System / Hệ thống và file
     + Phụ thuộc: G1
 
 # PostgreSQL extensions
@@ -47,14 +43,11 @@ Last verified: 2026-09-14
     - Nếu sequential scan không còn đủ nhanh, cần `pg_trgm` GIN index; khi đó `unaccent()` phải được bọc trong hàm `IMMUTABLE` vì bản thân nó là `STABLE`.
     - Xóa extension sẽ làm hỏng mọi query gọi `unaccent()`, nên `down()` chỉ rollback sạch khi các query đó được rollback cùng.
 
-# ---G1: Identity & Profile
+# ---G1: Auth / Tài khoản
 
     # note
-    - Quản lý tài khoản đăng nhập và hồ sơ người dùng.
-    - `profiles` là bảng thông tin cá nhân dùng chung; `teacher_profiles` và `student_profiles` là role tables dùng lại `profiles.id`; `student_guardians` lưu quan hệ guardian–student.
-    - `teacher_profiles.profile_id` và `student_profiles.profile_id` vừa là primary key của bảng role, vừa là foreign key về `profiles.id`. Cách dùng shared key khiến Academic chỉ có thể trỏ tới profile có đúng role.
-    - Guardian không có role table riêng; guardian tồn tại qua row trong `student_guardians` trỏ tới `profiles`.
-    - Chỉ `users` và `files` có soft deletion trong các nhóm hiện tại; profile không bị hard-delete trong flow ứng dụng. Foreign key cascade vẫn được giữ cho các đường dẫn xóa trực tiếp.
+    - Quản lý tài khoản đăng nhập; hồ sơ người dùng thuộc Academic ở G2.
+    - `users` có soft deletion; profile và file ownership được mô tả trong module sở hữu của chúng.
     - Bank details trên teacher profile và các cột tiền trên Academic đã bị loại bỏ; module sở hữu nghiệp vụ tiền sẽ tự tạo migration của mình.
 
 ## users
@@ -95,6 +88,8 @@ Last verified: 2026-09-14
     - `index(tokenable_type, tokenable_id)`.
     - `unique(token)`.
     - `index(expires_at)`.
+
+# ---G2: Academic / Con người và học vụ
 
 ## profiles
 
@@ -169,7 +164,7 @@ Last verified: 2026-09-14
     - `unique(student_profile_id, guardian_profile_id)`.
     - `unique(student_profile_id) WHERE is_primary` — PostgreSQL partial unique index; mỗi student tối đa một primary contact.
 
-# ---G2: Auth & Permissions
+# ---G1: Auth / Permissions
 
     # note
     - Permission catalogue và per-user overrides.
@@ -215,7 +210,7 @@ Last verified: 2026-09-14
     - Effective permissions = `defaults(user.role) ∪ granted − denied`, giới hạn ở các code module còn khai báo.
     - User có `is_active = false` không có permission hiệu lực; bearer token cấp trước đó vẫn hợp lệ tới khi hết hạn.
 
-# ---G3: Academic / Học vụ
+# ---G2: Academic / Học vụ
 
     # note
     - Quản lý subject, class, enrolment và teaching room.
@@ -289,11 +284,11 @@ Last verified: 2026-09-14
     - `index(class_id, student_id)` — Không unique để giữ lịch sử re-enrolment.
 
     # quan hệ đặc biệt
-    - `StudentProfile::activeEnrollments()` (Identity) là relation `HasMany` duy nhất đi ngược vào Academic, để student list hiển thị các class đang học.
-    - Các dependency còn lại chạy Academic → Identity: `classes.teacher_id`, `class_enrollments.student_id`, `ClassEnrollment` → `StudentProfile`, repository query `StudentProfile`, và `EnrollmentController` render `StudentResource`.
+    - `StudentProfile::activeEnrollments()` là relation `HasMany` duy nhất đi ngược vào Academic, để student list hiển thị các class đang học.
+    - Các dependency còn lại là quan hệ nội bộ Academic: `classes.teacher_id`, `class_enrollments.student_id`, `ClassEnrollment` → `StudentProfile`, repository query `StudentProfile`, và `EnrollmentController` render `StudentResource`.
     - `StudentResource` được dùng ở sáu call site; relation đi theo model nên không cần truyền dữ liệu thủ công qua từng endpoint.
     - `paginated()` nhận resource class name và tự gọi `$resourceClass::collection(...)`; không có seam để inject per-item data.
-    - Thiếu eager load chỉ ảnh hưởng query count, không ảnh hưởng correctness; `IdentityStudentTest` pin query count để student list không tăng theo số row.
+    - Thiếu eager load chỉ ảnh hưởng query count, không ảnh hưởng correctness; test student list pin query count để danh sách không tăng theo số row.
 
 ## rooms
 
@@ -321,7 +316,7 @@ Last verified: 2026-09-14
     - Filter dùng `facilities @> '[…]'::jsonb` nên room phải chứa **mọi** facility được yêu cầu. `jsonb_path_ops` nhỏ hơn `jsonb_ops` vì chỉ dùng containment.
     - `jsonb` phân biệt `0` và `"0"`; `IndexRoomRequest` và request store/update đều coerce input về `int`. `AcademicRoomTest` pin flow save bằng JSON body và filter bằng query string.
 
-# ---G4: System / Hệ thống
+# ---G3: System / Hệ thống
 
 ## system_settings
 
@@ -339,10 +334,10 @@ Last verified: 2026-09-14
     # index
     - `unique(key)`.
 
-# ---G5: File Management
+# ---G3: System / Quản lý tệp
 
     # note
-    - Private file metadata và domain links, owned by `API / FileManagement`.
+    - Private file metadata và domain links, owned by `API / System`.
     - Mỗi file có một immutable owner; `file_links` là reference duy nhất tới domain usage.
     - Không có folders hoặc generic links.
 

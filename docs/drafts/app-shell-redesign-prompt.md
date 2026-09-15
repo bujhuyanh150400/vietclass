@@ -27,7 +27,7 @@ vụ hiện hữu không thay đổi.
 - `Trang chủ` → `/dashboard`.
 - `Học vụ` → `Môn học`, `Phòng học`, `Lớp học`.
 - `Người dùng` → `Giáo viên`, `Học sinh`, `Phụ huynh · Sắp có`.
-- `Hệ thống` → `Quản lý thư viện` → `/files`.
+- `Hệ thống` → `Quản lý thư viện` → `/system/files`.
 - Desktop có sidebar mở rộng và icon rail; mobile dùng drawer có overlay, focus trap,
   Escape và nút đóng rõ ràng.
 - Header chỉ có trigger sidebar và tiêu đề route hiện tại. Chỉ `.vc-app-content`

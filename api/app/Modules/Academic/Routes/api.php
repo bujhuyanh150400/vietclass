@@ -3,12 +3,91 @@
 use App\Modules\Academic\Enums\AcademicFeature;
 use App\Modules\Academic\Http\Controllers\ClassController;
 use App\Modules\Academic\Http\Controllers\EnrollmentController;
+use App\Modules\Academic\Http\Controllers\GuardianController;
+use App\Modules\Academic\Http\Controllers\ProfileAvatarController;
 use App\Modules\Academic\Http\Controllers\RoomController;
+use App\Modules\Academic\Http\Controllers\StudentController;
 use App\Modules\Academic\Http\Controllers\SubjectController;
+use App\Modules\Academic\Http\Controllers\TeacherController;
 use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')->group(function (): void {
+Route::middleware('auth:sanctum')->prefix('academic')->name('academic.')->group(function (): void {
+    Route::put('profiles/{profile}/avatar', ProfileAvatarController::class)
+        ->whereNumber('profile')
+        ->middleware(Authorize::using(AcademicFeature::ProfileAvatarUpdate))
+        ->name('profiles.avatar.update');
+
+    Route::prefix('teachers')->name('teachers.')->group(function (): void {
+        Route::get('/', [TeacherController::class, 'index'])
+            ->middleware(Authorize::using(AcademicFeature::TeacherList))
+            ->name('index');
+
+        Route::get('options', [TeacherController::class, 'options'])
+            ->middleware(Authorize::using(AcademicFeature::TeacherList))
+            ->name('options');
+
+        Route::post('/', [TeacherController::class, 'store'])
+            ->middleware(Authorize::using(AcademicFeature::TeacherCreate))
+            ->name('store');
+
+        Route::get('{teacher}', [TeacherController::class, 'show'])
+            ->whereNumber('teacher')
+            ->middleware(Authorize::using(AcademicFeature::TeacherView))
+            ->name('show');
+
+        Route::put('{teacher}', [TeacherController::class, 'update'])
+            ->whereNumber('teacher')
+            ->middleware(Authorize::using(AcademicFeature::TeacherUpdate))
+            ->name('update');
+
+        Route::patch('{teacher}/account', [TeacherController::class, 'toggleAccount'])
+            ->whereNumber('teacher')
+            ->middleware(Authorize::using(AcademicFeature::TeacherToggleActive))
+            ->name('toggle-account');
+
+        Route::patch('{teacher}/password', [TeacherController::class, 'changePassword'])
+            ->whereNumber('teacher')
+            ->middleware(Authorize::using(AcademicFeature::TeacherUpdate))
+            ->name('change-password');
+    });
+
+    Route::prefix('guardians')->name('guardians.')->group(function (): void {
+        Route::get('options', [GuardianController::class, 'options'])
+            ->middleware(Authorize::using(AcademicFeature::GuardianList))
+            ->name('options');
+    });
+
+    Route::prefix('students')->name('students.')->group(function (): void {
+        Route::get('/', [StudentController::class, 'index'])
+            ->middleware(Authorize::using(AcademicFeature::StudentList))
+            ->name('index');
+
+        Route::post('/', [StudentController::class, 'store'])
+            ->middleware(Authorize::using(AcademicFeature::StudentCreate))
+            ->name('store');
+
+        Route::get('{student}', [StudentController::class, 'show'])
+            ->whereNumber('student')
+            ->middleware(Authorize::using(AcademicFeature::StudentView))
+            ->name('show');
+
+        Route::put('{student}', [StudentController::class, 'update'])
+            ->whereNumber('student')
+            ->middleware(Authorize::using(AcademicFeature::StudentUpdate))
+            ->name('update');
+
+        Route::patch('{student}/account', [StudentController::class, 'toggleAccount'])
+            ->whereNumber('student')
+            ->middleware(Authorize::using(AcademicFeature::StudentToggleActive))
+            ->name('toggle-account');
+
+        Route::patch('{student}/password', [StudentController::class, 'changePassword'])
+            ->whereNumber('student')
+            ->middleware(Authorize::using(AcademicFeature::StudentUpdate))
+            ->name('change-password');
+    });
+
     Route::prefix('subjects')->name('subjects.')->group(function (): void {
         Route::get('/', [SubjectController::class, 'index'])
             ->middleware(Authorize::using(AcademicFeature::SubjectList))

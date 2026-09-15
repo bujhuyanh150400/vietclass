@@ -1,14 +1,14 @@
 <?php
 
 use App\Modules\Academic\Models\Subject;
-use App\Modules\FileManagement\Enums\FileLinkType;
-use App\Modules\FileManagement\Models\FileLink;
-use App\Modules\FileManagement\Models\ManagedFile;
-use App\Modules\Identity\Enums\GuardianRelationship;
-use App\Modules\Identity\Models\Profile;
-use App\Modules\Identity\Models\StudentGuardian;
-use App\Modules\Identity\Models\StudentProfile;
-use App\Modules\Identity\Models\User;
+use App\Modules\System\Enums\FileLinkType;
+use App\Modules\System\Models\FileLink;
+use App\Modules\System\Models\ManagedFile;
+use App\Modules\Academic\Enums\GuardianRelationship;
+use App\Modules\Academic\Models\Profile;
+use App\Modules\Academic\Models\StudentGuardian;
+use App\Modules\Academic\Models\StudentProfile;
+use App\Modules\Auth\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;

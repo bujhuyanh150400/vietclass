@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { SESSION_COOKIE_NAME } from "@/modules/identity/server";
+import { SESSION_COOKIE_NAME } from "@/modules/auth/server";
 
 /**
  * Guards the dashboard and academic paths optimistically. Only the presence of
@@ -23,5 +23,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/academic/:path*"],
+  matcher: ["/dashboard/:path*", "/academic/:path*", "/system/:path*"],
 };

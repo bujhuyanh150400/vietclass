@@ -5,8 +5,8 @@ namespace Database\Factories;
 use App\Modules\Academic\Enums\ClassStatus;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\Subject;
-use App\Modules\Identity\Enums\GradeLevel;
-use App\Modules\Identity\Models\TeacherProfile;
+use App\Modules\Academic\Enums\GradeLevel;
+use App\Modules\Academic\Models\TeacherProfile;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

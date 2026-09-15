@@ -1,13 +1,13 @@
 <?php
 
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Auth\Models\User;
 use Illuminate\Support\Facades\DB;
 
 test('missing quota setting returns the fixed defaults', function (): void {
     $admin = User::factory()->create(['role' => UserRole::Admin]);
 
-    $this->withToken($admin->createToken('test')->plainTextToken)->getJson('/api/v1/system/file-quotas')
+    $this->withToken($admin->createToken('test')->plainTextToken)->getJson('/api/v1/system/settings/file-quotas')
         ->assertOk()
         ->assertExactJson([
             'data' => [
@@ -31,7 +31,7 @@ test('an administrator updates every quota and records the actor', function (): 
     ];
 
     $this->withToken($admin->createToken('test')->plainTextToken)
-        ->putJson('/api/v1/system/file-quotas', ['quotas' => $quotas])
+        ->putJson('/api/v1/system/settings/file-quotas', ['quotas' => $quotas])
         ->assertOk()
         ->assertExactJson(['data' => ['quotas' => $quotas]]);
 
@@ -47,7 +47,7 @@ test('file quota updates require exactly four nonnegative integer quotas', funct
     $admin = User::factory()->create(['role' => UserRole::Admin]);
 
     $this->withToken($admin->createToken('test')->plainTextToken)
-        ->putJson('/api/v1/system/file-quotas', ['quotas' => $quotas])
+        ->putJson('/api/v1/system/settings/file-quotas', ['quotas' => $quotas])
         ->assertUnprocessable()
         ->assertJsonValidationErrors($error);
 })->with([

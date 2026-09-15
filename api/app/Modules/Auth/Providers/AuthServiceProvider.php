@@ -5,7 +5,7 @@ namespace App\Modules\Auth\Providers;
 use App\Modules\Auth\Console\SyncFeaturesCommand;
 use App\Modules\Auth\Support\FeatureRegistry;
 use App\Modules\Auth\Support\FeatureResolver;
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -64,7 +64,7 @@ final class AuthServiceProvider extends ServiceProvider
      */
     private function registerCookieTokenRetrieval(): void
     {
-        $cookieName = (string) config('identity.session_cookie');
+        $cookieName = (string) config('authentication.session_cookie');
 
         Sanctum::getAccessTokenFromRequestUsing(
             function (Request $request) use ($cookieName): ?string {

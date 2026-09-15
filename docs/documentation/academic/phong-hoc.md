@@ -47,13 +47,13 @@ Mọi endpoint cần header `Authorization: Bearer <token>`.
 
 | Thao tác | Yêu cầu |
 | --- | --- |
-| Xem danh sách | `GET /api/v1/rooms` |
-| Lấy danh sách chọn | `GET /api/v1/rooms/options` |
-| Tạo | `POST /api/v1/rooms` với `name`, `capacity`, tùy chọn `location`, `facilities`, `note` |
-| Xem chi tiết | `GET /api/v1/rooms/{id}` |
-| Sửa | `PUT /api/v1/rooms/{id}` với `name`, `capacity`, tùy chọn `location`, `facilities`, `note`, `status` |
-| Đổi trạng thái | `PATCH /api/v1/rooms/{id}/status` với `status` (thao tác nhanh trên danh sách) |
-| Xóa | `DELETE /api/v1/rooms/{id}` |
+| Xem danh sách | `GET /api/v1/academic/rooms` |
+| Lấy danh sách chọn | `GET /api/v1/academic/rooms/options` |
+| Tạo | `POST /api/v1/academic/rooms` với `name`, `capacity`, tùy chọn `location`, `facilities`, `note` |
+| Xem chi tiết | `GET /api/v1/academic/rooms/{id}` |
+| Sửa | `PUT /api/v1/academic/rooms/{id}` với `name`, `capacity`, tùy chọn `location`, `facilities`, `note`, `status` |
+| Đổi trạng thái | `PATCH /api/v1/academic/rooms/{id}/status` với `status` (thao tác nhanh trên danh sách) |
+| Xóa | `DELETE /api/v1/academic/rooms/{id}` |
 
 Danh sách nhận `q` để tìm theo tên và vị trí, `status` để lọc theo một trạng thái,
 `facilities[]` để lọc theo tiện ích, `capacity_min` và `capacity_max` để lọc theo khoảng

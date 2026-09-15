@@ -32,13 +32,13 @@ Mọi endpoint nằm dưới tiền tố `/api/v1` và cần header `Authorizati
 
 | Thao tác | Yêu cầu |
 | --- | --- |
-| Xem danh sách | `GET /subjects` |
-| Lấy danh sách chọn | `GET /subjects/options` |
-| Tạo | `POST /subjects` với `name`, `grade_levels`, tùy chọn `description`, `is_active` |
-| Xem chi tiết | `GET /subjects/{id}` |
-| Sửa | `PUT /subjects/{id}` với `name`, `grade_levels`, `is_active`, tùy chọn `description` |
-| Khóa hoặc mở | `PATCH /subjects/{id}/active` với `is_active` |
-| Xóa | `DELETE /subjects/{id}` |
+| Xem danh sách | `GET /api/v1/academic/subjects` |
+| Lấy danh sách chọn | `GET /api/v1/academic/subjects/options` |
+| Tạo | `POST /api/v1/academic/subjects` với `name`, `grade_levels`, tùy chọn `description`, `is_active` |
+| Xem chi tiết | `GET /api/v1/academic/subjects/{id}` |
+| Sửa | `PUT /api/v1/academic/subjects/{id}` với `name`, `grade_levels`, `is_active`, tùy chọn `description` |
+| Khóa hoặc mở | `PATCH /api/v1/academic/subjects/{id}/active` với `is_active` |
+| Xóa | `DELETE /api/v1/academic/subjects/{id}` |
 
 Danh sách nhận thêm `q` để tìm theo tên, `is_active` để lọc theo trạng thái, `grade_level` để lọc một khối, cùng `page`, `per_page`, `sort`, `direction`. Cột sắp xếp cho phép: `id`, `name`, `created_at`, `active_classes_count`.
 

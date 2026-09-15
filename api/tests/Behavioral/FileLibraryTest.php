@@ -1,12 +1,12 @@
 <?php
 
-use App\Modules\FileManagement\Actions\GetFileContentAction;
-use App\Modules\FileManagement\Enums\FileError;
-use App\Modules\FileManagement\Enums\FileLinkType;
-use App\Modules\FileManagement\Models\FileLink;
-use App\Modules\FileManagement\Models\ManagedFile;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\Profile;
+use App\Modules\System\Actions\GetFileContentAction;
+use App\Modules\System\Enums\FileError;
+use App\Modules\System\Enums\FileLinkType;
+use App\Modules\System\Models\FileLink;
+use App\Modules\System\Models\ManagedFile;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Academic\Models\Profile;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -15,7 +15,7 @@ use League\Flysystem\UnableToGenerateTemporaryUrl;
 
 beforeEach(function (): void {
     Storage::fake('managed-files');
-    config()->set('file-management.disk', 'managed-files');
+    config()->set('system.files.disk', 'managed-files');
     $this->owner = Profile::factory()->forRole(UserRole::Student)->create([
         'full_name' => 'Nguyen Owner',
     ])->user;
@@ -30,7 +30,7 @@ test('file list scopes owners and returns the complete safe resource shape', fun
     FileLink::factory()->for($mine, 'file')->create(['type' => FileLinkType::ProfileAvatar]);
     ManagedFile::factory()->create();
 
-    $this->withToken($this->ownerToken)->getJson('/api/v1/files')
+    $this->withToken($this->ownerToken)->getJson('/api/v1/system/files')
         ->assertOk()
         ->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.id', $mine->id)
@@ -41,7 +41,7 @@ test('file list scopes owners and returns the complete safe resource shape', fun
         ->assertJsonPath('data.0.is_linked', true)
         ->assertJsonPath('data.0.link_types.0', FileLinkType::ProfileAvatar->value)
         ->assertJsonPath('data.0.trashed_at', null)
-        ->assertJsonPath('data.0.content_url', "/api/v1/files/{$mine->id}/content")
+        ->assertJsonPath('data.0.content_url', "/api/v1/system/files/{$mine->id}/content")
         ->assertJsonMissingPath('data.0.owner_id')
         ->assertJsonMissingPath('data.0.disk')
         ->assertJsonMissingPath('data.0.path');
@@ -99,17 +99,17 @@ test('administrator file list applies every exact metadata filter', function ():
     ]);
     FileLink::factory()->for($afterRange, 'file')->create(['type' => FileLinkType::ProfileAvatar]);
 
-    $this->withToken($adminToken)->getJson('/api/v1/files?per_page=20')
+    $this->withToken($adminToken)->getJson('/api/v1/system/files?per_page=20')
         ->assertOk()
         ->assertJsonPath('meta.total', 7);
 
     $this->withToken($adminToken)
-        ->getJson('/api/v1/files?search=lesson&category=pdf&owner_user_id='.$this->owner->id.'&uploaded_from=2026-09-01&uploaded_to=2026-09-30&trash=active&link_type=0&per_page=20')
+        ->getJson('/api/v1/system/files?search=lesson&category=pdf&owner_user_id='.$this->owner->id.'&uploaded_from=2026-09-01&uploaded_to=2026-09-30&trash=active&link_type=0&per_page=20')
         ->assertOk()
         ->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.id', $matching->id);
 
-    $this->withToken($adminToken)->getJson('/api/v1/files?search=Unrelated')
+    $this->withToken($adminToken)->getJson('/api/v1/system/files?search=Unrelated')
         ->assertOk()
         ->assertJsonPath('meta.total', 1);
 });
@@ -123,16 +123,16 @@ test('file list supports exact trash selection and newest first pagination', fun
     ]);
     $trashed = ManagedFile::factory()->for($this->owner, 'owner')->trashed()->create();
 
-    $this->withToken($this->ownerToken)->getJson('/api/v1/files?per_page=1')
+    $this->withToken($this->ownerToken)->getJson('/api/v1/system/files?per_page=1')
         ->assertOk()
         ->assertJsonPath('meta.total', 2)
         ->assertJsonPath('data.0.id', $newer->id);
 
-    $this->withToken($this->ownerToken)->getJson('/api/v1/files?per_page=1&page=2')
+    $this->withToken($this->ownerToken)->getJson('/api/v1/system/files?per_page=1&page=2')
         ->assertOk()
         ->assertJsonPath('data.0.id', $older->id);
 
-    $this->withToken($this->ownerToken)->getJson('/api/v1/files?trash=trashed')
+    $this->withToken($this->ownerToken)->getJson('/api/v1/system/files?trash=trashed')
         ->assertOk()
         ->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.id', $trashed->id)
@@ -143,12 +143,12 @@ test('file list honors validated metadata sorting', function (): void {
     $zulu = ManagedFile::factory()->for($this->owner, 'owner')->create(['display_name' => 'Zulu']);
     $alpha = ManagedFile::factory()->for($this->owner, 'owner')->create(['display_name' => 'Alpha']);
 
-    $this->withToken($this->ownerToken)->getJson('/api/v1/files?sort=display_name&direction=asc')
+    $this->withToken($this->ownerToken)->getJson('/api/v1/system/files?sort=display_name&direction=asc')
         ->assertOk()
         ->assertJsonPath('data.0.id', $alpha->id)
         ->assertJsonPath('data.1.id', $zulu->id);
 
-    $this->withToken($this->ownerToken)->getJson('/api/v1/files?sort=path')
+    $this->withToken($this->ownerToken)->getJson('/api/v1/system/files?sort=path')
         ->assertUnprocessable()
         ->assertJsonValidationErrorFor('sort');
 });
@@ -159,17 +159,17 @@ test('file detail and rename return safe metadata without changing storage coord
         'path' => "users/{$this->owner->id}/immutable.png",
     ]);
 
-    $this->withToken($this->ownerToken)->getJson("/api/v1/files/{$file->id}")
+    $this->withToken($this->ownerToken)->getJson("/api/v1/system/files/{$file->id}")
         ->assertOk()
         ->assertJsonPath('data.id', $file->id)
         ->assertJsonMissingPath('data.disk')
         ->assertJsonMissingPath('data.path');
 
-    $this->withToken($this->ownerToken)->putJson("/api/v1/files/{$file->id}", [
+    $this->withToken($this->ownerToken)->putJson("/api/v1/system/files/{$file->id}", [
         'display_name' => 'Renamed image',
     ])->assertOk()->assertJsonPath('data.display_name', 'Renamed image');
 
-    $this->withToken($this->ownerToken)->putJson("/api/v1/files/{$file->id}", [
+    $this->withToken($this->ownerToken)->putJson("/api/v1/system/files/{$file->id}", [
         'display_name' => 'Blocked overwrite',
         'disk' => 'public',
         'path' => 'outside',
@@ -207,11 +207,11 @@ test('content redirects to five minute urls with safe category dispositions', fu
         'display_name' => 'Ảnh đại diện.png',
     ]);
 
-    $documentResponse = $this->withToken($this->ownerToken)->get("/api/v1/files/{$document->id}/content")
+    $documentResponse = $this->withToken($this->ownerToken)->get("/api/v1/system/files/{$document->id}/content")
         ->assertRedirect('https://signed.test/object/1');
-    $imageResponse = $this->withToken($this->ownerToken)->get("/api/v1/files/{$image->id}/content")
+    $imageResponse = $this->withToken($this->ownerToken)->get("/api/v1/system/files/{$image->id}/content")
         ->assertRedirect('https://signed.test/object/2');
-    $downloadResponse = $this->withToken($this->ownerToken)->get("/api/v1/files/{$image->id}/content?download=1")
+    $downloadResponse = $this->withToken($this->ownerToken)->get("/api/v1/system/files/{$image->id}/content?download=1")
         ->assertRedirect('https://signed.test/object/3');
 
     expect($captured[0]['path'])->toBe($document->path)
@@ -278,7 +278,7 @@ test('file list eager loads resource relations with a bounded query count', func
 
     DB::flushQueryLog();
     DB::enableQueryLog();
-    $this->withToken($this->ownerToken)->getJson('/api/v1/files?per_page=20')->assertOk();
+    $this->withToken($this->ownerToken)->getJson('/api/v1/system/files?per_page=20')->assertOk();
 
     expect(count(DB::getQueryLog()))->toBeGreaterThan(0)->toBeLessThanOrEqual(10);
     DB::disableQueryLog();

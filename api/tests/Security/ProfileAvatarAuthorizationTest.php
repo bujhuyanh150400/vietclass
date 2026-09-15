@@ -1,13 +1,13 @@
 <?php
 
-use App\Modules\FileManagement\Models\ManagedFile;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\Profile;
+use App\Modules\System\Models\ManagedFile;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Academic\Models\Profile;
 
 test('avatar updates require authentication', function (): void {
     $profile = Profile::factory()->forRole(UserRole::Student)->create();
 
-    $this->putJson("/api/v1/profiles/{$profile->id}/avatar", ['type' => 'none'])
+    $this->putJson("/api/v1/academic/profiles/{$profile->id}/avatar", ['type' => 'none'])
         ->assertUnauthorized();
 });
 
@@ -16,7 +16,7 @@ test('a non administrator cannot update another profile', function (UserRole $ro
     $profile = Profile::factory()->forRole(UserRole::Student)->create();
 
     $this->withToken($actor->createToken('avatar')->plainTextToken)
-        ->putJson("/api/v1/profiles/{$profile->id}/avatar", ['type' => 'none'])
+        ->putJson("/api/v1/academic/profiles/{$profile->id}/avatar", ['type' => 'none'])
         ->assertForbidden();
 })->with([UserRole::Teacher, UserRole::Student, UserRole::Guardian]);
 
@@ -25,7 +25,7 @@ test('an administrator may update any profile', function (): void {
     $profile = Profile::factory()->forRole(UserRole::Student)->create();
 
     $this->withToken($admin->createToken('avatar')->plainTextToken)
-        ->putJson("/api/v1/profiles/{$profile->id}/avatar", ['type' => 'none'])
+        ->putJson("/api/v1/academic/profiles/{$profile->id}/avatar", ['type' => 'none'])
         ->assertOk();
 });
 
@@ -34,7 +34,7 @@ test('a non administrator cannot attach another users image to their own profile
     $file = ManagedFile::factory()->create();
 
     $this->withToken($profile->user->createToken('avatar')->plainTextToken)
-        ->putJson("/api/v1/profiles/{$profile->id}/avatar", [
+        ->putJson("/api/v1/academic/profiles/{$profile->id}/avatar", [
             'type' => 'file', 'file_id' => $file->id,
         ])->assertNotFound();
 });

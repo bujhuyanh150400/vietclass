@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Modules\FileManagement\Enums\FileLinkType;
-use App\Modules\FileManagement\Models\FileLink;
-use App\Modules\FileManagement\Models\ManagedFile;
+use App\Modules\System\Enums\FileLinkType;
+use App\Modules\System\Models\FileLink;
+use App\Modules\System\Models\ManagedFile;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

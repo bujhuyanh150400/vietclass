@@ -6,7 +6,7 @@ use App\Core\Data\ListQuery;
 use App\Core\Repositories\BaseRepository;
 use App\Modules\Academic\Enums\ClassStatus;
 use App\Modules\Academic\Models\Subject;
-use App\Modules\Identity\Enums\GradeLevel;
+use App\Modules\Academic\Enums\GradeLevel;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;

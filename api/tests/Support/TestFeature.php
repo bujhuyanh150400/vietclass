@@ -3,7 +3,7 @@
 namespace Tests\Support;
 
 use App\Modules\Auth\Contracts\FeatureEnum;
-use App\Modules\Identity\Enums\UserRole;
+use App\Modules\Auth\Enums\UserRole;
 
 /**
  * A disposable permission declaration used to exercise the Access module before any

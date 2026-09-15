@@ -5,43 +5,43 @@ use App\Modules\Auth\Models\Feature;
 use App\Modules\Auth\Repositories\FeatureRepository;
 use App\Modules\Auth\Support\FeatureRegistry;
 use App\Modules\Auth\Support\FeatureResolver;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\User;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Auth\Models\User;
 use Illuminate\Support\Facades\DB;
 
 dataset('academic endpoints', [
-    'subject list' => ['getJson', '/api/v1/subjects'],
-    'subject options' => ['getJson', '/api/v1/subjects/options'],
-    'subject create' => ['postJson', '/api/v1/subjects'],
-    'subject detail' => ['getJson', '/api/v1/subjects/1'],
-    'subject update' => ['putJson', '/api/v1/subjects/1'],
-    'subject lock' => ['patchJson', '/api/v1/subjects/1/active'],
-    'subject delete' => ['deleteJson', '/api/v1/subjects/1'],
-    'teacher list' => ['getJson', '/api/v1/teachers'],
-    'teacher options' => ['getJson', '/api/v1/teachers/options'],
-    'teacher create' => ['postJson', '/api/v1/teachers'],
-    'teacher detail' => ['getJson', '/api/v1/teachers/1'],
-    'teacher update' => ['putJson', '/api/v1/teachers/1'],
-    'teacher account' => ['patchJson', '/api/v1/teachers/1/account'],
-    'teacher password' => ['patchJson', '/api/v1/teachers/1/password'],
-    'class list' => ['getJson', '/api/v1/classes'],
-    'class options' => ['getJson', '/api/v1/classes/options'],
-    'class create' => ['postJson', '/api/v1/classes'],
-    'class detail' => ['getJson', '/api/v1/classes/1'],
-    'class update' => ['putJson', '/api/v1/classes/1'],
-    'class status' => ['patchJson', '/api/v1/classes/1/status'],
-    'student list' => ['getJson', '/api/v1/students'],
-    'student create' => ['postJson', '/api/v1/students'],
-    'student detail' => ['getJson', '/api/v1/students/1'],
-    'student update' => ['putJson', '/api/v1/students/1'],
-    'student account' => ['patchJson', '/api/v1/students/1/account'],
-    'student password' => ['patchJson', '/api/v1/students/1/password'],
-    'roster' => ['getJson', '/api/v1/classes/1/enrollments'],
-    'available students' => ['getJson', '/api/v1/classes/1/available-students'],
-    'enrol students' => ['postJson', '/api/v1/classes/1/enrollments'],
-    'enrolment update' => ['putJson', '/api/v1/enrollments/1'],
-    'enrolment transfer' => ['postJson', '/api/v1/enrollments/1/transfer'],
-    'enrolment leave' => ['postJson', '/api/v1/enrollments/1/leave'],
+    'subject list' => ['getJson', '/api/v1/academic/subjects'],
+    'subject options' => ['getJson', '/api/v1/academic/subjects/options'],
+    'subject create' => ['postJson', '/api/v1/academic/subjects'],
+    'subject detail' => ['getJson', '/api/v1/academic/subjects/1'],
+    'subject update' => ['putJson', '/api/v1/academic/subjects/1'],
+    'subject lock' => ['patchJson', '/api/v1/academic/subjects/1/active'],
+    'subject delete' => ['deleteJson', '/api/v1/academic/subjects/1'],
+    'teacher list' => ['getJson', '/api/v1/academic/teachers'],
+    'teacher options' => ['getJson', '/api/v1/academic/teachers/options'],
+    'teacher create' => ['postJson', '/api/v1/academic/teachers'],
+    'teacher detail' => ['getJson', '/api/v1/academic/teachers/1'],
+    'teacher update' => ['putJson', '/api/v1/academic/teachers/1'],
+    'teacher account' => ['patchJson', '/api/v1/academic/teachers/1/account'],
+    'teacher password' => ['patchJson', '/api/v1/academic/teachers/1/password'],
+    'class list' => ['getJson', '/api/v1/academic/classes'],
+    'class options' => ['getJson', '/api/v1/academic/classes/options'],
+    'class create' => ['postJson', '/api/v1/academic/classes'],
+    'class detail' => ['getJson', '/api/v1/academic/classes/1'],
+    'class update' => ['putJson', '/api/v1/academic/classes/1'],
+    'class status' => ['patchJson', '/api/v1/academic/classes/1/status'],
+    'student list' => ['getJson', '/api/v1/academic/students'],
+    'student create' => ['postJson', '/api/v1/academic/students'],
+    'student detail' => ['getJson', '/api/v1/academic/students/1'],
+    'student update' => ['putJson', '/api/v1/academic/students/1'],
+    'student account' => ['patchJson', '/api/v1/academic/students/1/account'],
+    'student password' => ['patchJson', '/api/v1/academic/students/1/password'],
+    'roster' => ['getJson', '/api/v1/academic/classes/1/enrollments'],
+    'available students' => ['getJson', '/api/v1/academic/classes/1/available-students'],
+    'enrol students' => ['postJson', '/api/v1/academic/classes/1/enrollments'],
+    'enrolment update' => ['putJson', '/api/v1/academic/enrollments/1'],
+    'enrolment transfer' => ['postJson', '/api/v1/academic/enrollments/1/transfer'],
+    'enrolment leave' => ['postJson', '/api/v1/academic/enrollments/1/leave'],
 ]);
 
 test('an academic endpoint refuses a request with no bearer token', function (string $method, string $uri) {
@@ -90,7 +90,7 @@ test('a deny override withdraws one permission from an administrator', function 
     app(FeatureResolver::class)->flush();
 
     $this->withToken($admin->createToken('test')->plainTextToken)
-        ->deleteJson('/api/v1/subjects/1')
+        ->deleteJson('/api/v1/academic/subjects/1')
         ->assertForbidden();
 });
 
@@ -109,7 +109,7 @@ test('a grant override opens one permission to a teacher', function () {
     app(FeatureResolver::class)->flush();
 
     $this->withToken($teacher->createToken('test')->plainTextToken)
-        ->getJson('/api/v1/subjects')
+        ->getJson('/api/v1/academic/subjects')
         ->assertOk();
 });
 
@@ -120,6 +120,6 @@ test('an administrator whose account was locked after signing in loses every per
     $admin->forceFill(['is_active' => false])->save();
 
     $this->withToken($token)
-        ->getJson('/api/v1/subjects')
+        ->getJson('/api/v1/academic/subjects')
         ->assertForbidden();
 });

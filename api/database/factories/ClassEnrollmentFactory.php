@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Academic\Models\SchoolClass;
-use App\Modules\Identity\Models\StudentProfile;
+use App\Modules\Academic\Models\StudentProfile;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

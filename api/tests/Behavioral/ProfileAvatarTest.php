@@ -1,11 +1,11 @@
 <?php
 
-use App\Modules\FileManagement\Enums\FileLinkType;
-use App\Modules\FileManagement\Models\FileLink;
-use App\Modules\FileManagement\Models\ManagedFile;
-use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Identity\Models\Profile;
-use App\Modules\Identity\Rules\AvatarSelection;
+use App\Modules\System\Enums\FileLinkType;
+use App\Modules\System\Models\FileLink;
+use App\Modules\System\Models\ManagedFile;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Academic\Models\Profile;
+use App\Modules\Academic\Rules\AvatarSelection;
 use Illuminate\Support\Facades\Validator;
 
 beforeEach(function (): void {
@@ -17,13 +17,13 @@ beforeEach(function (): void {
 test('selecting an owned image stores a file union and one avatar link', function (): void {
     $file = ManagedFile::factory()->for($this->owner, 'owner')->create();
 
-    $this->withToken($this->token)->putJson("/api/v1/profiles/{$this->profile->id}/avatar", [
+    $this->withToken($this->token)->putJson("/api/v1/academic/profiles/{$this->profile->id}/avatar", [
         'type' => 'file',
         'file_id' => $file->id,
     ])->assertOk()
         ->assertJsonPath('data.type', 'file')
         ->assertJsonPath('data.file_id', $file->id)
-        ->assertJsonPath('data.content_url', "/api/v1/files/{$file->id}/content");
+        ->assertJsonPath('data.content_url', "/api/v1/system/files/{$file->id}/content");
 
     expect($this->profile->fresh()->avatar_config)->toBe(['type' => 'file'])
         ->and(FileLink::query()
@@ -40,7 +40,7 @@ test('none clears the avatar union and its link', function (): void {
     ]);
     $this->profile->forceFill(['avatar_config' => ['type' => 'file']])->save();
 
-    $this->withToken($this->token)->putJson("/api/v1/profiles/{$this->profile->id}/avatar", [
+    $this->withToken($this->token)->putJson("/api/v1/academic/profiles/{$this->profile->id}/avatar", [
         'type' => 'none',
     ])->assertOk()->assertJsonPath('data', null);
 
@@ -58,7 +58,7 @@ test('each supported DiceBear style replaces a file link with safe configuration
         'foreign_id' => $this->profile->id,
     ]);
 
-    $this->withToken($this->token)->putJson("/api/v1/profiles/{$this->profile->id}/avatar", [
+    $this->withToken($this->token)->putJson("/api/v1/academic/profiles/{$this->profile->id}/avatar", [
         'type' => 'dicebear',
         'style' => $style,
         'seed' => 'stableSeed',
@@ -81,7 +81,7 @@ test('each supported DiceBear style replaces a file link with safe configuration
 })->with(['adventurer']);
 
 test('the Adventurer style accepts the hair variant the sample picker sets', function (string $variant): void {
-    $this->withToken($this->token)->putJson("/api/v1/profiles/{$this->profile->id}/avatar", [
+    $this->withToken($this->token)->putJson("/api/v1/academic/profiles/{$this->profile->id}/avatar", [
         'type' => 'dicebear',
         'style' => 'adventurer',
         'seed' => 'stableSeed',
@@ -91,7 +91,7 @@ test('the Adventurer style accepts the hair variant the sample picker sets', fun
 })->with(['long01', 'long26', 'short01', 'short19']);
 
 test('the Adventurer style refuses a hair variant its definition does not declare', function (string $variant): void {
-    $this->withToken($this->token)->putJson("/api/v1/profiles/{$this->profile->id}/avatar", [
+    $this->withToken($this->token)->putJson("/api/v1/academic/profiles/{$this->profile->id}/avatar", [
         'type' => 'dicebear',
         'style' => 'adventurer',
         'seed' => 'stableSeed',
@@ -101,7 +101,7 @@ test('the Adventurer style refuses a hair variant its definition does not declar
 
 test('the avatar union accepts reordered JSON fields', function (): void {
     $file = ManagedFile::factory()->for($this->owner, 'owner')->create();
-    $path = "/api/v1/profiles/{$this->profile->id}/avatar";
+    $path = "/api/v1/academic/profiles/{$this->profile->id}/avatar";
 
     $this->withToken($this->token)->putJson($path, [
         'file_id' => $file->id,
@@ -136,7 +136,7 @@ test('a replacement leaves exactly one avatar link', function (): void {
     $second = ManagedFile::factory()->for($this->owner, 'owner')->create();
 
     foreach ([$first, $second] as $file) {
-        $this->withToken($this->token)->putJson("/api/v1/profiles/{$this->profile->id}/avatar", [
+        $this->withToken($this->token)->putJson("/api/v1/academic/profiles/{$this->profile->id}/avatar", [
             'type' => 'file',
             'file_id' => $file->id,
         ])->assertOk();
@@ -151,12 +151,12 @@ test('a replacement leaves exactly one avatar link', function (): void {
 test('the selected avatar remains protected by the file lifecycle', function (): void {
     $file = ManagedFile::factory()->for($this->owner, 'owner')->create();
 
-    $this->withToken($this->token)->putJson("/api/v1/profiles/{$this->profile->id}/avatar", [
+    $this->withToken($this->token)->putJson("/api/v1/academic/profiles/{$this->profile->id}/avatar", [
         'type' => 'file',
         'file_id' => $file->id,
     ])->assertOk();
 
-    $this->withToken($this->token)->deleteJson("/api/v1/files/{$file->id}")
+    $this->withToken($this->token)->deleteJson("/api/v1/system/files/{$file->id}")
         ->assertConflict();
 });
 
@@ -170,7 +170,7 @@ test('file selection rejects a wrong owner, trashed file, and non-image', functi
     ]);
 
     foreach ([$wrongOwner, $trashed, $document] as $file) {
-        $this->withToken($this->token)->putJson("/api/v1/profiles/{$this->profile->id}/avatar", [
+        $this->withToken($this->token)->putJson("/api/v1/academic/profiles/{$this->profile->id}/avatar", [
             'type' => 'file',
             'file_id' => $file->id,
         ])->assertNotFound();
@@ -178,7 +178,7 @@ test('file selection rejects a wrong owner, trashed file, and non-image', functi
 });
 
 test('the avatar request rejects unknown, invalid, and oversized DiceBear input', function (): void {
-    $path = "/api/v1/profiles/{$this->profile->id}/avatar";
+    $path = "/api/v1/academic/profiles/{$this->profile->id}/avatar";
 
     $this->withToken($this->token)->putJson($path, [
         'type' => 'dicebear',
@@ -213,7 +213,7 @@ test('an accountless profile can select none or DiceBear but never a file', func
     $admin = Profile::factory()->forRole(UserRole::Admin)->create()->user;
     $profile = Profile::factory()->create();
     $token = $admin->createToken('admin-avatar')->plainTextToken;
-    $path = "/api/v1/profiles/{$profile->id}/avatar";
+    $path = "/api/v1/academic/profiles/{$profile->id}/avatar";
 
     $this->withToken($token)->putJson($path, ['type' => 'none'])->assertOk();
     $this->withToken($token)->putJson($path, [

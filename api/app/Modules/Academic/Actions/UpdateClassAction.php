@@ -10,9 +10,9 @@ use App\Modules\Academic\Models\Subject;
 use App\Modules\Academic\Repositories\ClassRepository;
 use App\Modules\Academic\Repositories\SubjectRepository;
 use App\Modules\Academic\Services\SubjectUsageGuard;
-use App\Modules\Identity\Enums\TeacherStatus;
-use App\Modules\Identity\Models\TeacherProfile;
-use App\Modules\Identity\Repositories\TeacherRepository;
+use App\Modules\Academic\Enums\TeacherStatus;
+use App\Modules\Academic\Models\TeacherProfile;
+use App\Modules\Academic\Repositories\TeacherRepository;
 
 final class UpdateClassAction
 {

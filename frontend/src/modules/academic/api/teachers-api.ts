@@ -28,24 +28,24 @@ export type TeacherOptionParams = {
 
 /** Fetches one page of teacher profiles. */
 export async function fetchTeachers(params: TeacherListParams): Promise<Page<Teacher>> {
-  return browserRequestList<Teacher>("/api/v1/teachers", { params });
+  return browserRequestList<Teacher>("/api/v1/academic/teachers", { params });
 }
 
 /** Fetches the teachers a class may be assigned to. */
 export async function fetchTeacherOptions(params: TeacherOptionParams): Promise<Option[]> {
-  return browserRequest<Option[]>("/api/v1/teachers/options", { params });
+  return browserRequest<Option[]>("/api/v1/academic/teachers/options", { params });
 }
 
 /** Fetches one teacher profile. */
 export async function fetchTeacher(id: number): Promise<Teacher> {
-  return browserRequest<Teacher>(`/api/v1/teachers/${id}`);
+  return browserRequest<Teacher>(`/api/v1/academic/teachers/${id}`);
 }
 
 /** Creates a teacher profile together with its login account. */
 export async function createTeacher(
   submission: CreateProfileSubmission<CreateTeacherRequest>,
 ): Promise<Teacher> {
-  return browserRequest<Teacher>("/api/v1/teachers", {
+  return browserRequest<Teacher>("/api/v1/academic/teachers", {
     method: "POST",
     body: profileCreateBody(submission),
   });
@@ -53,12 +53,12 @@ export async function createTeacher(
 
 /** Changes a teacher profile. */
 export async function updateTeacher(id: number, body: UpdateTeacherRequest): Promise<Teacher> {
-  return browserRequest<Teacher>(`/api/v1/teachers/${id}`, { method: "PUT", body });
+  return browserRequest<Teacher>(`/api/v1/academic/teachers/${id}`, { method: "PUT", body });
 }
 
 /** Locks or unlocks a teacher's login account. */
 export async function setTeacherAccountActive(id: number, isActive: boolean): Promise<Teacher> {
-  return browserRequest<Teacher>(`/api/v1/teachers/${id}/account`, {
+  return browserRequest<Teacher>(`/api/v1/academic/teachers/${id}/account`, {
     method: "PATCH",
     body: { is_active: isActive },
   });
@@ -66,7 +66,7 @@ export async function setTeacherAccountActive(id: number, isActive: boolean): Pr
 
 /** Replaces the password on a teacher's login account. */
 export async function changeTeacherPassword(id: number, password: string): Promise<void> {
-  await browserRequest<undefined>(`/api/v1/teachers/${id}/password`, {
+  await browserRequest<undefined>(`/api/v1/academic/teachers/${id}/password`, {
     method: "PATCH",
     body: { password },
   });
