@@ -23,8 +23,7 @@ docs/
 task/
 tasks/
 
-# Private/local AI agent configuration. Do not commit these directories.
-.agents/
+# Private/local AI configuration.
 .cursorignore
 .claude
 .codex
@@ -37,11 +36,13 @@ tasks/
 !README.md
 
 # Shared project documentation and repository-wide agent guidance.
-AGENTS.md
+/AGENTS.md
 CLAUDE.md
+!/AGENTS.md
 !docs/
 !docs/**
-.agents/**
+!.agents/
+!.agents/**
 
 # Agent brainstorming and design-spec working artifacts stay local.
 docs/superpowers/

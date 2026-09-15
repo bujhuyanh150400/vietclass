@@ -1,0 +1,9 @@
+# Machine-local agent configuration
+settings.local.json
+
+
+# Per-person task, evidence, and planning artifacts
+task/
+tasks/
+plan/
+plans/
