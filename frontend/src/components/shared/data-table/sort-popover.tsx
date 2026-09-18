@@ -47,6 +47,7 @@ export function SortPopover<T extends string>({
           type="button"
           variant="outline"
           size="sm"
+          aria-label={isActive ? `${triggerLabel}, đang áp dụng` : triggerLabel}
           className={cn(
             compact && COMPACT_TRIGGER,
             isActive && "border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100",

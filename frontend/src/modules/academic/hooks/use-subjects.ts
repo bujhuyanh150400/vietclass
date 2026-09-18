@@ -22,11 +22,13 @@ import type { SubjectRequest } from "../types/academic-requests";
 import { GRADE_LEVELS } from "../utils/labels";
 import {
   SUBJECT_LIST_SORTS,
+  SUBJECT_LIST_VIEWS,
   SUBJECT_TABLE_PAGE_SIZES,
   activeSubjectFilterCount,
   buildSubjectListParams,
   type SubjectFilterState,
   type SubjectListSort,
+  type SubjectListView,
 } from "../utils/subject-list-controls";
 
 /** List data plus the URL-backed catalogue controls. */
@@ -34,10 +36,12 @@ export type SubjectListViewModel = ResourceListViewModel<Subject> & {
   filters: SubjectFilterState;
   filterCount: number;
   sort: SubjectListSort;
+  view: SubjectListView;
   tablePageSize: number;
   setGradeLevel: (gradeLevel: GradeLevel | null) => void;
   setActive: (isActive: boolean | null) => void;
   setSort: (sort: SubjectListSort) => void;
+  setView: (view: SubjectListView) => void;
   setTablePageSize: (pageSize: number) => void;
   clearFilters: () => void;
   clearConditions: () => void;
@@ -51,6 +55,7 @@ export function useSubjectList(): SubjectListViewModel {
     grade_level: parseAsNumberLiteral(GRADE_LEVELS),
     is_active: parseAsBoolean,
     sort: parseAsStringLiteral(SUBJECT_LIST_SORTS).withDefault("newest"),
+    view: parseAsStringLiteral(SUBJECT_LIST_VIEWS).withDefault("table"),
     per_page: parseAsNumberLiteral(SUBJECT_TABLE_PAGE_SIZES).withDefault(10),
   }, { history: "replace", clearOnDefault: true });
   const filters: SubjectFilterState = { gradeLevel: controls.grade_level, isActive: controls.is_active };
@@ -75,6 +80,9 @@ export function useSubjectList(): SubjectListViewModel {
     void setControls({ sort: sort === "newest" ? null : sort });
     list.query.setPage(1);
   }, [list.query, setControls]);
+  const setView = useCallback((view: SubjectListView) => {
+    void setControls({ view: view === "table" ? null : view });
+  }, [setControls]);
   const setTablePageSize = useCallback((pageSize: number) => {
     if (!SUBJECT_TABLE_PAGE_SIZES.includes(pageSize as (typeof SUBJECT_TABLE_PAGE_SIZES)[number])) return;
     void setControls({ per_page: pageSize === 10 ? null : pageSize as (typeof SUBJECT_TABLE_PAGE_SIZES)[number] });
@@ -89,8 +97,21 @@ export function useSubjectList(): SubjectListViewModel {
     void setControls({ grade_level: null, is_active: null, sort: null });
   }, [list.query, setControls]);
 
-  return { ...list, filters, filterCount: activeSubjectFilterCount(filters), sort: controls.sort,
-    tablePageSize: controls.per_page, setGradeLevel, setActive, setSort, setTablePageSize, clearFilters, clearConditions };
+  return {
+    ...list,
+    filters,
+    filterCount: activeSubjectFilterCount(filters),
+    sort: controls.sort,
+    view: controls.view,
+    tablePageSize: controls.per_page,
+    setGradeLevel,
+    setActive,
+    setSort,
+    setView,
+    setTablePageSize,
+    clearFilters,
+    clearConditions,
+  };
 }
 
 /**

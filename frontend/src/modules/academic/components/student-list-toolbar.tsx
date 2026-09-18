@@ -79,7 +79,6 @@ export function StudentListToolbar({
       searchHelpText="Tìm theo mã học sinh, tên hoặc số điện thoại học sinh, tên hoặc số điện thoại phụ huynh, và tên đăng nhập."
       align="start"
       size="control"
-      searchClassName="w-full min-w-0 sm:w-[min(420px,42vw)] sm:min-w-[260px]"
     >
       <FilterPopover
         compact

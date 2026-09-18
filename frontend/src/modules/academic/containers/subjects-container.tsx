@@ -6,6 +6,7 @@ import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
 import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
+import { SubjectDetailDialog } from "../components/subject-detail-dialog";
 import { SubjectsView } from "../components/subjects-view";
 import { useDeleteSubject, useSetSubjectActive, useSubjectList } from "../hooks/use-subjects";
 import type { Subject } from "../types/academic";
@@ -32,6 +33,7 @@ export function SubjectsContainer() {
 
   const [pending, setPending] = useState<PendingAction>({ kind: "none" });
   const [actionError, setActionError] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<Subject | null>(null);
 
   /** Opens a confirmation, clearing any refusal left from the previous one. */
   function open(action: PendingAction) {
@@ -89,15 +91,21 @@ export function SubjectsContainer() {
         filters={list.filters}
         filterCount={list.filterCount}
         sort={list.sort}
+        view={list.view}
         tablePageSize={list.tablePageSize}
         onGradeLevelChange={list.setGradeLevel}
         onActiveChange={list.setActive}
         onClearFilters={list.clearFilters}
         onSortChange={list.setSort}
+        onViewChange={list.setView}
         onTablePageSizeChange={list.setTablePageSize}
+        onClearConditions={list.clearConditions}
+        onView={setViewing}
         onToggleActive={(target) => open({ kind: "toggle", subject: target })}
         onDelete={(target) => open({ kind: "delete", subject: target })}
       />
+
+      <SubjectDetailDialog subject={viewing} onClose={() => setViewing(null)} />
 
       <ConfirmActionDialog
         open={pending.kind !== "none"}

@@ -29,6 +29,7 @@ tasks/
 .codex
 .mcp.json
 .worktrees/
+.pi/
 
 # All Markdown is private/local by default, including AGENTS.md and CLAUDE.md.
 # Repository README files remain trackable.

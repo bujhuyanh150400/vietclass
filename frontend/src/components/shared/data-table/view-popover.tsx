@@ -39,6 +39,7 @@ export function ViewPopover({
           type="button"
           variant="outline"
           size="sm"
+          aria-label={`${triggerLabel} hiện tại: ${value === "table" ? "Bảng" : "Thẻ"}`}
           className={cn(compact && COMPACT_TRIGGER)}
         >
           {value === "table" ? <Table2 aria-hidden="true" /> : <Grid2X2 aria-hidden="true" />}

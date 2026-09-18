@@ -33,7 +33,8 @@ const SEARCH_DEBOUNCE_MS = 400;
  * `size` sets the search box's geometry. `sm` is the 32px chip that trails a
  * table's card. `control` is the 44px field a list sheet uses, matching the
  * height and 5px radius of the Filter, Sort, and View triggers beside it — at 32px
- * the search would sit visibly short against them.
+ * the search would sit visibly short against them. Control-sized toolbars also
+ * share the same responsive width so every academic list aligns.
  */
 export function ListToolbar({
   search,
@@ -60,6 +61,9 @@ export function ListToolbar({
   children?: ReactNode;
 }) {
   const control = size === "control";
+  const defaultSearchClassName = control
+    ? "w-full min-w-0 sm:w-[min(420px,42vw)] sm:min-w-[260px]"
+    : "w-full sm:w-64";
   const [draft, setDraft] = useState(search);
   const [appliedSearch, setAppliedSearch] = useState(search);
 
@@ -88,7 +92,7 @@ export function ListToolbar({
         align === "start" ? "justify-start" : "justify-end",
       )}
     >
-      <div className={cn("relative", searchClassName ?? "w-full sm:w-64")}>
+      <div className={cn("relative", searchClassName ?? defaultSearchClassName)}>
         <Search
           aria-hidden="true"
           className={cn(

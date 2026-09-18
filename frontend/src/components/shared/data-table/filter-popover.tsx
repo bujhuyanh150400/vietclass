@@ -44,6 +44,7 @@ export function FilterPopover({
           type="button"
           variant="outline"
           size="sm"
+          aria-label={count > 0 ? `${title}, ${count} bộ lọc đang áp dụng` : title}
           className={cn(
             compact && COMPACT_TRIGGER,
             count > 0 && "border-vc-orange/35 bg-orange-50 text-vc-orange-deep hover:bg-orange-100",

@@ -97,7 +97,6 @@ export function RoomListToolbar({
       searchHelpText="Tìm theo tên phòng và vị trí. Bỏ dấu tiếng Việt vẫn tìm được."
       align="start"
       size="control"
-      searchClassName="w-full min-w-0 sm:w-[min(420px,42vw)] sm:min-w-[260px]"
     >
       <FilterPopover
         compact
