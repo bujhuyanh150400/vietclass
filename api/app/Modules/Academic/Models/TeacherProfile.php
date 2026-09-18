@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'profile_id',
@@ -63,5 +64,18 @@ final class TeacherProfile extends Model
     public function profile(): BelongsTo
     {
         return $this->belongsTo(Profile::class, 'profile_id');
+    }
+
+    /**
+     * Return the classes this teacher currently leads.
+     *
+     * Ended classes are excluded by the teacher list repository because this
+     * relation represents current responsibility rather than teaching history.
+     *
+     * @return HasMany<SchoolClass, $this>
+     */
+    public function classes(): HasMany
+    {
+        return $this->hasMany(SchoolClass::class, 'teacher_id', 'profile_id');
     }
 }

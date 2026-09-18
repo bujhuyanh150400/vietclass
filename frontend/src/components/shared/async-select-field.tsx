@@ -45,6 +45,8 @@ type SharedProps = {
   emptyMessage?: string;
   disabled?: boolean;
   className?: string;
+  /** Shared geometry preset for the picker trigger. */
+  size?: "default" | "control";
   /** Narrows what the endpoint returned, for a choice only this screen may not offer. */
   filterOption?: (option: AsyncOption) => boolean;
 };
@@ -93,6 +95,7 @@ export function AsyncSelectField(props: SingleProps | MultipleProps) {
     emptyMessage = "Không tìm thấy kết quả phù hợp.",
     disabled = false,
     className,
+    size = "default",
     filterOption,
   } = props;
 
@@ -183,6 +186,8 @@ export function AsyncSelectField(props: SingleProps | MultipleProps) {
             className={cn(
               "w-full justify-between font-normal",
               selectedIds.length === 0 && "text-muted-foreground",
+              size === "control" &&
+                "h-11 rounded-control border-vc-control bg-card text-[13px] md:text-[13px]",
             )}
           >
             <span className="truncate">{triggerText}</span>

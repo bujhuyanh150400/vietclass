@@ -3,6 +3,7 @@
 namespace App\Modules\Academic\Http\Resources;
 
 use App\Modules\Academic\Models\Profile;
+use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\TeacherProfile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -19,6 +20,18 @@ final class TeacherResource extends JsonResource
     public function toArray(Request $request): array
     {
         $profile = $this->profile;
+        $classes = $this->relationLoaded('classes') ? $this->classes : collect();
+        $subjects = $classes
+            ->map(static fn (SchoolClass $class) => $class->relationLoaded('subject') ? $class->subject : null)
+            ->filter()
+            ->unique('id')
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values()
+            ->map(static fn ($subject): array => [
+                'id' => $subject->id,
+                'name' => $subject->name,
+            ])
+            ->all();
 
         return [
             'id' => $this->profile_id,
@@ -37,6 +50,19 @@ final class TeacherResource extends JsonResource
             'avatar' => $profile instanceof Profile && $profile->avatar_config !== null
                 ? AvatarResource::make($profile)->resolve($request)
                 : null,
+            'subjects' => $subjects,
+            'classes' => $classes->map(static function (SchoolClass $class): array {
+                $subjectName = $class->relationLoaded('subject') ? $class->subject?->name : null;
+
+                return [
+                    'id' => $class->id,
+                    'code' => $class->code,
+                    'name' => $class->name,
+                    'subject_id' => $class->subject_id,
+                    'subject_name' => $subjectName,
+                    'status' => $class->status->value,
+                ];
+            })->values()->all(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

@@ -14,7 +14,7 @@ import { GuardianInitials, GuardianPickerDialog } from "./guardian-picker-dialog
 import { MAX_GUARDIANS, type GuardianDraft } from "../schemas/academic-form-schema";
 import type { GuardianRelationship } from "../types/academic";
 import { GUARDIAN_RELATIONSHIP_CHOICES } from "../utils/labels";
-import { SHEET_CONTROL, SHEET_FIELD_TYPE } from "./form-control";
+import { SHEET_FIELD_TYPE } from "./form-control";
 
 /** Which screen the roster is on, which is what the wording around it turns on. */
 export type GuardianRosterMode = "create" | "edit";
@@ -126,7 +126,7 @@ function GuardianRow({
           disabled={disabled}
           onChange={(next) => onRelationshipChange(next as GuardianRelationship)}
           className="[&>label]:sr-only w-[178px] max-sm:w-full"
-          triggerClassName={SHEET_CONTROL}
+          size="control"
         />
 
         {/* The flag is a choice across the whole roster, so the control is one radio in

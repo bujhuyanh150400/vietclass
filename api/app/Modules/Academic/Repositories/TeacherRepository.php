@@ -4,12 +4,14 @@ namespace App\Modules\Academic\Repositories;
 
 use App\Core\Data\ListQuery;
 use App\Core\Repositories\BaseRepository;
+use App\Modules\Academic\Enums\ClassStatus;
 use App\Modules\Academic\Enums\TeacherStatus;
 use App\Modules\Academic\Models\Profile;
 use App\Modules\Academic\Models\TeacherProfile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class TeacherRepository extends BaseRepository
 {
@@ -33,22 +35,51 @@ final class TeacherRepository extends BaseRepository
      */
     public function paginateList(ListQuery $query): LengthAwarePaginator
     {
-        $builder = $this->modelQuery()
-            ->with(['profile.user:id,username,is_active', 'profile.avatarFileLink.file'])
+        $builder = $this->withListRelations($this->modelQuery())
             ->when(
                 $query->hasSearch(),
-                fn (Builder $builder): Builder => $builder->whereHas(
-                    'profile',
-                    fn (Builder $profile): Builder => $profile->where(
-                        function (Builder $scoped) use ($query): void {
-                            $this->whereAnyUnaccentedLike($scoped, ['full_name', 'phone', 'email'], (string) $query->searchLike());
-                            $scoped->orWhereHas(
-                                'user',
-                                fn (Builder $user): Builder => $this->whereAnyUnaccentedLike($user, ['username'], (string) $query->searchLike()),
-                            );
-                        },
-                    ),
-                ),
+                function (Builder $builder) use ($query): Builder {
+                    $like = (string) $query->searchLike();
+
+                    return $builder->where(function (Builder $scoped) use ($like): void {
+                        $scoped->whereHas(
+                            'profile',
+                            function (Builder $profile) use ($like): void {
+                                $profile->where(function (Builder $profileSearch) use ($like): void {
+                                    $this->whereAnyUnaccentedLike(
+                                        $profileSearch,
+                                        ['full_name', 'phone', 'email'],
+                                        $like,
+                                    );
+                                    $profileSearch->orWhereHas(
+                                        'user',
+                                        fn (Builder $user): Builder => $this->whereAnyUnaccentedLike(
+                                            $user,
+                                            ['username'],
+                                            $like,
+                                        ),
+                                    );
+                                });
+                            },
+                        )->orWhereHas(
+                            'classes',
+                            function (Builder $classes) use ($like): void {
+                                $classes->where('status', ClassStatus::Active)
+                                    ->where(function (Builder $classSearch) use ($like): void {
+                                        $this->whereAnyUnaccentedLike($classSearch, ['code', 'name'], $like);
+                                        $classSearch->orWhereHas(
+                                            'subject',
+                                            fn (Builder $subject): Builder => $this->whereAnyUnaccentedLike(
+                                                $subject,
+                                                ['name'],
+                                                $like,
+                                            ),
+                                        );
+                                    });
+                            },
+                        );
+                    });
+                },
             )
             ->when(
                 $query->hasFilter('status'),
@@ -60,6 +91,32 @@ final class TeacherRepository extends BaseRepository
                     'profile.user',
                     fn (Builder $user): Builder => $user->where('is_active', $query->filter('is_active')),
                 ),
+            )
+            ->when(
+                $query->hasFilter('subject_id'),
+                fn (Builder $builder): Builder => $builder->whereHas(
+                    'classes',
+                    fn (Builder $classes): Builder => $classes
+                        ->where('status', ClassStatus::Active)
+                        ->whereIn('subject_id', (array) $query->filter('subject_id')),
+                ),
+            )
+            ->when(
+                $query->hasFilter('class_id'),
+                fn (Builder $builder): Builder => $builder->whereHas(
+                    'classes',
+                    fn (Builder $classes): Builder => $classes
+                        ->where('status', ClassStatus::Active)
+                        ->whereIn('id', (array) $query->filter('class_id')),
+                ),
+            )
+            ->when(
+                $query->hasFilter('joined_from'),
+                fn (Builder $builder): Builder => $builder->whereDate('joined_at', '>=', $query->filter('joined_from')),
+            )
+            ->when(
+                $query->hasFilter('joined_to'),
+                fn (Builder $builder): Builder => $builder->whereDate('joined_at', '<=', $query->filter('joined_to')),
             );
 
         return $this->applySort($builder, $query)
@@ -99,9 +156,7 @@ final class TeacherRepository extends BaseRepository
      */
     public function findById(int $teacherId): ?TeacherProfile
     {
-        return $this->modelQuery()
-            ->with(['profile.user:id,username,is_active', 'profile.avatarFileLink.file'])
-            ->find($teacherId);
+        return $this->withListRelations($this->modelQuery())->find($teacherId);
     }
 
     /**
@@ -124,6 +179,25 @@ final class TeacherRepository extends BaseRepository
         $teacher->fill($attributes)->save();
 
         return $teacher;
+    }
+
+    /**
+     * Attach every relation the teacher list and detail resource reports.
+     *
+     * @param  Builder<TeacherProfile>  $query
+     * @return Builder<TeacherProfile>
+     */
+    private function withListRelations(Builder $query): Builder
+    {
+        return $query->with([
+            'profile.user:id,username,is_active',
+            'profile.avatarFileLink.file',
+            'classes' => fn (HasMany $classes): HasMany => $classes
+                ->select(['id', 'code', 'name', 'subject_id', 'teacher_id', 'status'])
+                ->where('status', ClassStatus::Active)
+                ->with('subject:id,name')
+                ->orderBy('code'),
+        ]);
     }
 
     /**

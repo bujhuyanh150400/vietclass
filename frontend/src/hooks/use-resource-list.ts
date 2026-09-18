@@ -48,6 +48,7 @@ export function useResourceList<TRow, TParams extends object = Record<string, st
   const query = useQuery({
     queryKey: queryKey(params),
     queryFn: () => fetcher(params),
+    retry: (failureCount, error) => !isApiClientError(error) && failureCount < 1,
     placeholderData: (previous) => previous,
   });
 
@@ -59,7 +60,7 @@ export function useResourceList<TRow, TParams extends object = Record<string, st
     query: listQuery,
     meta: query.data?.meta ?? EMPTY_META,
     isFetching: query.isFetching,
-    state: toState(query.data, query.isPending, query.error, emptyMessage, refetch),
+    state: toState(query.data, query.isPending, query.isError, query.error, emptyMessage, refetch),
   };
 }
 
@@ -70,6 +71,7 @@ export function useResourceList<TRow, TParams extends object = Record<string, st
 function toState<TRow>(
   page: Page<TRow> | undefined,
   isPending: boolean,
+  isError: boolean,
   error: unknown,
   emptyMessage: string,
   onRetry: () => void,
@@ -80,7 +82,11 @@ function toState<TRow>(
       : { kind: "content", rows: page.data };
   }
 
-  if (isPending) {
+  // A first request can finish with an error while React Query still reports the
+  // query as pending during its retry lifecycle. Once an error exists and there is
+  // no previous page to preserve, the reader needs the actionable error panel —
+  // not a skeleton that can stay on screen until the retry timer settles.
+  if (!isError && isPending) {
     return { kind: "loading" };
   }
 

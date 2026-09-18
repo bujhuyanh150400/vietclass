@@ -13,7 +13,7 @@ import { isApiClientError } from "@/lib/api/api-client-error";
 import { cn } from "@/lib/utils/index";
 
 import { ChangePasswordDialog } from "../components/change-password-dialog";
-import { SHEET_CONTROL, SHEET_FIELD_TYPE } from "../components/form-control";
+import { SHEET_FIELD_TYPE } from "../components/form-control";
 import { useChangeStudentPassword, useSetStudentAccountActive } from "../hooks/use-students";
 import type { Student } from "../types/academic";
 
@@ -109,7 +109,8 @@ export function StudentAccountSection({ student }: { student: Student }) {
           readOnly
           aria-describedby="student-login-name-hint"
           value={student.username ?? ""}
-          className={cn(SHEET_CONTROL, "bg-background font-mono text-muted-foreground")}
+          size="control"
+          className="bg-background font-mono text-muted-foreground"
         />
       </Field>
 

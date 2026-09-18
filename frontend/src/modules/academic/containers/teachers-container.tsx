@@ -7,7 +7,10 @@ import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
 import { ChangePasswordDialog } from "../components/change-password-dialog";
+import { TeacherDetailDialog } from "../components/teacher-detail-dialog";
 import { TeachersView } from "../components/teachers-view";
+import { useClassOptions } from "../hooks/use-classes";
+import { useSubjectOptions } from "../hooks/use-subjects";
 import {
   useChangeTeacherPassword,
   useSetTeacherAccountActive,
@@ -25,10 +28,13 @@ import type { Teacher } from "../types/academic";
  */
 export function TeachersContainer() {
   const list = useTeacherList();
+  const subjectOptions = useSubjectOptions();
+  const classOptions = useClassOptions();
   const toggleAccount = useSetTeacherAccountActive();
   const changePassword = useChangeTeacherPassword();
   const showToast = useToast();
 
+  const [detailTarget, setDetailTarget] = useState<Teacher | null>(null);
   const [lockTarget, setLockTarget] = useState<Teacher | null>(null);
   const [passwordTarget, setPasswordTarget] = useState<Teacher | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -71,13 +77,36 @@ export function TeachersContainer() {
         state={list.state}
         meta={list.meta}
         search={list.query.q}
+        filters={list.filters}
+        filterCount={list.filterCount}
+        sort={list.sort}
+        view={list.view}
+        tablePageSize={list.tablePageSize}
+        subjectOptions={subjectOptions.data ?? []}
+        classOptions={classOptions.data ?? []}
         onSearchChange={list.query.setSearch}
+        onSubjectChange={list.setSubject}
+        onClassChange={list.setClass}
+        onAccountActiveChange={list.setAccountActive}
+        onJoinedFromChange={list.setJoinedFrom}
+        onJoinedToChange={list.setJoinedTo}
+        onClearFilters={list.clearFilters}
+        onSortChange={list.setSort}
+        onViewChange={list.setView}
+        onTablePageSizeChange={list.setTablePageSize}
+        onClearConditions={list.clearConditions}
         onPageChange={list.query.setPage}
+        onViewTeacher={setDetailTarget}
         onToggleAccount={(teacher) => {
           setActionError(null);
           setLockTarget(teacher);
         }}
         onChangePassword={setPasswordTarget}
+      />
+
+      <TeacherDetailDialog
+        teacher={detailTarget}
+        onOpenChange={(open) => (open ? undefined : setDetailTarget(null))}
       />
 
       <ConfirmActionDialog

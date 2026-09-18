@@ -31,7 +31,7 @@ import {
   type GuardianDuplicateReason,
 } from "../utils/guardian-duplicate";
 import { GENDER_LABELS, GUARDIAN_RELATIONSHIP_CHOICES } from "../utils/labels";
-import { SHEET_CONTROL, SHEET_FIELD_GRID, SHEET_FIELD_TYPE } from "./form-control";
+import { SHEET_FIELD_GRID, SHEET_FIELD_TYPE } from "./form-control";
 
 /** Which of the two ways of naming a person the dialog is showing. */
 type PickerSource = "existing" | "new";
@@ -315,7 +315,8 @@ export function GuardianPickerDialog({
                     type="search"
                     value={search}
                     placeholder="Nhập tên hoặc SĐT…"
-                    className={cn(SHEET_CONTROL, "pl-[39px]")}
+                    size="control"
+                    className="pl-[39px]"
                     onChange={(event) => setSearch(event.target.value)}
                   />
                 </div>
@@ -400,7 +401,7 @@ export function GuardianPickerDialog({
                   value={name}
                   placeholder="Nhập họ và tên phụ huynh"
                   autoComplete="off"
-                  className={SHEET_CONTROL}
+                  size="control"
                   onChange={(event) => {
                     setName(event.target.value);
                     setError(null);
@@ -420,7 +421,7 @@ export function GuardianPickerDialog({
                   inputMode="tel"
                   value={phone}
                   placeholder="Nhập số điện thoại"
-                  className={SHEET_CONTROL}
+                  size="control"
                   onChange={(event) => {
                     setPhone(event.target.value);
                     clearDuplicate();
@@ -435,7 +436,7 @@ export function GuardianPickerDialog({
                 value={gender}
                 choices={GENDER_CHOICES}
                 onChange={(next) => setGender(next as Gender)}
-                triggerClassName={SHEET_CONTROL}
+                size="control"
               />
 
               <SelectField
@@ -449,7 +450,7 @@ export function GuardianPickerDialog({
                   setRelationship(next as GuardianRelationship);
                   setError(null);
                 }}
-                triggerClassName={SHEET_CONTROL}
+                size="control"
               />
             </div>
           )}
@@ -466,7 +467,7 @@ export function GuardianPickerDialog({
                 setRelationship(next as GuardianRelationship);
                 setError(null);
               }}
-              triggerClassName={SHEET_CONTROL}
+              size="control"
             />
           ) : null}
 

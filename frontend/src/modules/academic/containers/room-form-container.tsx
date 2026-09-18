@@ -15,12 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useResourceForm } from "@/hooks/use-resource-form";
 
-import {
-  SHEET_CONTROL,
-  SHEET_FIELD_GRID,
-  SHEET_FIELD_TYPE,
-  SHEET_TEXTAREA,
-} from "../components/form-control";
+import { SHEET_FIELD_GRID, SHEET_FIELD_TYPE } from "../components/form-control";
 import { NumberedSection } from "../components/numbered-section";
 import { useCreateRoom, useUpdateRoom } from "../hooks/use-rooms";
 import {
@@ -143,7 +138,7 @@ export function RoomFormContainer({ room }: { room?: Room }) {
                 <Input
                   {...form.register("name")}
                   {...fieldAria("name", errors.name?.message)}
-                  className={SHEET_CONTROL}
+                  size="control"
                   placeholder="Ví dụ: Phòng học 301"
                   autoComplete="off"
                 />
@@ -160,7 +155,7 @@ export function RoomFormContainer({ room }: { room?: Room }) {
                     value={field.value}
                     onChange={(value) => field.onChange(value)}
                     error={errors.status?.message}
-                    triggerClassName={SHEET_CONTROL}
+                    size="control"
                     choices={ROOM_STATUSES.map((status) => ({
                       value: status,
                       label: ROOM_STATUS_LABELS[status],
@@ -183,7 +178,7 @@ export function RoomFormContainer({ room }: { room?: Room }) {
                     errors.capacity?.message,
                     "Số chỗ ngồi, có thể bằng 0 khi chưa xác định.",
                   )}
-                  className={SHEET_CONTROL}
+                  size="control"
                   type="number"
                   min={0}
                   max={32767}
@@ -240,7 +235,7 @@ export function RoomFormContainer({ room }: { room?: Room }) {
                 <Textarea
                   {...form.register("location")}
                   {...fieldAria("location", errors.location?.message)}
-                  className={SHEET_TEXTAREA}
+                  size="control"
                   rows={3}
                   placeholder="Ví dụ: Tầng 2 · Dãy A, gần cầu thang"
                 />
@@ -256,7 +251,7 @@ export function RoomFormContainer({ room }: { room?: Room }) {
                 <Textarea
                   {...form.register("note")}
                   {...fieldAria("note", errors.note?.message)}
-                  className={SHEET_TEXTAREA}
+                  size="control"
                   rows={4}
                   placeholder="Lưu ý khi sử dụng phòng…"
                 />

@@ -73,6 +73,22 @@ export type Room = {
   updated_at: string | null;
 };
 
+/** A subject currently taught by a teacher. */
+export type TeacherSubject = {
+  id: number;
+  name: string;
+};
+
+/** A currently running class led by a teacher. */
+export type TeacherClass = {
+  id: number;
+  code: string;
+  name: string;
+  subject_id: number;
+  subject_name: string | null;
+  status: ClassStatus;
+};
+
 /** A teacher profile together with the state of its login account. */
 export type Teacher = {
   id: number;
@@ -87,6 +103,8 @@ export type Teacher = {
   status: TeacherStatus;
   color_identification: string | null;
   joined_at: string | null;
+  subjects: TeacherSubject[];
+  classes: TeacherClass[];
   username?: string | null;
   is_account_active?: boolean | null;
   created_at: string | null;

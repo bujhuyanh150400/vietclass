@@ -104,6 +104,7 @@ export function EditEnrollmentDialog({
             value={field.value}
             onChange={field.onChange}
             error={errors.enrolled_at?.message}
+            size="control"
           />
         )}
       />
@@ -119,6 +120,7 @@ export function EditEnrollmentDialog({
             value={field.value ?? ""}
             onChange={field.onChange}
             error={errors.left_at?.message}
+            size="control"
           />
         )}
       />
@@ -127,6 +129,7 @@ export function EditEnrollmentDialog({
         <Textarea
           {...form.register("note")}
           {...fieldAria("note", errors.note?.message)}
+          size="control"
           rows={3}
         />
       </Field>
@@ -195,6 +198,7 @@ export function TransferEnrollmentDialog({
             placeholder="Chọn lớp"
             searchPlaceholder="Tìm lớp học…"
             emptyMessage="Không tìm thấy lớp học phù hợp."
+            size="control"
           />
         )}
       />
@@ -210,6 +214,7 @@ export function TransferEnrollmentDialog({
             value={field.value}
             onChange={field.onChange}
             error={errors.left_at?.message}
+            size="control"
           />
         )}
       />
@@ -218,6 +223,7 @@ export function TransferEnrollmentDialog({
         <Textarea
           {...form.register("note")}
           {...fieldAria("note", errors.note?.message)}
+          size="control"
           rows={2}
         />
       </Field>
@@ -276,6 +282,7 @@ export function LeaveClassDialog({
             value={field.value}
             onChange={field.onChange}
             error={errors.left_at?.message}
+            size="control"
           />
         )}
       />
@@ -284,6 +291,7 @@ export function LeaveClassDialog({
         <Textarea
           {...form.register("reason")}
           {...fieldAria("reason", errors.reason?.message)}
+          size="control"
           rows={3}
         />
       </Field>

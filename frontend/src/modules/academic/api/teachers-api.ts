@@ -17,6 +17,10 @@ export type TeacherListParams = {
   sort?: "id" | "full_name" | "joined_at" | "created_at";
   direction?: "asc" | "desc";
   is_active?: boolean | 0 | 1;
+  subject_id?: number | number[];
+  class_id?: number | number[];
+  joined_from?: string;
+  joined_to?: string;
   [key: `status[${number}]`]: TeacherStatus;
 };
 

@@ -31,6 +31,12 @@ final class IndexTeacherRequest extends FormRequest
             'status' => ['sometimes', 'array'],
             'status.*' => ['integer', Rule::in(TeacherStatus::values())],
             'is_active' => ['sometimes', 'boolean'],
+            'subject_id' => ['sometimes', 'array'],
+            'subject_id.*' => ['integer', 'min:1'],
+            'class_id' => ['sometimes', 'array'],
+            'class_id.*' => ['integer', 'min:1'],
+            'joined_from' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
+            'joined_to' => ['sometimes', 'nullable', 'date_format:Y-m-d', 'after_or_equal:joined_from'],
         ];
     }
 
@@ -51,6 +57,6 @@ final class IndexTeacherRequest extends FormRequest
      */
     protected function filterKeys(): array
     {
-        return ['status', 'is_active'];
+        return ['status', 'is_active', 'subject_id', 'class_id', 'joined_from', 'joined_to'];
     }
 }

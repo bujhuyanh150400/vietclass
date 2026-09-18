@@ -84,6 +84,7 @@ export function ChangePasswordDialog({
               {...fieldAria("password", error)}
               type="password"
               autoComplete="new-password"
+              size="control"
             />
           </Field>
 

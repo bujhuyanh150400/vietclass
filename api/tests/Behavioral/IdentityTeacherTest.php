@@ -4,12 +4,14 @@ use App\Modules\Academic\Actions\ChangeTeacherPasswordAction;
 use App\Modules\Academic\Actions\GetTeacherAction;
 use App\Modules\Academic\Actions\ToggleTeacherAccountAction;
 use App\Modules\Academic\Actions\UpdateTeacherAction;
-use App\Modules\Academic\Enums\Gender;
 use App\Modules\Academic\Enums\AcademicPersonError;
+use App\Modules\Academic\Enums\Gender;
 use App\Modules\Academic\Enums\TeacherStatus;
-use App\Modules\Auth\Enums\UserRole;
 use App\Modules\Academic\Models\Profile;
+use App\Modules\Academic\Models\SchoolClass;
+use App\Modules\Academic\Models\Subject;
 use App\Modules\Academic\Models\TeacherProfile;
+use App\Modules\Auth\Enums\UserRole;
 use App\Modules\Auth\Models\User;
 use Illuminate\Support\Facades\Hash;
 
@@ -116,6 +118,76 @@ test('the teacher list filters by employment status and account state', function
         ->assertOk()
         ->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.id', $locked->profile_id);
+});
+
+test('the teacher list reports current subjects and classes without ended classes', function () {
+    $teacher = TeacherProfile::factory()->create([
+        'joined_at' => '2026-01-15',
+    ]);
+    $subject = Subject::factory()->create(['name' => 'Toán học']);
+    $class = SchoolClass::factory()->create([
+        'code' => 'TOAN-9A',
+        'name' => 'Toán 9A',
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacher->profile_id,
+    ]);
+    SchoolClass::factory()->ended()->create([
+        'teacher_id' => $teacher->profile_id,
+        'subject_id' => $subject->id,
+    ]);
+
+    $response = $this->getJson('/api/v1/academic/teachers')->assertOk();
+
+    $response
+        ->assertJsonPath('data.0.subjects.0.id', $subject->id)
+        ->assertJsonPath('data.0.subjects.0.name', 'Toán học')
+        ->assertJsonPath('data.0.classes.0.id', $class->id)
+        ->assertJsonPath('data.0.classes.0.code', 'TOAN-9A')
+        ->assertJsonPath('data.0.classes.0.subject_name', 'Toán học');
+
+    expect($response->json('data.0.classes'))->toHaveCount(1);
+});
+
+test('the teacher list filters by current subject, class, and joined date range', function () {
+    $target = TeacherProfile::factory()->create(['joined_at' => '2026-01-15']);
+    $other = TeacherProfile::factory()->create(['joined_at' => '2026-02-15']);
+    $subject = Subject::factory()->create(['name' => 'Ngữ văn']);
+    $class = SchoolClass::factory()->create([
+        'code' => 'NGUVAN-9A',
+        'subject_id' => $subject->id,
+        'teacher_id' => $target->profile_id,
+    ]);
+    SchoolClass::factory()->create(['teacher_id' => $other->profile_id]);
+
+    $this->getJson('/api/v1/academic/teachers?subject_id[]='.$subject->id)
+        ->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.id', $target->profile_id);
+
+    $this->getJson('/api/v1/academic/teachers?class_id[]='.$class->id)
+        ->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.id', $target->profile_id);
+
+    $this->getJson('/api/v1/academic/teachers?q='.urlencode('Ngữ văn'))
+        ->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.id', $target->profile_id);
+
+    $this->getJson('/api/v1/academic/teachers?q=NGUVAN-9A')
+        ->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.id', $target->profile_id);
+
+    $this->getJson('/api/v1/academic/teachers?joined_from=2026-01-01&joined_to=2026-01-31')
+        ->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.id', $target->profile_id);
+});
+
+test('the teacher list rejects a joined date range in reverse order', function () {
+    $this->getJson('/api/v1/academic/teachers?joined_from=2026-03-01&joined_to=2026-02-01')
+        ->assertJsonValidationErrorFor('joined_to');
 });
 
 test('updating a teacher cannot change the login name', function () {

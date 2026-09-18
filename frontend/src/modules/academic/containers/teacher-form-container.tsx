@@ -162,6 +162,7 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
             {...form.register("full_name")}
             {...fieldAria("full_name", errors.full_name?.message)}
             autoComplete="off"
+            size="control"
           />
         </Field>
 
@@ -172,6 +173,7 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
             type="tel"
             inputMode="tel"
             placeholder="0901234567"
+            size="control"
           />
         </Field>
 
@@ -181,6 +183,7 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
             {...fieldAria("email", errors.email?.message)}
             type="email"
             autoComplete="off"
+            size="control"
           />
         </Field>
 
@@ -196,6 +199,7 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
               choices={GENDER_CHOICES}
               onChange={field.onChange}
               error={errors.gender?.message}
+              size="control"
             />
           )}
         />
@@ -211,6 +215,7 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
               value={field.value}
               onChange={field.onChange}
               error={errors.joined_at?.message}
+              size="control"
             />
           )}
         />
@@ -228,6 +233,7 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
               onChange={field.onChange}
               error={errors.status?.message}
               hint="Giáo viên đã nghỉ không chọn được khi mở lớp."
+              size="control"
             />
           )}
         />
@@ -242,6 +248,7 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
             {...form.register("color_identification")}
             {...fieldAria("color_identification", errors.color_identification?.message, "Không bắt buộc.")}
             placeholder="#FD7110"
+            size="control"
           />
         </Field>
 
@@ -255,6 +262,7 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
           <Textarea
             {...form.register("address")}
             {...fieldAria("address", errors.address?.message, "Không bắt buộc.")}
+            size="control"
             rows={2}
           />
         </Field>
@@ -272,6 +280,7 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
                 {...form.register("username")}
                 {...fieldAria("username", errors.username?.message, "Không đổi được sau khi tạo.")}
                 autoComplete="off"
+                size="control"
               />
             </Field>
 
@@ -281,6 +290,7 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
                 {...fieldAria("password", errors.password?.message)}
                 type="password"
                 autoComplete="new-password"
+                size="control"
               />
             </Field>
           </>

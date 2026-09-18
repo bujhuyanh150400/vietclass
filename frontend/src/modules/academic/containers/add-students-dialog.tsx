@@ -136,6 +136,7 @@ export function AddStudentsDialog({
                   setSearch(event.target.value);
                   setPage(1);
                 }}
+                size="control"
                 placeholder="Tên hoặc số điện thoại"
               />
             </Field>
@@ -147,6 +148,7 @@ export function AddStudentsDialog({
               hint="Không được trước ngày khai giảng."
               value={enrolledAt}
               onChange={setEnrolledAt}
+              size="control"
             />
           </div>
 

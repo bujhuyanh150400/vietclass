@@ -40,6 +40,7 @@ export function DateField({
   placeholder = "Chọn ngày…",
   disabled = false,
   className,
+  size = "default",
   triggerClassName,
 }: {
   name: string;
@@ -52,7 +53,9 @@ export function DateField({
   placeholder?: string;
   disabled?: boolean;
   className?: string;
-  /** Restates the trigger's own size and radius, for a screen on the design system's control scale. */
+  /** Shared geometry preset for the date trigger. */
+  size?: "default" | "control";
+  /** Additional trigger classes for one-off composition, kept for compatibility. */
   triggerClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -79,6 +82,8 @@ export function DateField({
             className={cn(
               "w-full justify-start font-normal",
               selected === undefined && "text-muted-foreground",
+              size === "control" &&
+                "h-11 rounded-control border-vc-control bg-card text-[13px] md:text-[13px]",
               triggerClassName,
             )}
           >

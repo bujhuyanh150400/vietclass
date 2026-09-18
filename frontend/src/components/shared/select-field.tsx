@@ -6,6 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  type SelectTriggerSize,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils/index";
 
@@ -35,6 +36,7 @@ export function SelectField({
   placeholder = "Chọn…",
   disabled = false,
   className,
+  size = "default",
   triggerClassName,
 }: {
   name: string;
@@ -48,7 +50,9 @@ export function SelectField({
   placeholder?: string;
   disabled?: boolean;
   className?: string;
-  /** Restates the trigger's own size and radius, for a screen on the design system's control scale. */
+  /** Shared geometry preset for the select trigger. */
+  size?: SelectTriggerSize;
+  /** Additional trigger classes for one-off composition, kept for compatibility. */
   triggerClassName?: string;
 }) {
   return (
@@ -69,6 +73,7 @@ export function SelectField({
           id={name}
           aria-invalid={error !== undefined}
           aria-describedby={error !== undefined ? `${name}-error` : undefined}
+          size={size}
           className={cn("w-full", triggerClassName)}
         >
           <SelectValue placeholder={placeholder} />

@@ -102,6 +102,7 @@ export function ListToolbar({
         />
         <Input
           type="search"
+          size={control ? "control" : "compact"}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           placeholder={searchPlaceholder}
@@ -109,7 +110,7 @@ export function ListToolbar({
           className={cn(
             "text-xs shadow-none md:text-xs",
             searchHelpText && (control ? "pr-9" : "pr-8"),
-            control ? "h-11 rounded-control pl-[38px]" : "h-8 pl-8",
+            control ? "pl-[38px]" : "pl-8",
           )}
         />
         {searchHelpText ? (

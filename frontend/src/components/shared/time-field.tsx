@@ -23,6 +23,7 @@ export function TimeField({
   required = false,
   disabled = false,
   className,
+  size = "default",
 }: {
   name: string;
   label: string;
@@ -33,6 +34,7 @@ export function TimeField({
   required?: boolean;
   disabled?: boolean;
   className?: string;
+  size?: "default" | "control";
 }) {
   return (
     <Field
@@ -46,6 +48,7 @@ export function TimeField({
       <Input
         {...fieldAria(name, error, hint)}
         type="time"
+        size={size === "control" ? "control" : undefined}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}

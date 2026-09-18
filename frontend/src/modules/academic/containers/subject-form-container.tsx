@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useResourceForm } from "@/hooks/use-resource-form";
 
 import { NumberedSection } from "../components/numbered-section";
-import { SHEET_CONTROL, SHEET_FIELD_GRID, SHEET_FIELD_TYPE, SHEET_TEXTAREA } from "../components/form-control";
+import { SHEET_FIELD_GRID, SHEET_FIELD_TYPE } from "../components/form-control";
 import { useCreateSubject, useUpdateSubject } from "../hooks/use-subjects";
 import {
   emptyToNull,
@@ -113,15 +113,15 @@ export function SubjectFormContainer({ subject }: { subject?: Subject }) {
           <NumberedSection index={1} title="Thông tin môn học" description="Các lớp mới chỉ chọn được môn đang hoạt động và đúng khối áp dụng.">
             <div className={`${SHEET_FIELD_GRID} ${SHEET_FIELD_TYPE}`}>
               <Field name="name" label="Tên môn học" required error={errors.name?.message}>
-                <Input {...form.register("name")} {...fieldAria("name", errors.name?.message)} className={SHEET_CONTROL} placeholder="Ví dụ: Toán nâng cao" autoComplete="off" />
+                <Input {...form.register("name")} {...fieldAria("name", errors.name?.message)} size="control" placeholder="Ví dụ: Toán nâng cao" autoComplete="off" />
               </Field>
 
               <Controller control={form.control} name="is_active" render={({ field }) => (
-                <SelectField name="is_active" label="Trạng thái" required value={field.value ? 1 : 0} onChange={(value) => field.onChange(value === 1)} error={errors.is_active?.message} triggerClassName={SHEET_CONTROL} choices={[{ value: 1, label: "Hoạt động" }, { value: 0, label: "Ngừng hoạt động" }]} />
+                <SelectField name="is_active" label="Trạng thái" required value={field.value ? 1 : 0} onChange={(value) => field.onChange(value === 1)} error={errors.is_active?.message} size="control" choices={[{ value: 1, label: "Hoạt động" }, { value: 0, label: "Ngừng hoạt động" }]} />
               )} />
 
               <Field name="description" label="Mô tả" hint={`${description?.length ?? 0}/500 ký tự`} error={errors.description?.message} className="sm:col-span-2">
-                <Textarea {...form.register("description")} {...fieldAria("description", errors.description?.message)} className={SHEET_TEXTAREA} rows={4} />
+                <Textarea {...form.register("description")} {...fieldAria("description", errors.description?.message)} size="control" rows={4} />
               </Field>
 
               <Controller control={form.control} name="grade_levels" render={({ field }) => (

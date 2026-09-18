@@ -1,6 +1,6 @@
 # Quản lý giáo viên
 
-Last Verified: 2026-09-14
+Last Verified: 2026-09-18
 
 ## Tổng quan
 
@@ -45,7 +45,9 @@ Trường tùy chọn khi tạo và sửa: `address`, `color_identification`. Kh
 
 Giới tính: `0` Nam, `1` Nữ, `2` Khác.
 
-Danh sách nhận thêm `q` để tìm theo họ tên, số điện thoại, email hoặc tên đăng nhập; `status[]` để lọc theo trạng thái làm việc; `is_active` để lọc theo trạng thái tài khoản; cùng `page`, `per_page`, `sort`, `direction`. Cột sắp xếp cho phép: `id`, `full_name`, `joined_at`, `created_at`.
+Danh sách nhận thêm `q` để tìm theo họ tên, số điện thoại, email, tên đăng nhập, mã lớp hoặc tên bộ môn; `status[]` để lọc theo trạng thái làm việc; `is_active` để lọc theo trạng thái tài khoản; `subject_id[]` để lọc theo bộ môn; `class_id[]` để lọc theo lớp phụ trách; `joined_from` và `joined_to` để lọc khoảng ngày tham gia; cùng `page`, `per_page`, `sort`, `direction`. Cột sắp xếp cho phép: `id`, `full_name`, `joined_at`, `created_at`.
+
+Trên màn hình `/academic/teachers`, mở **Bộ lọc** rồi chọn **Bộ môn** hoặc **Lớp phụ trách** để dùng combobox có ô tìm kiếm. Từ khóa được gửi lên endpoint danh sách chọn tương ứng sau một khoảng debounce; chọn kết quả cập nhật bộ lọc và URL ngay lập tức.
 
 Từ khóa tìm kiếm **bỏ dấu tiếng Việt và không phân biệt hoa thường**: gõ `Hung` tìm ra `Hùng`, gõ `Do Thi Uoc` tìm ra `Đỗ Thị Ước`. Gõ đầy đủ dấu vẫn tìm được như thường. Ký tự `%` và `_` gõ vào được hiểu là ký tự thật, không phải ký tự đại diện.
 
@@ -54,6 +56,7 @@ Từ khóa tìm kiếm **bỏ dấu tiếng Việt và không phân biệt hoa t
 - Danh sách trả về envelope `data` kèm `meta` gồm `current_page`, `per_page`, `total`, `last_page`.
 - Mỗi hồ sơ kèm `username` và `is_account_active` của tài khoản, không kèm bất kỳ thông tin xác thực nào.
 - Mỗi hồ sơ kèm `profile_id` và `avatar`; `avatar` là `null` khi giáo viên chưa chọn ảnh.
+- Mỗi hồ sơ kèm `subjects` là các bộ môn đang dạy (`id`, `name`) và `classes` là các lớp đang phụ trách (`id`, `code`, `name`, `subject_id`, `subject_name`, `status`).
 - Tạo thành công trả `201`; giáo viên đăng nhập được ngay bằng tên đăng nhập và mật khẩu vừa đặt.
 - Sửa hồ sơ, khóa và mở tài khoản trả `200` cùng bản ghi sau khi cập nhật.
 - Đổi mật khẩu trả `204`; mật khẩu mới dùng được, mật khẩu cũ thì không.
@@ -94,7 +97,7 @@ Trên trình duyệt:
 - Không đổi được tên đăng nhập sau khi tạo.
 - Đổi mật khẩu không thu hồi token đang hoạt động.
 - Cấu hình lương và các nghiệp vụ tài chính chưa có.
-- Danh sách chọn trả tối đa 50 bản ghi mỗi lần gọi.
+- Danh sách chọn trả tối đa 50 bản ghi mỗi lần gọi; combobox bộ môn và lớp phụ trách tìm tiếp bằng tham số `q` khi danh mục vượt quá giới hạn này.
 
 ## Tham chiếu kỹ thuật
 

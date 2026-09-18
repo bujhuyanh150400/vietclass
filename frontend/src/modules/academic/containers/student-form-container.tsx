@@ -23,12 +23,7 @@ import type { AvatarDraft } from "../types/avatar";
 import { randomAdventurer } from "../utils/adventurer";
 
 import { NumberedSection } from "../components/numbered-section";
-import {
-  SHEET_CONTROL,
-  SHEET_FIELD_GRID,
-  SHEET_FIELD_TYPE,
-  SHEET_TEXTAREA,
-} from "../components/form-control";
+import { SHEET_FIELD_GRID, SHEET_FIELD_TYPE } from "../components/form-control";
 import { GuardianRosterField } from "../components/guardian-roster-field";
 import { StudentAccountSection } from "./student-account-section";
 import { useCreateStudent, useUpdateStudent } from "../hooks/use-students";
@@ -282,7 +277,7 @@ export function StudentFormContainer({ student }: { student?: Student }) {
             {...fieldAria("full_name", errors.full_name?.message)}
             placeholder="Nhập họ và tên học sinh"
             autoComplete="off"
-            className={SHEET_CONTROL}
+            size="control"
           />
         </Field>
 
@@ -297,7 +292,7 @@ export function StudentFormContainer({ student }: { student?: Student }) {
               value={field.value ?? ""}
               onChange={field.onChange}
               error={errors.dob?.message}
-              triggerClassName={SHEET_CONTROL}
+              size="control"
             />
           )}
         />
@@ -314,7 +309,7 @@ export function StudentFormContainer({ student }: { student?: Student }) {
               choices={GENDER_CHOICES}
               onChange={field.onChange}
               error={errors.gender?.message}
-              triggerClassName={SHEET_CONTROL}
+              size="control"
             />
           )}
         />
@@ -331,7 +326,7 @@ export function StudentFormContainer({ student }: { student?: Student }) {
               choices={GRADE_CHOICES}
               onChange={field.onChange}
               error={errors.grade_level?.message}
-              triggerClassName={SHEET_CONTROL}
+              size="control"
             />
           )}
         />
@@ -348,7 +343,7 @@ export function StudentFormContainer({ student }: { student?: Student }) {
             type="tel"
             inputMode="tel"
             placeholder="Nhập số điện thoại"
-            className={SHEET_CONTROL}
+            size="control"
           />
         </Field>
 
@@ -365,7 +360,7 @@ export function StudentFormContainer({ student }: { student?: Student }) {
               onChange={field.onChange}
               error={errors.status?.message}
               hint="Khác với trạng thái tài khoản đăng nhập."
-              triggerClassName={SHEET_CONTROL}
+              size="control"
             />
           )}
         />
@@ -382,7 +377,7 @@ export function StudentFormContainer({ student }: { student?: Student }) {
             {...fieldAria("address", errors.address?.message, "Không bắt buộc.")}
             rows={2}
             placeholder="Nhập địa chỉ hiện tại"
-            className={SHEET_TEXTAREA}
+            size="control"
           />
         </Field>
 
@@ -398,7 +393,7 @@ export function StudentFormContainer({ student }: { student?: Student }) {
             {...fieldAria("note", errors.note?.message, "Không bắt buộc.")}
             rows={2}
             placeholder="Thông tin sức khỏe, lưu ý học tập hoặc ghi chú khác…"
-            className={SHEET_TEXTAREA}
+            size="control"
           />
         </Field>
       </div>
@@ -483,7 +478,8 @@ export function StudentFormContainer({ student }: { student?: Student }) {
                 )}
                 placeholder="Ví dụ: hs_nguyenvanan"
                 autoComplete="off"
-                className={cn(SHEET_CONTROL, "rounded-r-none border-r-0")}
+                size="control"
+                className="rounded-r-none border-r-0"
               />
               <Button
                 type="button"
@@ -519,7 +515,8 @@ export function StudentFormContainer({ student }: { student?: Student }) {
                 type={showPassword ? "text" : "password"}
                 placeholder="Tối thiểu 8 ký tự"
                 autoComplete="new-password"
-                className={cn(SHEET_CONTROL, "pr-12")}
+                size="control"
+                className="pr-12"
               />
               <Button
                 type="button"

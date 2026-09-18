@@ -129,6 +129,7 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
             {...fieldAria("name", errors.name?.message)}
             placeholder="Ví dụ: Toán 9A"
             autoComplete="off"
+            size="control"
           />
         </Field>
 
@@ -145,6 +146,7 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
             disabled={isEditing}
             placeholder="TOAN-9A"
             autoComplete="off"
+            size="control"
           />
         </Field>
 
@@ -165,6 +167,7 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
               searchPlaceholder="Tìm môn học…"
               emptyMessage="Không tìm thấy môn học phù hợp."
               hint="Chỉ hiển thị môn học đang mở."
+              size="control"
             />
           )}
         />
@@ -186,6 +189,7 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
               searchPlaceholder="Tìm giáo viên…"
               emptyMessage="Không tìm thấy giáo viên phù hợp."
               hint="Chỉ hiển thị giáo viên đang làm việc."
+              size="control"
             />
           )}
         />
@@ -202,6 +206,7 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
               choices={GRADE_CHOICES}
               onChange={field.onChange}
               error={errors.grade_level?.message}
+              size="control"
             />
           )}
         />
@@ -222,6 +227,7 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
             {...fieldAria("max_students", errors.max_students?.message)}
             type="number"
             min={1}
+            size="control"
           />
         </Field>
 
@@ -238,6 +244,7 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
               onChange={field.onChange}
               error={errors.start_at?.message}
               disabled={isEditing}
+              size="control"
             />
           )}
         />
@@ -253,6 +260,7 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
               value={field.value ?? ""}
               onChange={field.onChange}
               error={errors.end_at?.message}
+              size="control"
             />
           )}
         />
