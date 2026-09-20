@@ -35,6 +35,12 @@ const optionalPhone = z
   .regex(PHONE_PATTERN, { error: "Số điện thoại không hợp lệ." })
   .or(z.literal(""));
 
+const optionalEmail = z
+  .email({ error: "Email không hợp lệ." })
+  .max(255)
+  .or(z.literal(""))
+  .default("");
+
 const password = z
   .string()
   .min(8, { error: "Mật khẩu phải có ít nhất 8 ký tự." })
@@ -121,7 +127,7 @@ const teacherProfileShape = {
     .min(1, { error: "Vui lòng nhập họ và tên." })
     .max(255, { error: "Họ và tên không được vượt quá 255 ký tự." }),
   phone: z.string().regex(PHONE_PATTERN, { error: "Số điện thoại không hợp lệ." }),
-  email: z.email({ error: "Email không hợp lệ." }).max(255),
+  email: optionalEmail,
   gender: z.union([z.literal(0), z.literal(1), z.literal(2)]),
   address: z.string().max(2000).default(""),
   status: z.union([z.literal(0), z.literal(1)]),

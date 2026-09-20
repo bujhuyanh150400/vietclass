@@ -31,11 +31,11 @@ export type RoomRequest = {
 type TeacherProfileRequest = {
   full_name: string;
   phone: string;
-  email: string;
+  email: string | null;
   gender: Gender;
   address: string | null;
   status: TeacherStatus;
-  color_identification: string | null;
+  color_identification?: string | null;
   joined_at: string;
 };
 

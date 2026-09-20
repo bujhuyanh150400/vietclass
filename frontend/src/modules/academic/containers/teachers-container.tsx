@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
@@ -7,7 +8,6 @@ import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
 import { ChangePasswordDialog } from "../components/change-password-dialog";
-import { TeacherDetailDialog } from "../components/teacher-detail-dialog";
 import { TeachersView } from "../components/teachers-view";
 import { useClassOptions } from "../hooks/use-classes";
 import { useSubjectOptions } from "../hooks/use-subjects";
@@ -27,6 +27,7 @@ import type { Teacher } from "../types/academic";
  * still work afterwards.
  */
 export function TeachersContainer() {
+  const router = useRouter();
   const list = useTeacherList();
   const subjectOptions = useSubjectOptions();
   const classOptions = useClassOptions();
@@ -34,7 +35,6 @@ export function TeachersContainer() {
   const changePassword = useChangeTeacherPassword();
   const showToast = useToast();
 
-  const [detailTarget, setDetailTarget] = useState<Teacher | null>(null);
   const [lockTarget, setLockTarget] = useState<Teacher | null>(null);
   const [passwordTarget, setPasswordTarget] = useState<Teacher | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -96,17 +96,12 @@ export function TeachersContainer() {
         onTablePageSizeChange={list.setTablePageSize}
         onClearConditions={list.clearConditions}
         onPageChange={list.query.setPage}
-        onViewTeacher={setDetailTarget}
+        onViewTeacher={(teacher) => router.push(`/academic/teachers/${teacher.id}`)}
         onToggleAccount={(teacher) => {
           setActionError(null);
           setLockTarget(teacher);
         }}
         onChangePassword={setPasswordTarget}
-      />
-
-      <TeacherDetailDialog
-        teacher={detailTarget}
-        onOpenChange={(open) => (open ? undefined : setDetailTarget(null))}
       />
 
       <ConfirmActionDialog

@@ -1,6 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, Eye, EyeOff, RefreshCw } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Controller } from "react-hook-form";
 import { useState } from "react";
@@ -8,15 +10,19 @@ import { useState } from "react";
 import { BackLink } from "@/components/shared/back-link";
 import { DateField } from "@/components/shared/date-field";
 import { Field, fieldAria } from "@/components/shared/field";
-import { FormShell } from "@/components/shared/form-shell";
+import { FormSheet } from "@/components/shared/form-sheet";
 import { SelectField } from "@/components/shared/select-field";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useResourceForm } from "@/hooks/use-resource-form";
-import { AvatarDraftField } from "../components/avatar-draft-field";
-import type { AvatarDraft } from "../types/avatar";
-import { ProfileAvatarEditorContainer } from "./profile-avatar-editor-container";
+import { cn, foldVietnamese } from "@/lib/utils/index";
 
+import { AvatarDraftField } from "../components/avatar-draft-field";
+import { NumberedSection } from "../components/numbered-section";
+import { SHEET_FIELD_GRID, SHEET_FIELD_TYPE } from "../components/form-control";
+import type { AvatarDraft } from "../types/avatar";
+import { useSaveProfileAvatar } from "../hooks/use-save-profile-avatar";
 import { useCreateTeacher, useUpdateTeacher } from "../hooks/use-teachers";
 import {
   emptyToNull,
@@ -27,6 +33,9 @@ import {
 } from "../schemas/academic-form-schema";
 import type { Teacher } from "../types/academic";
 import { GENDER_LABELS, TEACHER_STATUS_LABELS } from "../utils/labels";
+import { randomAdventurer } from "../utils/adventurer";
+import { TeacherAccountSection } from "./teacher-account-section";
+import "../styles/student-form.css";
 
 /** Fields the API may report validation messages for. */
 const FIELDS = [
@@ -38,7 +47,6 @@ const FIELDS = [
   "gender",
   "address",
   "status",
-  "color_identification",
   "joined_at",
 ] as const;
 
@@ -58,27 +66,27 @@ const GENDER_CHOICES = [
   { value: 2, label: GENDER_LABELS[2] },
 ];
 
-/**
- * Coordinates creating and editing a teacher.
- *
- * Creating also creates the login account, so the credentials appear here and
- * nowhere else. Editing hides them: the login name never changes, and the password
- * has its own dialog on the list screen.
- */
+/** Coordinates creating and editing a teacher in the shared mock-inspired sheet. */
 export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
   const router = useRouter();
   const isEditing = teacher !== undefined;
   const create = useCreateTeacher();
   const update = useUpdateTeacher(teacher?.id ?? 0);
-  // Only creating carries the avatar with the profile; editing saves it on its own.
-  const [avatar, setAvatar] = useState<AvatarDraft>({ type: "none" });
+  const saveAvatar = useSaveProfileAvatar();
+  const [avatar, setAvatar] = useState<AvatarDraft>(() =>
+    teacher === undefined
+      ? randomAdventurer("male")
+      : teacher.avatar?.type === "dicebear"
+        ? teacher.avatar
+        : { type: "none" },
+  );
+  const [avatarTouched, setAvatarTouched] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { form, onSubmit, alertMessage, isSubmitting } = useResourceForm<
     TeacherFormInput,
     TeacherFormValues
   >({
-    // Both modes share one field shape; only creating demands the credentials, so
-    // only creating gets the stricter resolver.
     resolver: zodResolver(isEditing ? teacherEditSchema : teacherCreateSchema),
     defaultValues: {
       username: teacher?.username ?? "",
@@ -89,7 +97,6 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
       gender: teacher?.gender ?? 0,
       address: teacher?.address ?? "",
       status: teacher?.status ?? 0,
-      color_identification: teacher?.color_identification ?? "",
       joined_at: teacher?.joined_at ?? "",
     },
     fieldNames: FIELDS,
@@ -97,20 +104,27 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
       const profile = {
         full_name: values.full_name,
         phone: values.phone,
-        email: values.email,
+        email: emptyToNull(values.email),
         gender: values.gender,
         address: emptyToNull(values.address),
         status: values.status,
-        color_identification: emptyToNull(values.color_identification),
         joined_at: values.joined_at,
       };
 
       if (isEditing) {
-        return update.mutateAsync(profile);
+        const saved = await update.mutateAsync(profile);
+
+        if (avatarTouched && avatar.type !== "none") {
+          await saveAvatar.save({
+            profileId: teacher.profile_id,
+            ownerUserId: teacher.user_id,
+            draft: avatar,
+          });
+        }
+
+        return saved;
       }
 
-      // The create resolver already required both; the fallbacks only satisfy the
-      // shared form type, whose credentials are optional for the edit mode.
       return create.mutateAsync({
         payload: {
           ...profile,
@@ -132,57 +146,73 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
 
   const errors = form.formState.errors;
 
-  return (
-    <div className="grid max-w-3xl gap-6">
-      <BackLink href={LIST_HREF} label="Danh sách giáo viên" />
+  /** Records an avatar choice so an edit saves it only when the reader changed it. */
+  function chooseAvatar(next: AvatarDraft): void {
+    setAvatar(next);
+    setAvatarTouched(true);
+  }
 
-      {/* The avatar sits beside the profile form, not inside it: creating submits it
-          with the account request, and editing saves it through its own endpoint. */}
-      {isEditing ? (
-        <ProfileAvatarEditorContainer
-          profileId={teacher.profile_id}
-          ownerUserId={teacher.user_id}
-          initialAvatar={teacher.avatar}
-          name={teacher.full_name}
-        />
+  /** Fills a teacher login name from the teacher's Vietnamese full name. */
+  function generateUsername(): void {
+    const compact = foldVietnamese(form.getValues("full_name") ?? "").replace(/[^a-z0-9]+/g, "");
 
-      ) : (
-        <AvatarDraftField value={avatar} onChange={setAvatar} disabled={isSubmitting} />
-      )}
+    if (compact === "") {
+      form.setError("full_name", { message: "Nhập họ và tên trước khi tự tạo tên đăng nhập." });
+      form.setFocus("full_name");
+      return;
+    }
 
-      <FormShell
-        onSubmit={onSubmit}
-        alertMessage={alertMessage}
-        isSubmitting={isSubmitting}
-        submitLabel={isEditing ? "Lưu thay đổi" : "Tạo giáo viên"}
-        cancelHref={LIST_HREF}
-      >
+    form.setValue("username", `gv_${compact}`, { shouldValidate: true });
+    form.clearErrors("username");
+    form.setFocus("username");
+  }
+
+  const profileSection = (
+    <NumberedSection
+      index={3}
+      title="Thông tin giáo viên"
+      description="Thông tin liên hệ và trạng thái làm việc hiện tại."
+    >
+      <div className={cn(SHEET_FIELD_GRID, SHEET_FIELD_TYPE)}>
         <Field name="full_name" label="Họ và tên" required error={errors.full_name?.message}>
           <Input
             {...form.register("full_name")}
             {...fieldAria("full_name", errors.full_name?.message)}
+            placeholder="Nhập họ và tên giáo viên"
             autoComplete="off"
             size="control"
           />
         </Field>
 
-        <Field name="phone" label="Số điện thoại" required error={errors.phone?.message}>
+        <Field
+          name="phone"
+          label="Số điện thoại"
+          required
+          hint="Dùng số điện thoại Việt Nam."
+          error={errors.phone?.message}
+        >
           <Input
             {...form.register("phone")}
-            {...fieldAria("phone", errors.phone?.message)}
+            {...fieldAria("phone", errors.phone?.message, "Dùng số điện thoại Việt Nam.")}
             type="tel"
             inputMode="tel"
-            placeholder="0901234567"
+            placeholder="Ví dụ: 0901 234 567"
             size="control"
           />
         </Field>
 
-        <Field name="email" label="Email" required error={errors.email?.message}>
+        <Field
+          name="email"
+          label="Email"
+          hint="Không bắt buộc."
+          error={errors.email?.message}
+        >
           <Input
             {...form.register("email")}
-            {...fieldAria("email", errors.email?.message)}
+            {...fieldAria("email", errors.email?.message, "Không bắt buộc.")}
             type="email"
             autoComplete="off"
+            placeholder="ten@truong.edu.vn"
             size="control"
           />
         </Field>
@@ -212,6 +242,7 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
               name="joined_at"
               label="Ngày vào làm"
               required
+              hint="Không được sau ngày hiện tại."
               value={field.value}
               onChange={field.onChange}
               error={errors.joined_at?.message}
@@ -239,20 +270,6 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
         />
 
         <Field
-          name="color_identification"
-          label="Màu đại diện"
-          hint="Không bắt buộc. Dùng cho lịch học sau này."
-          error={errors.color_identification?.message}
-        >
-          <Input
-            {...form.register("color_identification")}
-            {...fieldAria("color_identification", errors.color_identification?.message, "Không bắt buộc.")}
-            placeholder="#FD7110"
-            size="control"
-          />
-        </Field>
-
-        <Field
           name="address"
           label="Địa chỉ"
           hint="Không bắt buộc."
@@ -262,40 +279,172 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
           <Textarea
             {...form.register("address")}
             {...fieldAria("address", errors.address?.message, "Không bắt buộc.")}
-            size="control"
             rows={2}
+            placeholder="Nhập địa chỉ hiện tại"
+            size="control"
           />
         </Field>
+      </div>
+    </NumberedSection>
+  );
 
-        {isEditing ? null : (
-          <>
-            <Field
-              name="username"
-              label="Tên đăng nhập"
-              required
-              hint="Không đổi được sau khi tạo."
-              error={errors.username?.message}
-            >
+  const avatarSection = (
+    <NumberedSection
+      index={1}
+      title="Ảnh đại diện"
+      description="Giúp nhà trường nhận diện giáo viên nhanh hơn."
+    >
+      <AvatarDraftField
+        bare
+        value={avatar}
+        current={teacher?.avatar ?? null}
+        name={teacher?.full_name ?? "Giáo viên mới"}
+        allowUpload={!isEditing || (typeof teacher?.user_id === "number" && teacher.user_id > 0)}
+        onChange={chooseAvatar}
+        disabled={isSubmitting}
+      />
+    </NumberedSection>
+  );
+
+  const accountSection = (
+    <NumberedSection
+      index={2}
+      title="Tài khoản đăng nhập"
+      description={
+        isEditing
+          ? "Tên đăng nhập, trạng thái và bảo mật tài khoản."
+          : "Thông tin giáo viên dùng trong lần đăng nhập đầu tiên."
+      }
+    >
+      {isEditing ? (
+        <TeacherAccountSection teacher={teacher} />
+      ) : (
+        <div className={cn(SHEET_FIELD_GRID, SHEET_FIELD_TYPE)}>
+          <Field
+            name="username"
+            label="Tên đăng nhập"
+            required
+            hint="Chữ thường không dấu, số và dấu gạch dưới."
+            error={errors.username?.message}
+          >
+            <div className="flex">
               <Input
                 {...form.register("username")}
-                {...fieldAria("username", errors.username?.message, "Không đổi được sau khi tạo.")}
-                autoComplete="off"
+                {...fieldAria(
+                  "username",
+                  errors.username?.message,
+                  "Chữ thường không dấu, số và dấu gạch dưới.",
+                )}
+                placeholder="Ví dụ: gv_nguyenthimai"
+                autoComplete="username"
                 size="control"
+                className="rounded-r-none border-r-0"
               />
-            </Field>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={isSubmitting}
+                title="Tự tạo tên đăng nhập từ họ và tên"
+                aria-label="Tự tạo tên đăng nhập từ họ và tên"
+                className="size-11 shrink-0 rounded-control rounded-l-none border-vc-control bg-background"
+                onClick={generateUsername}
+              >
+                <RefreshCw aria-hidden="true" className="size-[17px]" />
+              </Button>
+            </div>
+          </Field>
 
-            <Field name="password" label="Mật khẩu" required error={errors.password?.message}>
+          <Field name="password" label="Mật khẩu" required error={errors.password?.message}>
+            <div className="relative">
               <Input
                 {...form.register("password")}
                 {...fieldAria("password", errors.password?.message)}
-                type="password"
+                id="teacher-password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Tối thiểu 8 ký tự"
                 autoComplete="new-password"
                 size="control"
+                className="pr-12"
               />
-            </Field>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-pressed={showPassword}
+                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                className="absolute top-1/2 right-1 size-10 -translate-y-1/2 rounded-[4px] text-muted-foreground"
+                onClick={() => setShowPassword((previous) => !previous)}
+              >
+                {showPassword ? (
+                  <EyeOff aria-hidden="true" className="size-[17px]" />
+                ) : (
+                  <Eye aria-hidden="true" className="size-[17px]" />
+                )}
+              </Button>
+            </div>
+          </Field>
+        </div>
+      )}
+    </NumberedSection>
+  );
+
+  return (
+    <div className="grid max-w-6xl gap-6">
+      <div className="grid gap-[18px]">
+        <BackLink href={LIST_HREF} label="Danh sách giáo viên" />
+        <div>
+          <div className="mb-1.5 flex flex-wrap items-center gap-2.5">
+            <span className="text-[10px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+              {isEditing ? "Hồ sơ giáo viên" : "Hồ sơ mới"}
+            </span>
+            {isEditing ? (
+              <span className="inline-flex min-h-[26px] items-center gap-1.5 rounded-control border border-vc-control bg-card px-2 py-1 font-mono text-[10px] font-medium tracking-[0.04em]">
+                <span className="text-muted-foreground">Mã hồ sơ</span>#{teacher.id}
+              </span>
+            ) : null}
+          </div>
+          <h2 className="text-[28px] leading-[1.3] font-semibold tracking-[-0.02em] md:text-[34px]">
+            {isEditing ? "Sửa giáo viên" : "Tạo giáo viên"}
+          </h2>
+          <p className="mt-[7px] text-xs text-muted-foreground">
+            {isEditing
+              ? `Cập nhật hồ sơ và quyền đăng nhập của ${teacher.full_name}.`
+              : "Tạo hồ sơ liên hệ và tài khoản đăng nhập cho giáo viên mới."}
+          </p>
+        </div>
+      </div>
+
+      <FormSheet
+        onSubmit={onSubmit}
+        alertMessage={alertMessage}
+        actions={
+          <>
+            <Button type="button" variant="ghost" asChild disabled={isSubmitting}>
+              <Link href={LIST_HREF} className="min-w-[104px] justify-center">
+                Hủy
+              </Link>
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="h-11 min-w-[155px] gap-2 rounded-control border border-vc-wood font-semibold shadow-vc-raised has-[>svg]:px-[15px]"
+            >
+              <Check aria-hidden="true" className="size-[19px]" />
+              {isSubmitting ? "Đang lưu…" : isEditing ? "Lưu thay đổi" : "Tạo giáo viên"}
+            </Button>
           </>
-        )}
-      </FormShell>
+        }
+      >
+        <div className="grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+          <aside className="vc-form-grid-paper rounded-t-sheet border-b border-vc-rule p-7 max-md:px-4 max-md:py-5 lg:rounded-tr-none lg:rounded-bl-sheet lg:border-r lg:border-b-0">
+            {avatarSection}
+            {accountSection}
+          </aside>
+
+          <div className="p-7 lg:px-8">{profileSection}</div>
+        </div>
+      </FormSheet>
     </div>
   );
 }

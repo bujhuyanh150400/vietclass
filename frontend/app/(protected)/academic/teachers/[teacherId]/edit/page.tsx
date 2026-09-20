@@ -1,21 +1,21 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { TeacherDetailContainer } from "@/modules/academic";
+import { TeacherEditContainer } from "@/modules/academic";
 
 export const metadata: Metadata = {
-  title: "Chi tiết giáo viên",
+  title: "Sửa hồ sơ giáo viên",
 };
 
 /**
- * Renders the read-only detail screen for one teacher profile.
+ * Renders the screen for editing one teacher profile.
  *
  * A path segment that is not a number never reaches the API: it cannot identify a
  * record, so it is a wrong URL rather than a missing teacher.
  */
-export default async function TeacherDetailPage({
+export default async function EditTeacherPage({
   params,
-}: PageProps<"/academic/teachers/[teacherId]">) {
+}: PageProps<"/academic/teachers/[teacherId]/edit">) {
   const { teacherId } = await params;
   const id = Number(teacherId);
 
@@ -23,5 +23,5 @@ export default async function TeacherDetailPage({
     notFound();
   }
 
-  return <TeacherDetailContainer teacherId={id} />;
+  return <TeacherEditContainer teacherId={id} />;
 }

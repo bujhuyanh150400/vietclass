@@ -74,7 +74,16 @@ Mã Next.js là source of truth cho behavior, accessibility, route, dữ liệu 
 runtime; OpenDesign chỉ dẫn đường cho hierarchy, tỷ lệ, chất liệu và responsive
 states. Không sao chép HTML/CSS/JavaScript sinh bởi artifact vào runtime.
 
-## 5. Skill id của OpenDesign
+## 5. Contract list dùng chung
+
+Các màn danh sách dùng contract `ListSheet` chung thay vì tự dựng khung riêng. Nguồn tham chiếu có hai lớp:
+
+- Design system canonical: `DESIGN.md` của `user:vietclasses-design-system`; đây là phần OpenDesign tự nạp vào mỗi run.
+- Reference trực quan trong project: `list-sheet.html` của `vietclass-polished-redesign`; dùng để đối chiếu markup, toolbar, popup `Chế độ xem`, conditions bar, table/card fallback và bốn data states.
+
+Khi dựng list mới, agent phải giữ thứ tự `toolbar → conditions → data → pager`, dùng button popup cho `Bộ lọc` / `Sắp xếp` / `Chế độ xem`, và không tạo segmented toggle Bảng/Thẻ. Cột và action được phép thay đổi theo module; khung, responsive fallback và state semantics không được tự phát minh lại.
+
+## 6. Skill id của OpenDesign
 
 Dùng đúng id thật; `od-design-refine` không tồn tại.
 
@@ -86,7 +95,7 @@ Dùng đúng id thật; `od-design-refine` không tồn tại.
 | `redesign-existing-projects` | Nâng cấp toàn bộ một màn đã có. |
 
 
-## 6. Chưa xác định
+## 7. Chưa xác định
 
 - Feature screen chưa được rework token theo hình học mới; phần app shell đã áp dụng hình học của design system theo bảng mục 4.
 - `error.webp` mới thêm vào `frontend/public/images/` và chưa được commit vào git.

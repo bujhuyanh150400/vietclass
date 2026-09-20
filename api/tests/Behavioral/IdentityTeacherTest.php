@@ -47,6 +47,15 @@ test('creating a teacher creates the profile and its login account together', fu
     $this->assertDatabaseHas('profiles', ['full_name' => 'Nguyễn Văn A']);
 });
 
+test('a teacher may be created without an email', function () {
+    $payload = teacherPayload();
+    unset($payload['email']);
+
+    $response = $this->postJson('/api/v1/academic/teachers', $payload)->assertCreated();
+
+    expect($response->json('data.email'))->toBeNull();
+});
+
 test('a created teacher can sign in with the password that was set', function () {
     $this->postJson('/api/v1/academic/teachers', teacherPayload())->assertCreated();
 
@@ -225,6 +234,21 @@ test('a teacher may keep their own phone and email while editing', function () {
         'status' => TeacherStatus::Active->value,
         'joined_at' => '2026-02-01',
     ])->assertOk();
+});
+
+test('a teacher may clear their email while editing', function () {
+    $teacher = TeacherProfile::factory()->create();
+
+    $response = $this->putJson("/api/v1/academic/teachers/{$teacher->profile_id}", [
+        'full_name' => 'Không còn email',
+        'phone' => $teacher->profile->phone,
+        'email' => null,
+        'gender' => Gender::Male->value,
+        'status' => TeacherStatus::Active->value,
+        'joined_at' => '2026-02-01',
+    ])->assertOk();
+
+    expect($response->json('data.email'))->toBeNull();
 });
 
 test('locking a teacher account keeps the profile and its classes intact', function () {

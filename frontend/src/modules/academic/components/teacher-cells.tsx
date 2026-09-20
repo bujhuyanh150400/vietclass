@@ -219,7 +219,7 @@ export function TeacherRowMenu({
       key: "edit",
       label: "Sửa hồ sơ",
       icon: <Pencil aria-hidden="true" className="text-foreground" />,
-      href: `/academic/teachers/${teacher.id}`,
+      href: `/academic/teachers/${teacher.id}/edit`,
     },
     {
       key: "password",

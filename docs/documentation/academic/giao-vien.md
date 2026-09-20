@@ -17,7 +17,7 @@ Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/a
 
 - Tạo hồ sơ giáo viên tạo đồng thời một bản ghi tài khoản với vai trò Giáo viên, trong cùng một transaction. Thất bại ở bất kỳ bước nào không để lại tài khoản mồ côi hay hồ sơ mồ côi.
 - Tên đăng nhập là duy nhất trong toàn hệ thống và **không đổi được** sau khi tạo. Gửi kèm `username` khi sửa hồ sơ thì giá trị đó bị bỏ qua.
-- Họ tên, số điện thoại, email và giới tính là bắt buộc khi tạo hồ sơ. Số điện thoại phải bắt đầu bằng `0` và có 10 hoặc 11 chữ số.
+- Họ tên, số điện thoại và giới tính là bắt buộc khi tạo hồ sơ. Email không bắt buộc; nếu nhập phải đúng định dạng. Số điện thoại phải bắt đầu bằng `0` và có 10 hoặc 11 chữ số.
 - Số điện thoại và email **không cần duy nhất**, kể cả giữa các giáo viên với nhau. Hồ sơ giáo viên, học sinh và phụ huynh dùng chung một bảng nhân thân, nên một giáo viên có thể dùng chính số của mình làm số liên hệ phụ huynh cho con mà không bị chặn vì trùng.
 - Mật khẩu tối thiểu 8 ký tự, được lưu dưới dạng hash và không bao giờ xuất hiện trong phản hồi.
 - Trạng thái làm việc gồm `0` Đang làm việc và `1` Đã nghỉ. Chỉ giáo viên đang làm việc và có tài khoản chưa khóa mới xuất hiện trong danh sách chọn khi xếp lớp.
@@ -25,7 +25,7 @@ Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/a
 - Không có thao tác xóa giáo viên. Ngừng cộng tác bằng cách đổi trạng thái làm việc hoặc khóa tài khoản; bản ghi hồ sơ luôn được giữ để các lớp và lịch sử trỏ tới nó không bị hỏng.
 - Khóa tài khoản chỉ chặn đăng nhập, không đụng tới hồ sơ.
 - Đổi mật khẩu không thu hồi các token đang có. Giáo viên không bị đăng xuất khỏi các thiết bị khác.
-- Hồ sơ giáo viên có ảnh đại diện riêng. Tạo giáo viên gửi được ảnh kèm theo; sau khi tạo, ảnh đại diện đổi bằng endpoint và nút lưu riêng của nó, xem [Ảnh đại diện hồ sơ](avatar.md).
+- Hồ sơ giáo viên có ảnh đại diện riêng. Khi tạo, ảnh được gửi cùng hồ sơ; khi sửa, ảnh mẫu hoặc ảnh tải lên được chọn ngay trong biểu mẫu và lưu cùng nút **Lưu thay đổi** qua endpoint ảnh đại diện, xem [Ảnh đại diện hồ sơ](avatar.md).
 
 ## Hướng dẫn thao tác
 
@@ -35,13 +35,13 @@ Mọi endpoint nằm dưới tiền tố `/api/v1` và cần header `Authorizati
 | --- | --- |
 | Xem danh sách | `GET /api/v1/academic/teachers` |
 | Lấy danh sách chọn | `GET /api/v1/academic/teachers/options` |
-| Tạo | `POST /api/v1/academic/teachers` với `username`, `password`, `full_name`, `phone`, `email`, `gender`, `status`, `joined_at` |
+| Tạo | `POST /api/v1/academic/teachers` với `username`, `password`, `full_name`, `phone`, `gender`, `status`, `joined_at`; `email` nếu có |
 | Xem chi tiết | `GET /api/v1/academic/teachers/{id}` |
-| Sửa hồ sơ | `PUT /api/v1/academic/teachers/{id}` với `full_name`, `phone`, `email`, `gender`, `status`, `joined_at` |
+| Sửa hồ sơ | `PUT /api/v1/academic/teachers/{id}` với `full_name`, `phone`, `gender`, `status`, `joined_at`; `email` nếu có |
 | Khóa hoặc mở tài khoản | `PATCH /api/v1/academic/teachers/{id}/account` với `is_active` |
 | Đổi mật khẩu | `PATCH /api/v1/academic/teachers/{id}/password` với `password` |
 
-Trường tùy chọn khi tạo và sửa: `address`, `color_identification`. Khi tạo còn nhận `avatar` — xem [Ảnh đại diện hồ sơ](avatar.md) cho cả hai dạng JSON và multipart.
+Trường tùy chọn khi tạo và sửa: `email`, `address`, `color_identification`. Khi tạo còn nhận `avatar` — xem [Ảnh đại diện hồ sơ](avatar.md) cho cả hai dạng JSON và multipart.
 
 Giới tính: `0` Nam, `1` Nữ, `2` Khác.
 
@@ -66,11 +66,14 @@ Trên trình duyệt:
 
 - Mỗi thao tác thành công hiện một thông báo nổi ở góc dưới bên phải rồi tự đóng sau vài giây: `Đã tạo giáo viên và tài khoản đăng nhập.`, `Đã lưu thay đổi hồ sơ giáo viên.`, `Đã khóa tài khoản của <tên>.`, `Đã mở lại tài khoản của <tên>.`, `Đã đổi mật khẩu cho <tên>.` Thông báo vẫn hiển thị sau khi màn hình quay về danh sách giáo viên.
 - Danh sách giáo viên tự hiển thị bản ghi vừa tạo hoặc vừa sửa khi màn hình quay lại, không cần tải lại trang.
+- Chọn một giáo viên từ danh sách mở `/academic/teachers/{id}`. Màn hình chi tiết có hai tab `Hồ sơ giáo viên` và `Lớp đang dạy`; thêm `?tab=classes` để mở trực tiếp tab lớp đang dạy.
+- Nút `Sửa hồ sơ` trên màn hình chi tiết mở `/academic/teachers/{id}/edit`; đây là màn hình biểu mẫu, còn URL không có `/edit` chỉ đọc thông tin.
+- Màn hình chi tiết không hiển thị trường màu đại diện; quy tắc API `color_identification` vẫn giữ nguyên cho các luồng đã hỗ trợ trường này.
 
 ## Lỗi và trường hợp ngoại lệ
 
 - Trùng tên đăng nhập trả `422` gắn vào `username`: `Có tài khoản đã dùng tên đăng nhập này, vui lòng chọn tên khác.`
-- Số điện thoại sai định dạng trả `422` gắn vào `phone`: `Số điện thoại không hợp lệ.` Số điện thoại và email trùng với giáo viên khác không bị chặn.
+- Số điện thoại sai định dạng trả `422` gắn vào `phone`: `Số điện thoại không hợp lệ.` Email nhập sai định dạng trả `422` gắn vào `email`; để trống email được chấp nhận. Số điện thoại và email trùng với giáo viên khác không bị chặn.
 - Màu sai định dạng trả `422` gắn vào `color_identification`: `Màu phải ở dạng mã hex, ví dụ #FD7110.`
 - Mật khẩu dưới 8 ký tự trả `422` gắn vào `password`.
 - Không tìm thấy giáo viên trả `404`: `Không tìm thấy giáo viên.`
@@ -89,7 +92,7 @@ Trên trình duyệt:
 | [Phân quyền theo chức năng](../auth/phan-quyen.md) | Tiên quyết | Quyết định ai gọi được các endpoint giáo viên. | Không đủ quyền thì nhận `403`. |
 | [Xác thực bearer token](../auth/authentication.md) | Trạng thái dùng chung | Hồ sơ giáo viên sở hữu một bản ghi tài khoản đăng nhập. | Khóa tài khoản giáo viên khiến người đó không đăng nhập được. |
 | Lớp học | Hạ nguồn | Lớp học phải có giáo viên đang làm việc phụ trách. | Giáo viên đã nghỉ không xuất hiện khi chọn giáo viên cho lớp. |
-| [Ảnh đại diện hồ sơ](avatar.md) | Trạng thái dùng chung | Hồ sơ giáo viên mang ảnh đại diện của chính nó, lưu độc lập với các trường hồ sơ. | Ảnh hiện trong danh sách và biểu mẫu giáo viên; đổi ảnh không cần lưu lại hồ sơ. |
+| [Ảnh đại diện hồ sơ](avatar.md) | Trạng thái dùng chung | Hồ sơ giáo viên mang ảnh đại diện của chính nó, lưu độc lập với các trường hồ sơ. | Ảnh hiện trong danh sách và biểu mẫu giáo viên; khi sửa, ảnh mới được lưu cùng nút **Lưu thay đổi** của biểu mẫu. |
 
 ## Giới hạn hiện tại
 

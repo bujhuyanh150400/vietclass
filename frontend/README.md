@@ -61,7 +61,7 @@ cd api && php artisan db:seed --class=AuthAccountSeeder
 | `/login`              | Page          | Sign-in screen; recovers an existing session before showing the form.    |
 | `/dashboard`          | Page          | Protected landing screen inside the application shell.                   |
 | `/academic/subjects`                   | Page | Subject list, with create and edit at `/new` and `/[subjectId]`. |
-| `/academic/teachers`                   | Page | Teacher list, with create and edit at `/new` and `/[teacherId]`. |
+| `/academic/teachers`                   | Page | Teacher list, with create at `/new`, detail at `/[teacherId]`, and edit at `/[teacherId]/edit`. |
 | `/academic/classes`                    | Page | Class list, with create at `/new`.                              |
 | `/academic/classes/[classId]`          | Page | One class with its roster; edit at `/edit`.                    |
 | `/academic/students`                   | Page | Student list, with create and edit at `/new` and `/[studentId]`. |

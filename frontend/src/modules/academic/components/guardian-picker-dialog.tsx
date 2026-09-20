@@ -283,16 +283,16 @@ export function GuardianPickerDialog({
               clearDuplicate();
             }}
           >
-            <TabsList className="grid h-auto w-full grid-cols-2 rounded-control border border-vc-control bg-card p-[3px] group-data-[orientation=horizontal]/tabs:h-auto">
+            <TabsList variant="segmented" className="grid-cols-2">
               <TabsTrigger
                 value="existing"
-                className="min-h-10 rounded-[3px] text-[11px] font-medium data-[state=active]:bg-vc-ink data-[state=active]:text-vc-paper data-[state=active]:shadow-none"
+                className="rounded-[3px] text-[11px] font-medium data-[state=active]:bg-vc-ink data-[state=active]:text-vc-paper"
               >
                 Phụ huynh có sẵn
               </TabsTrigger>
               <TabsTrigger
                 value="new"
-                className="min-h-10 rounded-[3px] text-[11px] font-medium data-[state=active]:bg-vc-ink data-[state=active]:text-vc-paper data-[state=active]:shadow-none"
+                className="rounded-[3px] text-[11px] font-medium data-[state=active]:bg-vc-ink data-[state=active]:text-vc-paper"
               >
                 Tạo phụ huynh mới
               </TabsTrigger>

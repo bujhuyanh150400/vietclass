@@ -337,7 +337,7 @@ function TeacherTable({
   return (
     <Table
       aria-label="Danh sách giáo viên"
-      className="min-w-[1120px] table-fixed min-[1200px]:min-w-[1240px]"
+      className="min-w-[1120px] table-fixed"
     >
       <colgroup>
         <col className="w-[22%]" />

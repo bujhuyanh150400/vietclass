@@ -1,6 +1,6 @@
 # Ảnh đại diện hồ sơ
 
-Last Verified: 2026-09-11
+Last Verified: 2026-09-18
 
 ## Tổng quan
 
@@ -30,7 +30,7 @@ Chức năng dùng được cả qua API lẫn trên trình duyệt: `/academic/
 - Tệp chọn làm ảnh đại diện phải đang hoạt động (không ở thùng rác), thuộc sở hữu của tài khoản gắn với hồ sơ, và có phần mở rộng `jpg`, `jpeg`, `png` hoặc `webp`.
 - Một hồ sơ có nhiều nhất một liên kết ảnh đại diện. Lưu ảnh mới thay thế liên kết cũ trong cùng một transaction; không có lúc nào hồ sơ giữ hai ảnh.
 - Tệp đang được dùng làm ảnh đại diện không chuyển vào thùng rác và không xóa vĩnh viễn được, cho tới khi hồ sơ đổi sang ảnh khác hoặc bỏ ảnh.
-- Đổi ảnh đại diện luôn là một endpoint riêng, độc lập với endpoint sửa hồ sơ. Nút bấm thì tùy màn: màn `/academic/avatar` và màn sửa giáo viên có nút **Lưu ảnh đại diện** riêng, còn màn sửa học sinh gộp vào nút **Lưu thay đổi** của tờ hồ sơ và ghi ảnh sau khi các trường hồ sơ được chấp nhận.
+- Đổi ảnh đại diện luôn là một endpoint riêng, độc lập với endpoint sửa hồ sơ. Nút bấm tùy màn: màn `/academic/avatar` có nút **Lưu ảnh đại diện** riêng; màn sửa học sinh và giáo viên gộp việc ghi ảnh vào nút **Lưu thay đổi** của tờ hồ sơ, sau khi các trường hồ sơ được chấp nhận.
 - Riêng lúc **tạo** học sinh hoặc giáo viên, ảnh đại diện được gửi cùng request tạo tài khoản, vì tài khoản sở hữu tệp chưa tồn tại trước đó. Ảnh tải từ máy đi kèm dưới dạng multipart và chỉ được lưu khi cả hồ sơ và tài khoản tạo thành công.
 
 ## Hướng dẫn thao tác
@@ -50,9 +50,9 @@ Trên trình duyệt:
 2. Chọn một trong các nút **Không dùng ảnh**, **Ảnh đã tải** hoặc **Chọn avatar mẫu**.
 3. Với **Ảnh đã tải**: chọn một ảnh có sẵn trong thư viện, hoặc kéo ảnh mới vào khung **Tải ảnh mới** — ảnh được tải lên thư viện trước và vẫn ở đó dù bước lưu sau có lỗi.
 4. Với **Chọn avatar mẫu**: hộp thoại mở ra ở avatar đang có trên hồ sơ. Chọn **Nam** hoặc **Nữ**, bấm **Random avatar** đến khi vừa ý, rồi bấm **Dùng avatar này**. Đổi giới tính cũng random lại ngay. Random bao nhiêu lần cũng không đụng tới avatar đang lưu — chỉ **Dùng avatar này** mới áp dụng.
-5. Bấm **Lưu ảnh đại diện**.
+5. Ở màn `/academic/avatar`, bấm **Lưu ảnh đại diện**. Ở màn sửa học sinh hoặc giáo viên, bấm **Lưu thay đổi** để lưu cả hồ sơ và avatar.
 
-Khi tạo học sinh hoặc giáo viên, khung ảnh đại diện nằm trong biểu mẫu tạo: tải ảnh từ máy hoặc chọn một avatar mẫu, ảnh được lưu cùng lúc bấm **Tạo học sinh** hoặc **Tạo giáo viên**. Riêng màn tạo học sinh **mở ra đã có sẵn một avatar mẫu ngẫu nhiên**; màn tạo giáo viên vẫn bắt đầu ở không dùng ảnh.
+Khi tạo học sinh hoặc giáo viên, khung ảnh đại diện nằm trong biểu mẫu tạo: tải ảnh từ máy hoặc chọn một avatar mẫu, ảnh được lưu cùng lúc bấm **Tạo học sinh** hoặc **Tạo giáo viên**. Cả hai màn tạo đều mở ra với một avatar mẫu ngẫu nhiên.
 
 Màn **sửa** học sinh dùng đúng khung đó ở khối `01`, và lưu cùng nút **Lưu thay đổi**. Khung mở ra trên ảnh đang lưu — kể cả ảnh tải từ máy, thứ không dựng lại thành một lựa chọn đang soạn được — và chỉ ghi đè khi có ảnh mới, nên mở thẻ tải ảnh rồi bỏ đó không làm mất ảnh cũ. Màn này không có cách gỡ ảnh; muốn bỏ hẳn thì dùng màn ảnh đại diện riêng.
 
@@ -85,7 +85,7 @@ Khung chọn ảnh có hai chế độ, chuyển bằng một cặp nút **Tải
 | --- | --- | --- | --- |
 | [Quản lý tệp](../system/quan-ly-tep.md) | Tiên quyết | Ảnh tải lên phải là một tệp ảnh đang hoạt động trong thư viện của chính tài khoản; việc chọn nó tạo liên kết chặn xóa tệp. | Ảnh đang dùng làm ảnh đại diện không chuyển vào thùng rác được. |
 | [Quản lý học sinh](hoc-sinh.md) | Trạng thái dùng chung | Hồ sơ học sinh mang ảnh đại diện của chính nó; tạo học sinh gửi ảnh kèm theo, sửa học sinh ghi ảnh qua endpoint này ngay trong nút Lưu thay đổi. | Ảnh hiện trong danh sách, thẻ và biểu mẫu học sinh. |
-| [Quản lý giáo viên](giao-vien.md) | Trạng thái dùng chung | Hồ sơ giáo viên mang ảnh đại diện của chính nó; tạo giáo viên có thể gửi ảnh kèm theo. | Ảnh hiện trong danh sách và biểu mẫu giáo viên. |
+| [Quản lý giáo viên](giao-vien.md) | Trạng thái dùng chung | Hồ sơ giáo viên mang ảnh đại diện của chính nó; tạo giáo viên gửi ảnh kèm theo, sửa giáo viên ghi ảnh qua endpoint này khi bấm **Lưu thay đổi**. | Ảnh hiện trong danh sách và biểu mẫu giáo viên. |
 | [Xác thực bearer token](../auth/authentication.md) | Trạng thái dùng chung | Người dùng hiện tại báo `profile_id` và `avatar` để menu tài khoản vẽ được ảnh. | Ảnh đại diện hiện trong menu tài khoản ngay sau khi đăng nhập. |
 | [Phân quyền theo chức năng](../auth/phan-quyen.md) | Tiên quyết | Quyết định ai đổi được ảnh đại diện. | Bị thu hồi quyền thì nhận `403`. |
 
@@ -98,7 +98,7 @@ Khung chọn ảnh có hai chế độ, chuyển bằng một cặp nút **Tải
 - Vùng cắt là **giữa ảnh**, không kéo chọn được. Muốn người dùng tự chọn khung mặt thì cần một trình sửa ảnh gắn ngoài (`filepond-plugin-image-edit` chỉ là cầu nối, bản thân nó không sửa ảnh và cần Doka hoặc Pintura — đều là phần mềm thương mại).
 - Ảnh tải lên luôn bị thu về 512×512 và mã hoá WebP; không giữ lại được bản gốc độ phân giải cao.
 - Không cắt, xoay hay chỉnh ảnh tải lên trong ứng dụng; ảnh được dùng nguyên trạng.
-- Sửa hồ sơ không đổi ảnh đại diện kèm theo; ảnh luôn lưu bằng nút riêng của nó.
+- Màn ảnh đại diện riêng lưu bằng nút riêng; màn sửa học sinh và giáo viên lưu avatar đã chọn cùng nút **Lưu thay đổi**.
 - Hồ sơ chưa có tài khoản đăng nhập không dùng được ảnh tải lên.
 - Không có ảnh đại diện mặc định theo vai trò; hồ sơ không chọn ảnh thì hiển thị chữ cái đầu của tên.
 

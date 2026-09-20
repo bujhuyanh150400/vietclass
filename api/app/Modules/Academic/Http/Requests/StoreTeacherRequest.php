@@ -35,7 +35,7 @@ final class StoreTeacherRequest extends FormRequest
             'password' => ['required', 'string', 'min:8', 'max:255'],
             'full_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'regex:/^0[0-9]{9,10}$/'],
-            'email' => ['required', 'email', 'max:255'],
+            'email' => ['sometimes', 'nullable', 'email', 'max:255'],
             'gender' => ['required', 'integer', Rule::in(Gender::values())],
             'address' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'status' => ['required', 'integer', Rule::in(TeacherStatus::values())],

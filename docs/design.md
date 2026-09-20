@@ -225,6 +225,20 @@ kể cả ở state chưa có dữ liệu, vì nó là đường thoát khỏi �
 `EmptyState` đang để `alt=""` — mỗi dáng linh vật nói một điều mà tiêu đề không nói,
 xem `docs/opendesign.md` mục 3.
 
+### 7.2.1 Contract ListSheet cho mọi màn danh sách
+
+Mọi list dùng một `ListSheet` duy nhất theo thứ tự `toolbar → conditions bar → data region → pager`.
+Toolbar đặt search ở đầu và dùng popup button cho `Bộ lọc`, `Sắp xếp` và `Chế độ xem`;
+view popup luôn có `Bảng` / `Thẻ`, mô tả ngắn và dấu chọn, không dùng segmented toggle inline.
+Sheet không `overflow: hidden`; bảng rộng tự sở hữu vùng `overflow-x-auto`. Dưới `lg`
+(`1024px`), table ẩn và card dùng cùng dữ liệu hiện ra bằng CSS, không đo viewport bằng
+JavaScript. Data region phải có loading, empty, no-result và error state với owl tương ứng,
+copy tiếng Việt, action tiếp theo và giữ toolbar để người dùng thoát điều kiện hoặc thử lại.
+
+Artifact tham chiếu trực quan cho OpenDesign là `list-sheet.html` trong project
+`vietclass-polished-redesign`; contract cốt lõi đồng thời nằm trong `DESIGN.md` của
+VietClasses Design System.
+
 ### 7.3 Màn tạo và sửa học sinh
 
 Feature screen thứ hai áp bộ hình học ở mục 2.5, và là màn **biểu mẫu** đầu tiên làm
@@ -356,8 +370,10 @@ shadcn/ui style `new-york` trên `radix-ui`, icon `lucide-react`, biến thể b
 
 Nhóm dữ liệu (`shared/data-table/`): `DataTable`, `DataTableToolbar`, `DataTablePagination`, `ListToolbar`, `FilterPopover` + `FilterSection`, `SortPopover`, `ViewPopover`, `ConditionTag` + `ConditionsBar`, `EmptyState`, `ListSheet`, `StatePanel`.
 
-`ListSheet` và `StatePanel` được thêm cho màn danh sách học sinh (mục 7.2); hiện chỉ
-màn đó dùng.
+`ListSheet` và `StatePanel` được chuẩn hóa từ màn danh sách học sinh (mục 7.2) và là
+contract dùng chung cho mọi màn danh sách được redesign tiếp theo. Học sinh là reference
+đầu tiên; domain screen chỉ thay đổi cột, nhãn và action, không tự tạo lại khung sheet,
+conditions bar, popup view, pager hoặc các data states.
 
 Các prop dưới đây được thêm **kiểu additive**: bỏ trống thì component hành xử y như
 trước, nên các màn danh sách chưa redesign không đổi gì.

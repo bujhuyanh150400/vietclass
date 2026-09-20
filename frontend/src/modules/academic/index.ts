@@ -55,6 +55,7 @@ export { RoomFormContainer } from "./containers/room-form-container";
 export { RoomEditContainer } from "./containers/room-edit-container";
 
 export { TeachersContainer } from "./containers/teachers-container";
+export { TeacherDetailContainer } from "./containers/teacher-detail-container";
 export { TeacherFormContainer } from "./containers/teacher-form-container";
 export { TeacherEditContainer } from "./containers/teacher-edit-container";
 

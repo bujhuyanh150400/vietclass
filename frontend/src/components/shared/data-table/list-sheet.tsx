@@ -25,7 +25,7 @@ export function ListSheet({
   pager?: ReactNode;
 }) {
   return (
-    <div className="rounded-sheet border border-vc-rule bg-card shadow-vc-sheet">
+    <div className="min-w-0 rounded-sheet border border-vc-rule bg-card shadow-vc-sheet">
       <div className="relative border-b border-vc-rule px-4 py-3.5">{toolbar}</div>
 
       {conditions ? (

@@ -221,18 +221,18 @@ export function AvatarDraftField({
         onValueChange={(next) => chooseSource(next as AvatarSource)}
       >
 
-        <TabsList className="grid h-auto w-full grid-cols-2 rounded-control border border-vc-control bg-card p-[3px] group-data-[orientation=horizontal]/tabs:h-auto">
+        <TabsList variant="segmented" className="grid-cols-2">
           <TabsTrigger
             value="upload"
             disabled={disabled}
-            className="min-h-10 rounded-[3px] text-[11px] font-medium data-[state=active]:bg-vc-ink data-[state=active]:text-vc-paper data-[state=active]:shadow-none"
+            className="rounded-[3px] text-[11px] font-medium data-[state=active]:bg-vc-ink data-[state=active]:text-vc-paper"
           >
             Tải ảnh lên
           </TabsTrigger>
           <TabsTrigger
             value="sample"
             disabled={disabled}
-            className="min-h-10 rounded-[3px] text-[11px] font-medium data-[state=active]:bg-vc-ink data-[state=active]:text-vc-paper data-[state=active]:shadow-none"
+            className="rounded-[3px] text-[11px] font-medium data-[state=active]:bg-vc-ink data-[state=active]:text-vc-paper"
           >
             Avatar mẫu
           </TabsTrigger>
