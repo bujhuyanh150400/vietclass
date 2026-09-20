@@ -12,6 +12,7 @@ All behavioral guidelines live in `.agents/rules/` and are loaded automatically 
 | `.agents/rules/api/coding-standards.md` | Backend PHP/Laravel coding conventions, named arguments, Action error boundaries, and module error declarations.      |
 | `.agents/rules/database-rules.md`       | Shared backend database conventions, schema reference, migration discipline, and module-to-schema mapping.              |
 | `.agents/rules/frontend/academic-api.md` | Academic frontend TypeScript API contracts, form schemas, request types, and explicit endpoint paths.                |
+| `.agents/rules/multi-agent-orchestration.md` | Pi subagent routing, delegation, parallelism, review, escalation, and cost discipline. |
 
 ## Available Repository Skills (`/skill-name`)
 

@@ -79,9 +79,9 @@ states. Không sao chép HTML/CSS/JavaScript sinh bởi artifact vào runtime.
 Các màn danh sách dùng contract `ListSheet` chung thay vì tự dựng khung riêng. Nguồn tham chiếu có hai lớp:
 
 - Design system canonical: `DESIGN.md` của `user:vietclasses-design-system`; đây là phần OpenDesign tự nạp vào mỗi run.
-- Reference trực quan trong project: `list-sheet.html` của `vietclass-polished-redesign`; dùng để đối chiếu markup, toolbar, popup `Chế độ xem`, conditions bar, table/card fallback và bốn data states.
+- Reference trực quan trong project: `list-sheet.html` của `vietclass-polished-redesign`; dùng để đối chiếu markup, toolbar, popup `Chế độ xem`, conditions bar, table/card fallback và bốn data states. Cặp runtime `assets/list-sheet-controls.css` / `assets/list-sheet-controls.js` là implementation dùng chung cho search, filter, sort và view.
 
-Khi dựng list mới, agent phải giữ thứ tự `toolbar → conditions → data → pager`, dùng button popup cho `Bộ lọc` / `Sắp xếp` / `Chế độ xem`, và không tạo segmented toggle Bảng/Thẻ. Cột và action được phép thay đổi theo module; khung, responsive fallback và state semantics không được tự phát minh lại.
+Khi dựng list mới, agent phải giữ thứ tự `toolbar → conditions → data → pager`, import cặp shared controls và dùng button popup cho `Bộ lọc` / `Sắp xếp` / `Chế độ xem`, không tạo segmented toggle Bảng/Thẻ hoặc copy toolbar theo module. Filter fields, sort choices, cột và action được phép thay đổi theo module; khung, responsive fallback và state semantics không được tự phát minh lại.
 
 ## 6. Skill id của OpenDesign
 
