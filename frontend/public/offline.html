@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fdf5e8">
+  <title>Không có kết nối Internet · VietClasses</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #fdf5e8;
+      --raised: #fffdf7;
+      --ink: #1b1614;
+      --muted: #7a5a45;
+      --orange: #fd7110;
+      --wood: #78310a;
+      --rule: #e7d9c5;
+      --grid: rgb(120 49 10 / 0.09);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      min-width: 320px;
+      min-height: 100svh;
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Be Vietnam Pro", "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    main {
+      display: grid;
+      min-height: 100svh;
+      place-items: center;
+      padding: clamp(24px, 6vw, 72px);
+      background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 22px 22px;
+    }
+
+    article {
+      width: min(100%, 520px);
+      padding: clamp(28px, 6vw, 48px);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      background: var(--raised);
+      box-shadow: 0 5px 20px rgb(50 30 10 / 0.07);
+      text-align: center;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .brand img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+    }
+
+    .brand strong {
+      font-family: "Courier New", monospace;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+
+    .owl {
+      display: block;
+      width: 150px;
+      height: 150px;
+      margin: 24px auto 12px;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 9px;
+      border: 1px solid var(--rule);
+      border-radius: 5px;
+      background: var(--paper);
+      color: var(--muted);
+      font: 600 10px/1.5 "Courier New", monospace;
+      letter-spacing: 0.02em;
+    }
+
+    .status svg {
+      width: 15px;
+      height: 15px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-width: 1.8;
+    }
+
+    h1 {
+      margin: 14px 0 8px;
+      font-size: clamp(24px, 5vw, 30px);
+      line-height: 1.3;
+      letter-spacing: -0.025em;
+    }
+
+    p {
+      max-width: 39ch;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    button {
+      display: inline-flex;
+      min-height: 46px;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      margin-top: 24px;
+      padding: 10px 16px;
+      border: 1px solid var(--wood);
+      border-radius: 5px;
+      background: var(--orange);
+      box-shadow: 0 3px 0 var(--wood);
+      color: var(--ink);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--ink);
+      outline-offset: 3px;
+    }
+
+    button svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.8;
+    }
+
+    .limit {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--rule);
+      font-size: 11px;
+      line-height: 1.65;
+    }
+
+    @media (max-width: 520px) {
+      article {
+        border: 0;
+        box-shadow: none;
+      }
+
+      main { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <main role="status" aria-live="assertive">
+    <article>
+      <div class="brand">
+        <img src="/images/brand-mark.png" alt="">
+        <strong>VIETCLASSES</strong>
+      </div>
+      <img class="owl" src="/images/error.webp" alt="Chú cú VietClasses hoa mắt vì mất kết nối Internet">
+      <div class="status">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2 12.5a15.6 15.6 0 0 1 20 0M5.5 16a10.4 10.4 0 0 1 13 0M9 19.5a5.3 5.3 0 0 1 6 0M12 22h.01"></path><path d="M3 3l18 18"></path></svg>
+        MẠNG NGOẠI TUYẾN
+      </div>
+      <h1>Không có kết nối Internet</h1>
+      <p>Dữ liệu và các thao tác tạm thời chưa khả dụng. Kiểm tra kết nối mạng rồi thử lại.</p>
+      <button type="button" onclick="window.location.reload()">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0 2.3 5.7M20 4v7h-7"></path></svg>
+        Thử lại
+      </button>
+      <p class="limit">Bạn đang xem phiên ngoại tuyến tối thiểu. Kết nối mạng để tiếp tục làm việc với VietClasses.</p>
+    </article>
+  </main>
+</body>
+</html>

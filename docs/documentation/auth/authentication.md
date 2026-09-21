@@ -50,6 +50,7 @@ Bổ sung cho luồng trình duyệt:
 2. Nhấn `Đăng nhập`. Thành công sẽ chuyển tới `/dashboard`, hoặc trở lại đúng trang trong khu vực `/dashboard` hay `/academic` mà trước đó đã yêu cầu.
 3. Tên đăng nhập và nhãn vai trò hiển thị trong menu tài khoản ở thanh trên. Nhãn vai trò: `0` Quản trị viên, `1` Giáo viên, `2` Học viên, `3` Phụ huynh.
 4. Chọn `Đăng xuất` trong menu tài khoản để kết thúc phiên.
+5. Chọn `Cài ứng dụng` trong menu tài khoản để cài VietClasses. Chromium gọi prompt cài đặt native khi đủ điều kiện; Safari iOS, Android Chrome, hoặc desktop browser chưa có prompt sẽ hiện hướng dẫn tương ứng.
 
 Trình duyệt gọi trực tiếp các endpoint Laravel qua `${NEXT_PUBLIC_API_ORIGIN}/api/v1/auth/login`, `${NEXT_PUBLIC_API_ORIGIN}/api/v1/auth/me`, và `${NEXT_PUBLIC_API_ORIGIN}/api/v1/auth/logout` bằng Axios `withCredentials: true`; không có lớp frontend `/api/auth/*` chuyển tiếp các request này.
 
@@ -88,6 +89,7 @@ Lỗi nghiệp vụ của thao tác đăng nhập được throw dưới dạng 
 | API cần `auth:sanctum` | Tiên quyết | Token xác định người dùng của request. | Không có bearer token hợp lệ thì không truy cập được endpoint cần xác thực. |
 | [Phân quyền theo chức năng](phan-quyen.md) | Hạ nguồn | Phân quyền chỉ chạy sau khi request đã xác định được người dùng. | Đăng nhập được không có nghĩa là gọi được mọi endpoint; xem tài liệu phân quyền để biết ai được làm gì. |
 | Khu vực `/dashboard` và `/academic` | Phụ thuộc | Chỉ phiên đã xác minh mới vào được khu vực đã đăng nhập. | Chưa đăng nhập thì bị đưa về `/login`; đăng nhập xong thì trở lại đúng trang đã yêu cầu. |
+| PWA shell ngoại tuyến | Hỗ trợ trình bày | Service Worker chỉ cung cấp fallback tĩnh khi navigation không tới được mạng. | Có thể thấy màn ngoại tuyến sau khi refresh lúc mất mạng, nhưng không thấy dữ liệu hoặc thao tác đã đăng nhập. |
 
 ## Giới hạn hiện tại
 
@@ -95,7 +97,8 @@ Lỗi nghiệp vụ của thao tác đăng nhập được throw dưới dạng 
 - Giá trị role được trả về và được hiển thị dưới dạng nhãn. Phân quyền theo role cho từng endpoint được mô tả riêng tại [Phân quyền theo chức năng](phan-quyen.md); tài liệu này chỉ nói về việc xác định danh tính, không nói về việc danh tính đó được làm gì.
 - Phiên trình duyệt kết thúc khi cookie hết hạn hoặc khi đăng xuất; không có gia hạn tự động.
 - CORS chỉ cho phép origin cấu hình qua `CORS_ALLOWED_ORIGINS`; credentialed browser session cần origin khớp allowlist và header cho phép credentials.
-- Manifest và icon PWA hiện có thể dùng để nhận diện/cài đặt ứng dụng. Khi app đã tải xong mà mất mạng, giao diện hiển thị trạng thái ngoại tuyến; không có service worker, cache ứng dụng, dữ liệu offline, hoặc hỗ trợ mở/làm mới lần đầu khi đang offline.
+- Manifest, icon và native Service Worker hỗ trợ cài VietClasses trong secure context production. Service Worker chỉ cache tài liệu fallback ngoại tuyến cùng manifest, icon và artwork công khai cần thiết; không cache API, HTML đã xác thực, dữ liệu React Query, tệp riêng tư, session hoặc mutation.
+- Khi app đã hydrate mà mất mạng, giao diện React hiển thị trạng thái ngoại tuyến. Khi mở hoặc làm mới navigation lúc offline, Service Worker trả branded fallback tĩnh; fallback không có dữ liệu tài khoản và không cho làm việc offline. `http://app.vietclass.test:3000` chỉ là môi trường phát triển, không phải bằng chứng installability production.
 
 ## Tham chiếu kỹ thuật
 

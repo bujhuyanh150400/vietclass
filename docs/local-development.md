@@ -96,12 +96,25 @@ ba trạng thái phòng đều có mặt, số tiện ích trải từ 0 đến 
 "Chưa cập nhật" lẫn chip `+N`), hai phòng không có vị trí, và sức chứa trải từ 8 đến
 200 để bộ lọc khoảng sức chứa có gì để lọc.
 
+### 3.3 PWA install và offline shell
+
+Service Worker và install prompt cần **HTTPS trong production-like context**. `http://app.vietclass.test:3000` chỉ phù hợp để kiểm tra luồng ứng dụng local; browser có thể không phát `beforeinstallprompt` ở origin HTTP này. Trên Chrome/Edge production, cài ứng dụng từ prompt native hoặc mục `Cài ứng dụng` trong menu tài khoản. Safari iOS, Android Chrome và desktop browser không phát prompt sẽ hiện hướng dẫn thao tác tương ứng.
+
+Offline shell không chứa session hoặc dữ liệu học vụ. Service Worker chỉ cache `offline.html`, manifest, icon và artwork công khai cần cho fallback; API, HTML đã xác thực, avatar/tệp riêng tư và mutation không được cache hay replay. Sau khi đã tải app online:
+
+1. Mở DevTools → **Application** → **Service Workers** và xác nhận `/sw.js` đang active.
+2. Trong **Cache Storage**, xác nhận chỉ có cache tên `vietclasses-shell-*` với fallback/manifest/icon/artwork công khai.
+3. Tắt mạng rồi mở hoặc refresh một URL: browser hiển thị branded offline fallback, không hiển thị dữ liệu tài khoản.
+4. Khi app đã hydrate, tắt/bật mạng để kiểm tra React offline page xuất hiện rồi application UI trở lại.
+5. Bật mạng lại trước khi thao tác API; offline không hỗ trợ đọc/ghi dữ liệu.
+
 ## 4. Lỗi thường gặp
 
 | Triệu chứng | Nguyên nhân | Cách sửa |
 | --- | --- | --- |
 | Màn hình báo `Không kết nối được dịch vụ xác thực`; `api/storage/logs/laravel.log` có `could not find driver (Connection: pgsql, …)`; API trả 500 | PHP CLI thiếu `pdo_pgsql` | Mục 2.2, rồi khởi động lại `make dev` |
 | Trình duyệt chặn request với lỗi CORS; API luôn trả `Access-Control-Allow-Origin: http://app.vietclass.test:3000` | Đang mở app bằng `localhost:3000` nên origin không khớp allowlist | Thêm entry ở mục 2.1 và mở bằng `app.vietclass.test:3000` |
+| Dashboard báo `Không kết nối được dịch vụ xác thực`; log Laravel có `SQLSTATE[08006] ... 127.0.0.1:5432 ... Connection refused` dù container Postgres đang healthy | Container Postgres cũ được tạo không có mapping `127.0.0.1:5432->5432/tcp`, thường do chạy Compose không nạp `.env.dev` | Dừng `make dev` bằng `Ctrl+C`, chạy `make dev-down && make dev` để recreate container từ Makefile (volume dữ liệu được giữ), rồi kiểm tra `docker compose --env-file .env.dev -f compose.dev.yml ps` |
 | `make dev` dừng với `Failed to listen on 0.0.0.0:8000 (reason: Address already in use)` | Một tiến trình hoặc container khác đang giữ cổng 8000 | `ss -ltnp \| grep :8000` để tìm chủ sở hữu rồi dừng nó, hoặc đổi `DEV_API_PORT` cùng với cổng trong `frontend/.env.local` |
 | `FATAL: An unexpected Turbopack error occurred`, hoặc HMR lặp `Cell … no longer exists in task …` | Cache tăng dần trong `frontend/.next` đã hỏng | Dừng dev, `rm -rf frontend/.next`, chạy lại. Không có gì trong repo sai; `.next` chỉ là cache và sẽ được dựng lại |
 | Một màn danh sách đứng mãi ở khung xương chờ dù Network cho thấy request đã trả lỗi | Module graph của HMR đã lệch sau nhiều vòng sửa file — xem mục 4.1 | Khởi động lại `make dev`. Đừng kết luận là lỗi của màn hình đang sửa trước khi thử trên dev server sạch |
