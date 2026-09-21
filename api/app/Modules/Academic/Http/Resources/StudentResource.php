@@ -92,6 +92,7 @@ final class StudentResource extends JsonResource
         return $this->activeEnrollments
             ->map(fn (ClassEnrollment $enrollment): array => [
                 'class_id' => $enrollment->class_id,
+                'name' => $enrollment->schoolClass->name,
                 'code' => $enrollment->schoolClass->code,
                 'subject_name' => $enrollment->schoolClass->subject?->name,
             ])

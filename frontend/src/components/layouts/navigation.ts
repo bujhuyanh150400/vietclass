@@ -127,7 +127,8 @@ const SUB_ROUTE_LABELS: Record<string, string> = {
   "/academic/teachers/:id": "Chi tiết giáo viên",
   "/academic/teachers/:id/edit": "Sửa hồ sơ giáo viên",
   "/academic/students/new": "Thêm học sinh",
-  "/academic/students/:id": "Sửa hồ sơ học sinh",
+  "/academic/students/:id": "Chi tiết học sinh",
+  "/academic/students/:id/edit": "Sửa hồ sơ học sinh",
   "/academic/avatar": "Đổi ảnh đại diện",
 };
 

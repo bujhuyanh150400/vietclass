@@ -65,6 +65,7 @@ export { ClassEditContainer } from "./containers/class-edit-container";
 export { ClassDetailContainer } from "./containers/class-detail-container";
 
 export { StudentsContainer } from "./containers/students-container";
+export { StudentDetailContainer } from "./containers/student-detail-container";
 export { StudentFormContainer } from "./containers/student-form-container";
 export { StudentEditContainer } from "./containers/student-edit-container";
 

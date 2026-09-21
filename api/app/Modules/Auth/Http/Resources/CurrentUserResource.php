@@ -5,6 +5,7 @@ namespace App\Modules\Auth\Http\Resources;
 use App\Modules\Academic\Http\Resources\AvatarResource;
 use App\Modules\Academic\Models\Profile;
 use App\Modules\Auth\Models\User;
+use App\Modules\Auth\Support\FeatureResolver;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -27,6 +28,7 @@ final class CurrentUserResource extends JsonResource
             'username' => $this->username,
             'role' => $this->role->value,
             'is_active' => $this->is_active,
+            'features' => app(FeatureResolver::class)->effectiveCodes($this->resource),
             'profile_id' => $profile instanceof Profile ? $profile->id : null,
             'avatar' => $profile instanceof Profile && $profile->avatar_config !== null
                 ? AvatarResource::make($profile)->resolve($request)

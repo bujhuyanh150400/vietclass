@@ -1,12 +1,12 @@
 # Quản lý học sinh
 
-Last Verified: 2026-09-11
+Last Verified: 2026-09-21
 
 ## Tổng quan
 
 Hồ sơ học sinh và tài khoản đăng nhập của học sinh được quản lý cùng nhau: tạo hồ sơ là tạo luôn tài khoản. Hồ sơ học sinh phải tồn tại trước khi ghi danh vào lớp.
 
-Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/academic/students` (mục **Học sinh** trong nhóm Người dùng ở thanh bên).
+Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/academic/students` (mục **Học sinh** trong nhóm Người dùng ở thanh bên). Trên trình duyệt, `/academic/students/{id}` là trang **Chi tiết học sinh** và `/academic/students/{id}/edit` là trang **Sửa hồ sơ học sinh**.
 
 ## Người dùng và điều kiện
 
@@ -124,6 +124,14 @@ Gỡ một hàng chỉ gỡ **liên kết**, không xóa hồ sơ người đó:
 
 Hàng **Hủy** / **Tạo học sinh** nằm ở mép dưới của tờ hồ sơ. Trên màn hình hẹp hàng này dính đáy khung nhìn, nên biểu mẫu dài không che mất nút gửi của chính nó. Dưới 1024px tờ hồ sơ về một cột; dưới 640px mỗi khối về một cột.
 
+### Màn chi tiết học sinh
+
+- Từ tên hoặc ảnh học sinh, mục **Xem hồ sơ**, và đường dẫn `/academic/students/{id}`, người dùng mở trang chi tiết. Mục **Sửa hồ sơ** ở danh sách và nút **Sửa hồ sơ** trên trang chi tiết mở `/academic/students/{id}/edit`. Lưu thành công quay về `/academic/students/{id}`; tạo mới vẫn quay về `/academic/students`.
+- Trang chi tiết là màn đọc theo capability. Có `student.view` thì đọc được hồ sơ; API vẫn là rào chắn quyền cuối cùng. Có `student.update` thì hiện **Sửa hồ sơ**; **Đổi mật khẩu** chỉ hiện khi đồng thời có tài khoản đăng nhập. Có `student.toggle_active` thì hiện **Khóa tài khoản** hoặc **Mở tài khoản**, cũng chỉ khi học sinh có tài khoản. Thiếu capability tương ứng thì action đó không xuất hiện; không có tài khoản thì không có action tài khoản.
+- Khối **Thông tin cá nhân** che một phần số điện thoại học sinh và gắn nhãn **Đã che**. Khối **Người giám hộ** hiển thị toàn bộ roster, đếm số người, đặt **Liên hệ chính** ở đầu nếu có, và che số điện thoại từng người. Không có thao tác guardian riêng trên trang này; thêm, sửa hoặc gỡ thực hiện trong **Sửa hồ sơ**.
+- Tab **Lớp đang học** chỉ đọc `active_enrollments`, tức các ghi danh còn hiệu lực. Mỗi dòng có tên lớp, mã lớp, môn học và link **Xem lớp** tới `/academic/classes/{classId}`. Trang này không ghi danh, chuyển lớp hoặc cho nghỉ; các thao tác đó thuộc [Ghi danh vào lớp](../academic/ghi-danh.md). Khi không có lớp còn hiệu lực, trang hiện trạng thái trống và link **Mở danh sách lớp** tới `/academic/classes`.
+- Hai tab **Điểm thưởng** và **Báo cáo học tập** luôn hiển thị nhưng mang badge **Sắp có** và panel tĩnh. Chúng không hiển thị số liệu, không có thao tác và không gọi dữ liệu module chưa được triển khai.
+
 ### Màn danh sách học sinh
 
 | Vùng | Hành vi |
@@ -140,7 +148,7 @@ Hàng **Hủy** / **Tạo học sinh** nằm ở mép dưới của tờ hồ s�
 | Màn hình hẹp | Dưới 1024px bảng chuyển thành thẻ, mỗi thẻ mang đúng những thông tin cột bảng có |
 | Trạng thái, tìm kiếm, phân trang | Lưu trong URL nên chia sẻ và tải lại được |
 
-Menu thao tác của mỗi học sinh có `Sửa hồ sơ`, `Đổi mật khẩu`, và `Khóa tài khoản` / `Mở tài khoản`.
+Menu thao tác của mỗi học sinh có **Xem hồ sơ**; **Sửa hồ sơ** chỉ hiện khi có `student.update`, còn **Đổi mật khẩu** cần capability đó và tài khoản đăng nhập. **Khóa tài khoản** / **Mở tài khoản** cần `student.toggle_active` và tài khoản đăng nhập; các mục bị ẩn khi thiếu điều kiện tương ứng.
 
 ## Kết quả mong đợi
 
@@ -148,7 +156,7 @@ Menu thao tác của mỗi học sinh có `Sửa hồ sơ`, `Đổi mật khẩu
 - Mỗi hồ sơ kèm `username` và `is_account_active` của tài khoản, không kèm bất kỳ thông tin xác thực nào.
 - Mỗi hồ sơ kèm `profile_id` và `avatar`; `avatar` là `null` khi học sinh chưa chọn ảnh.
 - Mỗi hồ sơ kèm `guardians`: mọi phụ huynh của học sinh, người liên hệ chính đứng đầu, mỗi mục gồm `profile_id`, `full_name`, `phone`, `relationship`, `is_primary`. Bốn trường `guardian_name`, `guardian_phone`, `guardian_gender`, `guardian_relationship` của người liên hệ chính vẫn được giữ nguyên bên cạnh.
-- Mỗi hồ sơ kèm `active_enrollments`: các lớp học sinh đang theo học, mỗi mục gồm `class_id`, `code`, `subject_name`.
+- Mỗi hồ sơ kèm `active_enrollments`: các lớp học sinh đang theo học, mỗi mục gồm `class_id`, `name`, `code`, `subject_name`.
 - Cả `guardians` và `active_enrollments` luôn là mảng, rỗng khi không có, không bao giờ `null`.
 - Tạo thành công trả `201` với trạng thái Đang học; học sinh đăng nhập được ngay.
 - Sửa hồ sơ, khóa và mở tài khoản trả `200` cùng bản ghi sau khi cập nhật.

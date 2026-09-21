@@ -72,12 +72,18 @@ function IdentityMeta({ label, value }: { label: string; value: string }) {
 export function StudentIdentity({ student }: { student: Student }) {
   return (
     <div className="grid min-w-0 grid-cols-[44px_minmax(0,1fr)] items-center gap-3">
-      <UserAvatar
-        value={student.avatar}
-        name={student.full_name}
-        alt={`Ảnh đại diện của ${student.full_name}`}
-        className="size-11 border border-vc-control bg-background"
-      />
+      <Link
+        href={`/academic/students/${student.id}`}
+        aria-label={`Xem hồ sơ của ${student.full_name}`}
+        className="rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      >
+        <UserAvatar
+          value={student.avatar}
+          name={student.full_name}
+          alt={`Ảnh đại diện của ${student.full_name}`}
+          className="size-11 border border-vc-control bg-background"
+        />
+      </Link>
       <div className="grid min-w-0 gap-0.5">
         <Link
           href={`/academic/students/${student.id}`}
@@ -102,13 +108,19 @@ export function StudentRowMenu({
   student,
   onToggleAccount,
   onChangePassword,
+  canUpdate,
+  canToggleAccount,
   className,
 }: {
   student: Student;
   onToggleAccount: (student: Student) => void;
   onChangePassword: (student: Student) => void;
+  canUpdate: boolean;
+  canToggleAccount: boolean;
   className?: string;
 }) {
+  const hasAccount = typeof student.user_id === "number" && student.user_id > 0;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -123,14 +135,23 @@ export function StudentRowMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <Link href={`/academic/students/${student.id}`}>Sửa hồ sơ</Link>
+          <Link href={`/academic/students/${student.id}`}>Xem hồ sơ</Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onChangePassword(student)}>
-          Đổi mật khẩu
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onToggleAccount(student)}>
-          {student.is_account_active === false ? "Mở tài khoản" : "Khóa tài khoản"}
-        </DropdownMenuItem>
+        {canUpdate ? (
+          <DropdownMenuItem asChild>
+            <Link href={`/academic/students/${student.id}/edit`}>Sửa hồ sơ</Link>
+          </DropdownMenuItem>
+        ) : null}
+        {hasAccount && canUpdate ? (
+          <DropdownMenuItem onSelect={() => onChangePassword(student)}>
+            Đổi mật khẩu
+          </DropdownMenuItem>
+        ) : null}
+        {hasAccount && canToggleAccount ? (
+          <DropdownMenuItem onSelect={() => onToggleAccount(student)}>
+            {student.is_account_active === false ? "Mở tài khoản" : "Khóa tài khoản"}
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );

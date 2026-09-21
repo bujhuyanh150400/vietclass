@@ -1,21 +1,21 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { StudentDetailContainer } from "@/modules/academic";
+import { StudentEditContainer } from "@/modules/academic";
 
 export const metadata: Metadata = {
-  title: "Chi tiết học sinh",
+  title: "Sửa hồ sơ học sinh",
 };
 
 /**
- * Renders the read-only detail screen for one student profile.
+ * Renders the screen for editing one student profile.
  *
  * A path segment that is not a number never reaches the API: it cannot identify a
  * record, so it is a wrong URL rather than a missing student.
  */
-export default async function StudentDetailPage({
+export default async function EditStudentPage({
   params,
-}: PageProps<"/academic/students/[studentId]">) {
+}: PageProps<"/academic/students/[studentId]/edit">) {
   const { studentId } = await params;
   const id = Number(studentId);
 
@@ -23,5 +23,5 @@ export default async function StudentDetailPage({
     notFound();
   }
 
-  return <StudentDetailContainer studentId={id} />;
+  return <StudentEditContainer studentId={id} />;
 }

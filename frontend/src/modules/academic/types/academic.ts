@@ -153,6 +153,7 @@ export type StudentGuardianSummary = {
  */
 export type StudentEnrollmentSummary = {
   class_id: number;
+  name: string;
   code: string;
   subject_name: string | null;
 };

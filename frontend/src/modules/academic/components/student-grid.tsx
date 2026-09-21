@@ -25,10 +25,14 @@ export function StudentGrid({
   state,
   onToggleAccount,
   onChangePassword,
+  canUpdate,
+  canToggleAccount,
 }: {
   state: Extract<DataTableState<Student>, { kind: "content" }>;
   onToggleAccount: (student: Student) => void;
   onChangePassword: (student: Student) => void;
+  canUpdate: boolean;
+  canToggleAccount: boolean;
 }) {
   return (
     <div className="grid gap-3 p-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -38,12 +42,18 @@ export function StudentGrid({
           className="min-w-0 rounded-panel border border-vc-rule bg-card p-3.5 transition-shadow hover:border-vc-control hover:shadow-[0_3px_0_var(--vc-shell-rule)] focus-within:border-vc-control"
         >
           <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5">
-            <UserAvatar
-              value={student.avatar}
-              name={student.full_name}
-              alt={`Ảnh đại diện của ${student.full_name}`}
-              className="size-[38px]"
-            />
+            <Link
+              href={`/academic/students/${student.id}`}
+              aria-label={`Xem hồ sơ của ${student.full_name}`}
+              className="rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <UserAvatar
+                value={student.avatar}
+                name={student.full_name}
+                alt={`Ảnh đại diện của ${student.full_name}`}
+                className="size-[38px]"
+              />
+            </Link>
             <div className="min-w-0">
               <h3 className="truncate text-[15px] font-semibold">
                 <Link
@@ -61,6 +71,8 @@ export function StudentGrid({
               student={student}
               onToggleAccount={onToggleAccount}
               onChangePassword={onChangePassword}
+              canUpdate={canUpdate}
+              canToggleAccount={canToggleAccount}
             />
           </div>
 
