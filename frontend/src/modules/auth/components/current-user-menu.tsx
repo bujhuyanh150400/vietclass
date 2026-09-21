@@ -1,6 +1,13 @@
 import Link from "next/link";
-import { ChevronsUpDown, Image as ImageIcon, Loader2, LogOut } from "lucide-react";
+import { useState, useSyncExternalStore } from "react";
+import { ChevronsUpDown, Download, Image as ImageIcon, Loader2, LogOut } from "lucide-react";
 
+import { InstallAppDialog } from "@/components/shared/pwa/install-app-dialog";
+import { usePwaInstall } from "@/components/shared/pwa/pwa-provider";
+import {
+  getInstallGuidePlatform,
+  type InstallGuidePlatform,
+} from "@/components/shared/pwa/pwa-install-platform";
 import { UserAvatar } from "@/modules/academic";
 import {
   DropdownMenu,
@@ -23,6 +30,27 @@ import { getRoleLabel } from "../utils/get-role-label";
 /** Shown when the browser cannot complete the same-origin logout request. */
 const LOGOUT_RETRY_MESSAGE = "Không đăng xuất được. Vui lòng thử lại.";
 
+/** Keeps the browser-only platform snapshot stable because the user agent does not change during a session. */
+function subscribeToInstallPlatform(): () => void {
+  return () => undefined;
+}
+
+/** Resolves the install guide platform without reading browser globals during SSR. */
+function getBrowserInstallPlatform(): InstallGuidePlatform | null {
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+  return isStandalone
+    ? null
+    : getInstallGuidePlatform(navigator.userAgent, navigator.maxTouchPoints);
+}
+
+/** Returns the server snapshot that prevents an install-platform hydration mismatch. */
+function getServerInstallPlatform(): InstallGuidePlatform | null {
+  return null;
+}
+
 /**
  * Renders the account menu from user data and callback state supplied by its
  * container; logout mutation and navigation stay outside this component. It
@@ -41,6 +69,25 @@ export function CurrentUserMenu({
   onLogout: () => void;
 }) {
   const { isMobile } = useSidebar();
+  const { hasNativePrompt, isInstalled, requestInstall } = usePwaInstall();
+  const guidePlatform = useSyncExternalStore(
+    subscribeToInstallPlatform,
+    getBrowserInstallPlatform,
+    getServerInstallPlatform,
+  );
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+
+  /** Opens the native prompt or the platform fallback after the menu item is selected. */
+  function handleInstallSelect(): void {
+    if (hasNativePrompt) {
+      void requestInstall();
+      return;
+    }
+
+    setIsGuideOpen(true);
+  }
+
+  const canShowInstall = !isInstalled && (hasNativePrompt || guidePlatform !== null);
 
   return (
     <SidebarMenu>
@@ -83,6 +130,16 @@ export function CurrentUserMenu({
               <Link href="/academic/avatar"><ImageIcon aria-hidden="true" />Đổi ảnh đại diện</Link>
             </DropdownMenuItem>
 
+            {canShowInstall ? (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={handleInstallSelect}>
+                  <Download aria-hidden="true" />
+                  Cài ứng dụng
+                </DropdownMenuItem>
+              </>
+            ) : null}
+
             <DropdownMenuSeparator />
 
             <DropdownMenuItem
@@ -108,6 +165,14 @@ export function CurrentUserMenu({
             ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {guidePlatform !== null && !hasNativePrompt ? (
+          <InstallAppDialog
+            open={isGuideOpen}
+            onOpenChange={setIsGuideOpen}
+            platform={guidePlatform}
+          />
+        ) : null}
       </SidebarMenuItem>
     </SidebarMenu>
   );
