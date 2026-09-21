@@ -97,25 +97,29 @@ export function PwaProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const requestInstall = useCallback(async (): Promise<InstallPromptResult> => {
-    const promptEvent = deferredPrompt.current;
+  const requestInstall = useCallback(
+    /** Requests the deferred native prompt once from the account-menu click. */
+    async (): Promise<InstallPromptResult> => {
+      const promptEvent = deferredPrompt.current;
 
-    if (promptEvent === null) {
-      return "unavailable";
-    }
+      if (promptEvent === null) {
+        return "unavailable";
+      }
 
-    try {
-      await promptEvent.prompt();
-      const { outcome } = await promptEvent.userChoice;
+      try {
+        await promptEvent.prompt();
+        const { outcome } = await promptEvent.userChoice;
 
-      return outcome;
-    } catch {
-      return "dismissed";
-    } finally {
-      deferredPrompt.current = null;
-      setHasNativePrompt(false);
-    }
-  }, []);
+        return outcome;
+      } catch {
+        return "dismissed";
+      } finally {
+        deferredPrompt.current = null;
+        setHasNativePrompt(false);
+      }
+    },
+    [],
+  );
 
   const value: PwaInstallState = {
     isInstalled,
