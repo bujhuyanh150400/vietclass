@@ -10,6 +10,7 @@ export type CurrentUser = {
   username: string;
   role: UserRole;
   is_active: boolean;
+  features: string[];
   profile_id: number | null;
   avatar: AvatarValue;
 };

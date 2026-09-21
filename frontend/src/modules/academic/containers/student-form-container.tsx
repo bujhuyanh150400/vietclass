@@ -239,7 +239,8 @@ export function StudentFormContainer({ student }: { student?: Student }) {
       });
     },
     onSuccess: () => {
-      router.push(LIST_HREF);
+      const destination = isEditing ? `/academic/students/${student.id}` : LIST_HREF;
+      router.push(destination);
       router.refresh();
     },
     successMessage: isEditing

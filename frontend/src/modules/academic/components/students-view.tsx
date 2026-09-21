@@ -59,6 +59,8 @@ export type StudentsViewProps = {
   onPageChange: (page: number) => void;
   onToggleAccount: (student: Student) => void;
   onChangePassword: (student: Student) => void;
+  canUpdate: boolean;
+  canToggleAccount: boolean;
 };
 
 /**
@@ -91,6 +93,8 @@ export function StudentsView({
   onPageChange,
   onToggleAccount,
   onChangePassword,
+  canUpdate,
+  canToggleAccount,
 }: StudentsViewProps) {
   const hasConditions = hasStudentConditions({ search, filterCount, sort });
 
@@ -149,6 +153,8 @@ export function StudentsView({
             onClearConditions={onClearConditions}
             onToggleAccount={onToggleAccount}
             onChangePassword={onChangePassword}
+            canUpdate={canUpdate}
+            canToggleAccount={canToggleAccount}
             view={view}
           />
         </div>
@@ -224,6 +230,8 @@ function StudentResults({
   onClearConditions,
   onToggleAccount,
   onChangePassword,
+  canUpdate,
+  canToggleAccount,
 }: {
   state: DataTableState<Student>;
   hasConditions: boolean;
@@ -231,6 +239,8 @@ function StudentResults({
   onClearConditions: () => void;
   onToggleAccount: (student: Student) => void;
   onChangePassword: (student: Student) => void;
+  canUpdate: boolean;
+  canToggleAccount: boolean;
 }) {
   if (state.kind === "loading") {
     return <StudentListSkeleton />;
@@ -298,6 +308,8 @@ function StudentResults({
         state={state}
         onToggleAccount={onToggleAccount}
         onChangePassword={onChangePassword}
+        canUpdate={canUpdate}
+        canToggleAccount={canToggleAccount}
       />
     );
   }
@@ -309,6 +321,8 @@ function StudentResults({
           rows={state.rows}
           onToggleAccount={onToggleAccount}
           onChangePassword={onChangePassword}
+          canUpdate={canUpdate}
+          canToggleAccount={canToggleAccount}
         />
       </div>
       <div className="lg:hidden">
@@ -316,6 +330,8 @@ function StudentResults({
           state={state}
           onToggleAccount={onToggleAccount}
           onChangePassword={onChangePassword}
+          canUpdate={canUpdate}
+          canToggleAccount={canToggleAccount}
         />
       </div>
     </>
@@ -336,10 +352,14 @@ function StudentTable({
   rows,
   onToggleAccount,
   onChangePassword,
+  canUpdate,
+  canToggleAccount,
 }: {
   rows: Student[];
   onToggleAccount: (student: Student) => void;
   onChangePassword: (student: Student) => void;
+  canUpdate: boolean;
+  canToggleAccount: boolean;
 }) {
   // One min-width at every size the table is shown at. A narrower variant was
   // tried for the 1024–1279 band and had to go: at 980px the guardian column
@@ -405,6 +425,8 @@ function StudentTable({
                 student={student}
                 onToggleAccount={onToggleAccount}
                 onChangePassword={onChangePassword}
+                canUpdate={canUpdate}
+                canToggleAccount={canToggleAccount}
                 className="opacity-35 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100"
               />
             </TableCell>

@@ -11,6 +11,7 @@ import {
 } from "nuqs";
 
 import { useResourceList, type ResourceListViewModel } from "@/hooks/use-resource-list";
+import { isApiClientError } from "@/lib/api/api-client-error";
 
 import {
   changeStudentPassword,
@@ -175,6 +176,8 @@ export function useStudent(id: number) {
   return useQuery({
     queryKey: academicQueryKeys.students.detail(id),
     queryFn: () => fetchStudent(id),
+    retry: (failureCount, error) =>
+      !(isApiClientError(error) && (error.status === 403 || error.status === 404)) && failureCount < 1,
   });
 }
 

@@ -2,12 +2,16 @@
 
 use App\Core\Data\ActionResult;
 use App\Core\Exceptions\ActionError;
+use App\Modules\Academic\Enums\AcademicFeature;
 use App\Modules\Auth\Actions\LoginAction;
 use App\Modules\Auth\Actions\LogoutAction;
 use App\Modules\Auth\Enums\AuthError;
 use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Auth\Models\Feature;
 use App\Modules\Auth\Models\User;
+use App\Modules\Auth\Support\FeatureResolver;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 test('login action returns a business failure result for invalid credentials', function () {
@@ -109,13 +113,55 @@ test('it logs in with a bearer token and returns the current user', function () 
         ->assertJsonPath('data.user.id', $user->id)
         ->assertJsonPath('data.user.username', 'teacher_one')
         ->assertJsonPath('data.user.role', UserRole::Teacher->value)
-        ->assertJsonPath('data.user.is_active', true);
+        ->assertJsonPath('data.user.is_active', true)
+        ->assertJsonPath('data.user.features', app(FeatureResolver::class)->effectiveCodes($user));
 
     $this->withToken($login->json('data.token'))
         ->getJson('/api/v1/auth/me')
         ->assertOk()
         ->assertJsonPath('data.id', $user->id)
-        ->assertJsonPath('data.username', 'teacher_one');
+        ->assertJsonPath('data.username', 'teacher_one')
+        ->assertJsonPath('data.features', app(FeatureResolver::class)->effectiveCodes($user));
+});
+
+test('denied identity features are absent from the current user response', function () {
+    $user = User::factory()->create([
+        'role' => UserRole::Admin,
+    ]);
+
+    $feature = Feature::query()->create([
+        'code' => AcademicFeature::StudentView->value,
+        'name' => 'Xem chi tiết học sinh',
+        'group_code' => 'student',
+    ]);
+
+    DB::table('feature_user')->insert([
+        'user_id' => $user->id,
+        'feature_id' => $feature->id,
+        'granted' => false,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    app(FeatureResolver::class)->flush();
+
+    $response = $this->withToken($user->createToken('test')->plainTextToken)
+        ->getJson('/api/v1/auth/me')
+        ->assertOk()
+        ->assertJsonPath('data.features', app(FeatureResolver::class)->effectiveCodes($user));
+
+    expect($response->json('data.features'))
+        ->not->toContain(AcademicFeature::StudentView->value);
+});
+
+test('an inactive identity response contains no effective features', function () {
+    $user = User::factory()->create([
+        'is_active' => false,
+    ]);
+
+    $this->withToken($user->createToken('test')->plainTextToken)
+        ->getJson('/api/v1/auth/me')
+        ->assertOk()
+        ->assertJsonPath('data.features', []);
 });
 
 test('it issues normal and remembered tokens with their configured lifetimes', function () {
