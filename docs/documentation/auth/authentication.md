@@ -1,13 +1,13 @@
 # Xác thực bearer token
 
-Last Verified: 2026-08-28
+Last Verified: 2026-09-21
 
 ## Tổng quan
 
 Auth cung cấp đăng nhập bằng username và mật khẩu, sau đó cấp bearer token để gọi các API cần xác thực. Chức năng này có hai mặt sử dụng:
 
 - **API client** gọi trực tiếp các endpoint Laravel dưới tiền tố `/api/v1` và tự quản lý bearer token.
-- **Trình duyệt** dùng màn hình `/login` của frontend. Bearer token không bao giờ đi tới trình duyệt; frontend giữ token trong cookie `HttpOnly` và chỉ trả về thông tin người dùng.
+- **Trình duyệt** dùng màn hình `/login` của frontend. Axios gọi trực tiếp `${NEXT_PUBLIC_API_ORIGIN}/api/v1/auth/*` với `withCredentials: true`; bearer token nằm trong cookie `HttpOnly` và chỉ trả về thông tin người dùng cho giao diện.
 
 Chức năng này là nền tảng xác thực hiện có; chưa bao gồm quản lý vai trò hay chức năng trường học.
 
@@ -16,7 +16,7 @@ Chức năng này là nền tảng xác thực hiện có; chưa bao gồm quả
 - Bất kỳ người dùng có bản ghi `users` đang hoạt động đều có thể đăng nhập.
 - API client phải gửi JSON đến endpoint dưới tiền tố `/api/v1`.
 - Các endpoint xem thông tin và đăng xuất của Laravel cần header `Authorization: Bearer <token>` hợp lệ.
-- Người dùng trình duyệt chỉ cần truy cập `/login`; frontend tự gắn cookie phiên vào các request cùng nguồn.
+- Người dùng trình duyệt chỉ cần truy cập `/login`; Axios tự gửi cookie phiên tới API được cấu hình qua `NEXT_PUBLIC_API_ORIGIN`. Khi API khác origin, origin frontend phải nằm trong `CORS_ALLOWED_ORIGINS` và Laravel phải cho phép credentialed CORS.
 
 ## Quy tắc nghiệp vụ
 
@@ -51,14 +51,14 @@ Bổ sung cho luồng trình duyệt:
 3. Tên đăng nhập và nhãn vai trò hiển thị trong menu tài khoản ở thanh trên. Nhãn vai trò: `0` Quản trị viên, `1` Giáo viên, `2` Học viên, `3` Phụ huynh.
 4. Chọn `Đăng xuất` trong menu tài khoản để kết thúc phiên.
 
-Các endpoint cùng nguồn mà trình duyệt gọi là `POST /api/auth/login`, `GET /api/auth/session`, và `POST /api/auth/logout`. Đây là endpoint của frontend, **không phải** endpoint Laravel; chúng khác với `/api/v1/auth/*` cả về đường dẫn lẫn phương thức, và chỉ tồn tại để giữ bearer token ở phía server.
+Trình duyệt gọi trực tiếp các endpoint Laravel qua `${NEXT_PUBLIC_API_ORIGIN}/api/v1/auth/login`, `${NEXT_PUBLIC_API_ORIGIN}/api/v1/auth/me`, và `${NEXT_PUBLIC_API_ORIGIN}/api/v1/auth/logout` bằng Axios `withCredentials: true`; không có lớp frontend `/api/auth/*` chuyển tiếp các request này.
 
 ## Kết quả mong đợi
 
-- Đăng nhập thành công qua API trả token bearer, thời điểm hết hạn, và thông tin người dùng gồm `id`, `username`, `role`, `is_active` trong envelope `data`.
-- `GET /api/v1/auth/me` trả thông tin người dùng hiện tại trong envelope `data`.
+- Đăng nhập thành công qua API trả token bearer, thời điểm hết hạn, và thông tin người dùng gồm `id`, `username`, `role`, `is_active`, `features: string[]` trong envelope `data`.
+- `GET /api/v1/auth/me` trả thông tin người dùng hiện tại cùng `features: string[]` — danh sách quyền hiệu lực — trong envelope `data`.
 - `DELETE /api/v1/auth/logout` trả `204 No Content`; token đã dùng không thể tiếp tục xác thực.
-- Đăng nhập thành công trên trình duyệt trả về chỉ `{ "data": { id, username, role, is_active } }` kèm cookie phiên; không có token trong phần thân phản hồi.
+- Đăng nhập thành công trên trình duyệt trả về thông tin định danh gồm `id`, `username`, `role`, `is_active`, `features` kèm cookie phiên; token vẫn không được giao cho mã giao diện qua API client.
 - Tải lại `/dashboard` hoặc một trang `/academic/...` vẫn giữ phiên. `document.cookie` không đọc được `vietclass_session`.
 - Đăng xuất trên trình duyệt thu hồi đúng một token ở Laravel, xóa cookie, đưa về `/login`, và `/dashboard` lại được bảo vệ.
 
@@ -94,7 +94,8 @@ Lỗi nghiệp vụ của thao tác đăng nhập được throw dưới dạng 
 - Chưa có endpoint hay màn hình đăng ký, đổi mật khẩu, đặt lại mật khẩu, làm mới token, hoặc quản trị token. Màn hình `/login` vì vậy không có liên kết đăng ký hay quên mật khẩu.
 - Giá trị role được trả về và được hiển thị dưới dạng nhãn. Phân quyền theo role cho từng endpoint được mô tả riêng tại [Phân quyền theo chức năng](phan-quyen.md); tài liệu này chỉ nói về việc xác định danh tính, không nói về việc danh tính đó được làm gì.
 - Phiên trình duyệt kết thúc khi cookie hết hạn hoặc khi đăng xuất; không có gia hạn tự động.
-- CORS chỉ cho phép origin cấu hình qua `CORS_ALLOWED_ORIGINS` và không hỗ trợ credentialed browser session. Frontend không bị ảnh hưởng vì chỉ gọi Laravel từ phía server.
+- CORS chỉ cho phép origin cấu hình qua `CORS_ALLOWED_ORIGINS`; credentialed browser session cần origin khớp allowlist và header cho phép credentials.
+- Manifest và icon PWA hiện có thể dùng để nhận diện/cài đặt ứng dụng. Khi app đã tải xong mà mất mạng, giao diện hiển thị trạng thái ngoại tuyến; không có service worker, cache ứng dụng, dữ liệu offline, hoặc hỗ trợ mở/làm mới lần đầu khi đang offline.
 
 ## Tham chiếu kỹ thuật
 
@@ -102,5 +103,6 @@ Lỗi nghiệp vụ của thao tác đăng nhập được throw dưới dạng 
 - Kiểm thử xác định: `api/tests/Behavioral/AuthenticationTest.php`, `api/tests/Security/AuthenticationSecurityTest.php`
 - Schema: `docs/database.md`
 - Module Auth của frontend: `frontend/src/modules/auth/` (`index.ts` cho client, `server.ts` chỉ cho server)
-- Endpoint cùng nguồn của frontend: `frontend/app/api/auth/`
+- Request browser và CORS credentials: `frontend/src/lib/api/browser-request.ts`
+- Manifest/icon và metadata: `frontend/public/app-icons/web/site.webmanifest`, `frontend/app/layout.tsx`
 - Bảo vệ đường dẫn: `frontend/proxy.ts` và `frontend/app/(protected)/layout.tsx`
