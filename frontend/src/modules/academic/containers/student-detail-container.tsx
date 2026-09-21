@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { EmptyState } from "@/components/shared/data-table/empty-state";
-import { useCurrentUser } from "@/modules/auth";
+import { useHasFeature } from "@/modules/auth";
 import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
 import { useToast } from "@/components/shared/toast-provider";
 import { Button } from "@/components/ui/button";
@@ -19,12 +19,8 @@ import { useChangeStudentPassword, useSetStudentAccountActive, useStudent } from
 /** Loads one student and coordinates capability-safe detail actions. */
 export function StudentDetailContainer({ studentId }: { studentId: number }) {
   const query = useStudent(studentId);
-  const currentUser = useCurrentUser(true);
-
-  const canUpdate =
-    currentUser.isSuccess && currentUser.data.features.includes("student.update");
-  const canToggleAccount =
-    currentUser.isSuccess && currentUser.data.features.includes("student.toggle_active");
+  const canUpdate = useHasFeature("student.update");
+  const canToggleAccount = useHasFeature("student.toggle_active");
 
   if (query.data !== undefined) {
     return (
