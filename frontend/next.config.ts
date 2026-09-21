@@ -16,6 +16,9 @@ if (process.env.NODE_ENV === "development" && !ALLOWED_ORIGIN) {
 
 const nextConfig: NextConfig = {
   ...(ALLOWED_ORIGIN ? { allowedDevOrigins: [ALLOWED_ORIGIN] } : {}),
+  experimental: {
+    useOffline: true,
+  },
 };
 
 export default nextConfig;
