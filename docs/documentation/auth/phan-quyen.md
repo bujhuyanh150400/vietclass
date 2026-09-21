@@ -1,6 +1,6 @@
 # Phân quyền theo chức năng
 
-Last Verified: 2026-08-27
+Last Verified: 2026-09-21
 
 ## Tổng quan
 
@@ -13,6 +13,7 @@ Trước chức năng này, API chỉ phân biệt được đã đăng nhập h
 - Chỉ áp dụng cho endpoint đã gắn quyền. Endpoint xác thực (`/auth/*`) không nằm trong phạm vi này.
 - Người gọi phải có bearer token hợp lệ; thiếu token vẫn trả `401` như trước.
 - Chưa có giao diện hay endpoint để quản trị viên tự cấp quyền. Việc cấp riêng cho từng người dùng hiện thực hiện trực tiếp trong cơ sở dữ liệu.
+- Phản hồi đăng nhập và `GET /api/v1/auth/me` trả `features: string[]`, là danh sách quyền hiệu lực của định danh đã xác thực.
 
 ## Quy tắc nghiệp vụ
 
@@ -44,7 +45,7 @@ Lệnh in số quyền đã đồng bộ. Nếu cơ sở dữ liệu còn quyề
 ## Kết quả mong đợi
 
 - Người dùng có quyền gọi endpoint thành công như bình thường.
-- Người dùng không có quyền nhận `403` với thông điệp `Bạn không có quyền thực hiện thao tác này.` trong envelope lỗi chuẩn.
+- Người dùng không có quyền nhận `403` với thông điệp `Bạn không có quyền thực hiện thao tác này.` trong envelope lỗi chuẩn. Đây vẫn là ranh giới bảo mật duy nhất; UI chỉ ẩn action trình bày tương ứng với các mã trong `features`.
 - Không có token nhận `401` với thông điệp `Chưa xác thực.`.
 - Thêm một bản ghi cấp riêng có `granted = true` mở ngay quyền đó cho người dùng, không cần triển khai lại mã nguồn.
 - Thêm một bản ghi có `granted = false` thu hồi ngay quyền đó, kể cả với quản trị viên.
@@ -67,7 +68,8 @@ Lệnh in số quyền đã đồng bộ. Nếu cơ sở dữ liệu còn quyề
 
 - Đợt này chỉ vai trò Quản trị viên có quyền học vụ. Giáo viên, Học viên và Phụ huynh không có quyền nào.
 - Không có endpoint hay màn hình để xem và sửa phân quyền. Cấp riêng phải thao tác trực tiếp trong cơ sở dữ liệu.
-- API chưa trả danh sách quyền hiệu lực của người dùng. Frontend vì thế ẩn hiện menu Học vụ theo **vai trò** (chỉ Quản trị viên), không theo quyền thật. Ranh giới thật vẫn là `403` từ API; phần ẩn hiện chỉ là mỹ quan. Hệ quả: nếu cấp riêng một quyền Học vụ cho tài khoản không phải Quản trị viên, người đó gọi được API nhưng không thấy menu. Cần bổ sung danh sách quyền vào `GET /auth/me` trước khi dùng phân quyền riêng trên thực tế.
+- Frontend dùng `features: string[]` từ định danh hiện tại để ẩn các action trình bày mà người dùng không có quyền hiệu lực. Việc này không thay thế middleware/API: request bị từ chối vẫn trả `403`, và UI không được coi là ranh giới bảo mật.
+- Không có UI/API trực tiếp để quản trị danh mục hoặc ngoại lệ quyền; thay đổi cấp/thu hồi riêng vẫn thực hiện trực tiếp trong cơ sở dữ liệu.
 - Chưa có phân quyền theo từng bản ghi. Ai có quyền xem lớp thì xem được mọi lớp.
 - Quyền được phân giải một lần cho mỗi request. Thay đổi phân quyền giữa chừng một request không có hiệu lực trong chính request đó.
 
@@ -75,5 +77,6 @@ Lệnh in số quyền đã đồng bộ. Nếu cơ sở dữ liệu còn quyề
 
 - Module: `api/app/Modules/Auth/`
 - Khai báo quyền của từng module: `api/app/Modules/Academic/Enums/AcademicFeature.php`, `api/app/Modules/Auth/Enums/AcademicFeature.php`
-- Kiểm thử xác định: `api/tests/Behavioral/AuthFeatureResolutionTest.php`, `api/tests/Security/AcademicAuthorizationTest.php`
+- Kiểm thử xác định: `api/tests/Behavioral/AuthenticationTest.php`, `api/tests/Behavioral/AuthFeatureResolutionTest.php`, `api/tests/Security/AcademicAuthorizationTest.php`
+- Hợp đồng định danh frontend: `frontend/src/modules/auth/types/auth.ts`, `frontend/src/modules/auth/hooks/use-has-feature.ts`
 - Schema: `docs/database.md`

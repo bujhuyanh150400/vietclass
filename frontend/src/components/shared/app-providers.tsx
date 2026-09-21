@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
+import { ConnectivityBoundary } from "@/components/shared/connectivity-boundary";
 import { ToastProvider } from "@/components/shared/toast-provider";
 
 /**
@@ -30,8 +31,9 @@ function createQueryClient() {
 
 /**
  * Wraps server-rendered children with the client-side query cache, the toast
- * surface, and the nuqs URL-state adapter, keeping those browser-only providers
- * out of the root layout so route segments stay Server Components.
+ * surface, the nuqs URL-state adapter, and the connectivity boundary, keeping
+ * those browser-only providers out of the root layout so route segments stay
+ * Server Components.
  */
 export function AppProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(createQueryClient);
@@ -39,7 +41,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <NuqsAdapter>
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <ConnectivityBoundary>{children}</ConnectivityBoundary>
+        </ToastProvider>
       </NuqsAdapter>
     </QueryClientProvider>
   );

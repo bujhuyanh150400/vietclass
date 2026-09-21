@@ -5,7 +5,7 @@ import { useState } from "react";
 import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
 import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
-import { useCurrentUser } from "@/modules/auth";
+import { useHasFeature } from "@/modules/auth";
 
 import { ChangePasswordDialog } from "../components/change-password-dialog";
 import { StudentsView } from "../components/students-view";
@@ -26,7 +26,8 @@ import type { Student } from "../types/academic";
  */
 export function StudentsContainer() {
   const list = useStudentList();
-  const currentUser = useCurrentUser(true);
+  const canUpdate = useHasFeature("student.update");
+  const canToggleAccount = useHasFeature("student.toggle_active");
   const toggleAccount = useSetStudentAccountActive();
   const changePassword = useChangeStudentPassword();
   const showToast = useToast();
@@ -66,10 +67,6 @@ export function StudentsContainer() {
   }
 
   const locking = lockTarget?.is_account_active !== false;
-  const canUpdate =
-    currentUser.isSuccess && currentUser.data.features.includes("student.update");
-  const canToggleAccount =
-    currentUser.isSuccess && currentUser.data.features.includes("student.toggle_active");
 
   return (
     <>

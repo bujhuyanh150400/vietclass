@@ -8,6 +8,7 @@ export { loginSchema } from "./schemas/login-schema";
 export type { LoginFormInput, LoginFormValues } from "./schemas/login-schema";
 
 export { useCurrentUser } from "./hooks/use-current-user";
+export { useHasFeature } from "./hooks/use-has-feature";
 export { authQueryKeys } from "./hooks/auth-query-keys";
 
 export { getRoleLabel } from "./utils/get-role-label";
