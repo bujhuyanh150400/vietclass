@@ -22,9 +22,12 @@ test("keeps the Service Worker cache limited to the static offline shell", () =>
   assert.match(worker, /const CACHE_PREFIX = "vietclasses-shell-"/);
   assert.match(worker, /const CACHE_NAME = `\$\{CACHE_PREFIX\}v\d+`/);
   assert.match(worker, /request\.mode !== "navigate"/);
-  assert.match(worker, /caches\.match\("\/offline\.html"\)/);
+  assert.match(
+    worker,
+    /async function getOfflineFallback\(\) \{[\s\S]*?caches\.open\(CACHE_NAME\)[\s\S]*?cache\.match\("\/offline\.html"\)/,
+  );
   assert.match(worker, /key\.startsWith\(CACHE_PREFIX\) && key !== CACHE_NAME/);
-  assert.doesNotMatch(worker, /cache\.put|caches\.match\(event\.request\)|\/api\//);
+  assert.doesNotMatch(worker, /cache\.put|caches\.match|\/api\//);
   assert.doesNotMatch(fallback, /_next\/|\/api\/|document\.cookie/);
 });
 

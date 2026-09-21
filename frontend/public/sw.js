@@ -31,12 +31,15 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+/** Reads the fallback from this worker's shell cache, never another origin cache. */
+async function getOfflineFallback() {
+  const cache = await caches.open(CACHE_NAME);
+
+  return (await cache.match("/offline.html")) ?? Response.error();
+}
+
 self.addEventListener("fetch", (event) => {
   if (event.request.mode !== "navigate") return;
 
-  event.respondWith(
-    fetch(event.request).catch(async () =>
-      (await caches.match("/offline.html")) ?? Response.error(),
-    ),
-  );
+  event.respondWith(fetch(event.request).catch(getOfflineFallback));
 });
