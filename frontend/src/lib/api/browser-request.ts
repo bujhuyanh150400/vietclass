@@ -4,16 +4,9 @@ import { ApiClientError } from "./api-client-error";
 import type { Page } from "./contracts";
 import { parseApiListResponse, parseApiResponse } from "./parse-api-response";
 
-/**
- * Origin the API is served from, without a trailing slash. The API lives on its own
- * subdomain, so the browser needs an absolute origin; an empty value leaves every
- * path relative for a deployment that puts the API behind this app's own origin.
- */
-const API_ORIGIN = (process.env.NEXT_PUBLIC_API_ORIGIN ?? "").replace(/\/+$/, "");
-
-/** Resolves an API path against the configured browser API origin without exposing storage URLs. */
+/** Resolves API paths against the same-origin Next.js BFF. */
 export function browserApiUrl(path: string): string {
-  return `${API_ORIGIN}${path}`;
+  return path;
 }
 
 /** Request options accepted by the browser request helper. */
@@ -26,9 +19,9 @@ type BrowserRequestInit = {
 };
 
 /**
- * Calls the API and returns its unwrapped payload. The helper knows nothing about
- * tokens; the browser attaches the HttpOnly session cookie itself, which it will do
- * cross-origin only because the API allows credentials for this exact origin.
+ * Calls the same-origin Next.js BFF and returns its unwrapped payload. The browser
+ * sends the HttpOnly frontend session cookie automatically; the BFF attaches the
+ * bearer token only on the server-to-server request to Laravel.
  */
 export async function browserRequest<T>(
   path: string,
@@ -62,8 +55,7 @@ async function sendBrowserRequest(
 ): Promise<AxiosResponse<unknown>> {
   try {
     return await axios.request<unknown>({
-      baseURL: API_ORIGIN,
-      url: path,
+      url: browserApiUrl(path),
       method: init.method ?? "GET",
       data: init.body,
       params: init.params,
@@ -72,10 +64,9 @@ async function sendBrowserRequest(
         ? (event) => init.onUploadProgress?.(event.loaded, event.total)
         : undefined,
       headers: { Accept: "application/json" },
-      // XHR omits cookies unless credentials are requested, and the session cookie
-      // is the only thing authenticating this call. Cross-origin this also makes the
-      // browser require the API to name this origin and allow credentials.
-      withCredentials: true,
+      // This request is same-origin; the HttpOnly frontend cookie is sent to Next.js,
+      // never to Laravel directly.
+      withCredentials: false,
       // Every status resolves here instead of axios throwing, so failure
       // handling can reuse the same envelope parsing as a success.
       validateStatus: () => true,

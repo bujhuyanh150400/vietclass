@@ -3,13 +3,12 @@ import { browserRequest } from "@/lib/api/browser-request";
 
 import type { CurrentUser, LoginCredentials, LoginResponse } from "../types/auth";
 
-/** Every identity call goes straight to the Laravel API on this app's own origin. */
+/** Every identity call goes through the same-origin Next.js BFF. */
 const BASE = "/api/v1/auth";
 
 /**
- * Submits credentials to Laravel and returns the resulting identity. Laravel puts
- * the bearer token in an HttpOnly cookie the browser cannot read; the copy it also
- * returns in the body is there for non-browser clients and is dropped here.
+ * Submits credentials to the same-origin Next.js BFF and returns the resulting identity.
+ * The BFF stores the bearer token in an HttpOnly frontend cookie.
  */
 export async function login(credentials: LoginCredentials): Promise<CurrentUser> {
   const payload = await browserRequest<LoginResponse>(`${BASE}/login`, {
@@ -29,9 +28,9 @@ export async function getCurrentUser(): Promise<CurrentUser> {
 }
 
 /**
- * Ends the browser session: Laravel revokes the token behind the cookie and clears
- * the cookie itself. Only a no-content success counts, so an unexpected response
- * body is not mistaken for a completed logout.
+ * Ends the browser session: the BFF revokes Laravel's bearer token and clears the
+ * HttpOnly frontend cookie. Only a no-content success counts, so an unexpected
+ * response body is not mistaken for a completed logout.
  */
 export async function logout(): Promise<void> {
   const result = await browserRequest<undefined>(`${BASE}/logout`, {

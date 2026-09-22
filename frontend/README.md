@@ -67,10 +67,7 @@ cd api && php artisan db:seed --class=AuthAccountSeeder
 | `/academic/students`                   | Page | Student list, with create and edit at `/new` and `/[studentId]`. |
 | `/academic/avatar`                     | Page | Avatar editor for the current account. |
 | `/system/files`                        | Page | Protected file library. |
-| `/api/auth/login`     | Route Handler | `POST` credentials, sets the session cookie, returns the current user.   |
-| `/api/auth/session`   | Route Handler | `GET` the current user for the session cookie; `401` clears the cookie.  |
-| `/api/auth/logout`    | Route Handler | `POST` to revoke the Laravel token and clear the cookie; returns `204`.  |
-| `/api/academic/*`     | Route Handler | Forwards allowlisted academic paths to Laravel with the bearer token.   |
+| `/api/v1/[...path]`   | Route Handler | Same-origin BFF proxy for Laravel API paths; injects bearer server-side and manages the HttpOnly session cookie. |
 
 `proxy.ts` guards `/dashboard`, `/academic`, `/system`, and their descendants. It only checks whether the
 session cookie is present and redirects to `/login` with a `returnTo` value; it
@@ -79,18 +76,12 @@ verifying the token against Laravel.
 
 ### Why the BFF routes exist
 
-The browser never sees the Laravel bearer token. `/api/auth/*` are thin
-same-origin endpoints that hold the token in the `HttpOnly`, host-only
-`vietclass_session` cookie and return only user data. They are not a general proxy
-for the Laravel API, and they are distinct from Laravel's own
-`/api/v1/auth/*` endpoints.
-
-`/api/academic/[...path]` forwards the academic screens' requests for the same
-reason: the token has to be attached on the server. It is not a general proxy
-either — every path it accepts is listed in an allowlist inside the route, and
-anything else answers `404` without a request ever being made. It forwards
-Laravel's status and body unchanged, so response validation lives in the module's
-client API layer rather than in the route.
+The browser never sees the Laravel bearer token. `/api/v1/[...path]` is a
+same-origin proxy for the browser-facing Laravel API paths. It holds the token in
+the `HttpOnly`, host-only `vietclass_browser_token` cookie, adds the bearer header
+only to the server-to-server request, and returns no token in the login payload.
+It also forwards multipart uploads and private-file redirects/streams without
+forwarding Laravel `Set-Cookie` headers.
 
 ## Directory boundaries
 
@@ -134,9 +125,9 @@ npm run lint
 npm run build
 ```
 
-There is no frontend test runner in this project. Behavior is verified with lint,
-a production build, and the manual authentication smoke matrix recorded in
-`.tasks/frontend-base-login.md`.
+Small framework-free frontend tests run with Node's built-in test runner. Behavior
+is also verified with lint, a production build, and the manual authentication smoke
+matrix recorded in `.tasks/frontend-base-login.md`.
 
 ## Stack
 

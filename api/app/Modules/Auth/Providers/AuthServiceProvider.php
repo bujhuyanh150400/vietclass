@@ -3,9 +3,9 @@
 namespace App\Modules\Auth\Providers;
 
 use App\Modules\Auth\Console\SyncFeaturesCommand;
+use App\Modules\Auth\Models\User;
 use App\Modules\Auth\Support\FeatureRegistry;
 use App\Modules\Auth\Support\FeatureResolver;
-use App\Modules\Auth\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
-use Laravel\Sanctum\Sanctum;
 
 final class AuthServiceProvider extends ServiceProvider
 {
@@ -35,7 +34,6 @@ final class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureLoginRateLimiter();
-        $this->registerCookieTokenRetrieval();
         $this->registerFeatureGate();
         $this->registerCommands();
         $this->loadApiRoutes();
@@ -52,27 +50,6 @@ final class AuthServiceProvider extends ServiceProvider
                 Str::lower((string) $request->input('username')).'|'.$request->ip(),
             );
         });
-    }
-
-    /**
-     * Also accept the bearer token from the session cookie, so a browser can authenticate
-     * without JavaScript ever being able to read the token.
-     *
-     * Sanctum calls this callback *instead of* its own header lookup rather than after it
-     * (`Guard::getTokenFromRequest`), so the header is read here first and stays the only
-     * source for mobile and other non-browser clients.
-     */
-    private function registerCookieTokenRetrieval(): void
-    {
-        $cookieName = (string) config('authentication.session_cookie');
-
-        Sanctum::getAccessTokenFromRequestUsing(
-            function (Request $request) use ($cookieName): ?string {
-                $cookie = $request->cookie($cookieName);
-
-                return $request->bearerToken() ?? (is_string($cookie) ? $cookie : null);
-            },
-        );
     }
 
     /**

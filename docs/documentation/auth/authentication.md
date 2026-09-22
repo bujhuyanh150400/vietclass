@@ -1,13 +1,13 @@
 # Xác thực bearer token
 
-Last Verified: 2026-09-21
+Last Verified: 2026-09-22
 
 ## Tổng quan
 
 Auth cung cấp đăng nhập bằng username và mật khẩu, sau đó cấp bearer token để gọi các API cần xác thực. Chức năng này có hai mặt sử dụng:
 
 - **API client** gọi trực tiếp các endpoint Laravel dưới tiền tố `/api/v1` và tự quản lý bearer token.
-- **Trình duyệt** dùng màn hình `/login` của frontend. Axios gọi trực tiếp `${NEXT_PUBLIC_API_ORIGIN}/api/v1/auth/*` với `withCredentials: true`; bearer token nằm trong cookie `HttpOnly` và chỉ trả về thông tin người dùng cho giao diện.
+- **Trình duyệt** dùng màn hình `/login` của frontend. Next.js BFF nhận request same-origin, lưu bearer token vào cookie first-party `HttpOnly` trên domain frontend (`vietclass_browser_token`), rồi gửi token qua header `Authorization: Bearer <token>` khi gọi Laravel. Browser JavaScript không đọc được token.
 
 Chức năng này là nền tảng xác thực hiện có; chưa bao gồm quản lý vai trò hay chức năng trường học.
 
@@ -16,7 +16,7 @@ Chức năng này là nền tảng xác thực hiện có; chưa bao gồm quả
 - Bất kỳ người dùng có bản ghi `users` đang hoạt động đều có thể đăng nhập.
 - API client phải gửi JSON đến endpoint dưới tiền tố `/api/v1`.
 - Các endpoint xem thông tin và đăng xuất của Laravel cần header `Authorization: Bearer <token>` hợp lệ.
-- Người dùng trình duyệt chỉ cần truy cập `/login`; Axios tự gửi cookie phiên tới API được cấu hình qua `NEXT_PUBLIC_API_ORIGIN`. Khi API khác origin, origin frontend phải nằm trong `CORS_ALLOWED_ORIGINS` và Laravel phải cho phép credentialed CORS.
+- Người dùng trình duyệt chỉ cần truy cập `/login`; Axios gửi token qua header `Authorization: Bearer <token>`. Khi API khác domain, origin frontend phải nằm trong `CORS_ALLOWED_ORIGINS` của Laravel.
 
 ## Quy tắc nghiệp vụ
 
@@ -28,8 +28,8 @@ Chức năng này là nền tảng xác thực hiện có; chưa bao gồm quả
 
 Bổ sung cho luồng trình duyệt:
 
-- Token của phiên trình duyệt chỉ nằm trong cookie `vietclass_session` với `HttpOnly`, `SameSite=Lax`, `Path=/`, không có `Domain`, và `Secure` khi chạy production. Thời điểm hết hạn của cookie đúng bằng `expires_at` mà Laravel trả về, nên tùy chọn ghi nhớ quyết định luôn tuổi thọ của cookie.
-- Token không xuất hiện trong phản hồi JSON của frontend, trong cache truy vấn, trong `localStorage`, `sessionStorage`, hay trong log.
+- Token của phiên trình duyệt nằm trong cookie first-party `HttpOnly` `vietclass_browser_token` với `SameSite=Lax`, `Path=/`, không có `Domain`, và `Secure` khi chạy HTTPS. Thời điểm hết hạn của cookie đúng bằng `expires_at` mà Laravel trả về, nên tùy chọn ghi nhớ quyết định luôn tuổi thọ của cookie.
+- Laravel không phát hành cookie xác thực. Token không được lưu trong cache truy vấn, `localStorage`, `sessionStorage`, hay log.
 - `/dashboard`, `/academic`, và các đường dẫn con được bảo vệ hai lớp: lớp ngoài chỉ kiểm tra sự hiện diện của cookie và chuyển hướng về `/login`, lớp trong xác minh token với Laravel trước khi hiển thị nội dung.
 - Sau khi đăng nhập, người dùng chỉ được đưa về đường dẫn nằm trong `/dashboard` hoặc `/academic`. Mọi giá trị `returnTo` khác — URL tuyệt đối, URL bắt đầu bằng `//`, đường dẫn chứa dấu gạch chéo ngược, hoặc đường dẫn ngoài hai khu vực này — đều quay về `/dashboard`.
 - Đang có phiên hợp lệ mà mở `/login` thì được chuyển thẳng tới đích hợp lệ; không hiển thị lại biểu mẫu.
@@ -52,16 +52,16 @@ Bổ sung cho luồng trình duyệt:
 4. Chọn `Đăng xuất` trong menu tài khoản để kết thúc phiên.
 5. Chọn `Cài ứng dụng` trong menu tài khoản để cài VietClasses. Chromium gọi prompt cài đặt native khi đủ điều kiện; Safari iOS, Android Chrome, hoặc desktop browser chưa có prompt sẽ hiện hướng dẫn tương ứng.
 
-Trình duyệt gọi trực tiếp các endpoint Laravel qua `${NEXT_PUBLIC_API_ORIGIN}/api/v1/auth/login`, `${NEXT_PUBLIC_API_ORIGIN}/api/v1/auth/me`, và `${NEXT_PUBLIC_API_ORIGIN}/api/v1/auth/logout` bằng Axios `withCredentials: true`; không có lớp frontend `/api/auth/*` chuyển tiếp các request này.
+Browser gọi các endpoint same-origin `/api/v1/auth/login`, `/api/v1/auth/me`, và `/api/v1/auth/logout` của Next.js BFF. Route Handler đọc cookie HttpOnly, gọi Laravel server-to-server bằng header `Authorization: Bearer <token>`, và không trả token về browser. Các endpoint học vụ cũng đi qua cùng BFF để giữ bearer token ở server.
 
 ## Kết quả mong đợi
 
 - Đăng nhập thành công qua API trả token bearer, thời điểm hết hạn, và thông tin người dùng gồm `id`, `username`, `role`, `is_active`, `features: string[]` trong envelope `data`.
 - `GET /api/v1/auth/me` trả thông tin người dùng hiện tại cùng `features: string[]` — danh sách quyền hiệu lực — trong envelope `data`.
 - `DELETE /api/v1/auth/logout` trả `204 No Content`; token đã dùng không thể tiếp tục xác thực.
-- Đăng nhập thành công trên trình duyệt trả về thông tin định danh gồm `id`, `username`, `role`, `is_active`, `features` kèm cookie phiên; token vẫn không được giao cho mã giao diện qua API client.
-- Tải lại `/dashboard` hoặc một trang `/academic/...` vẫn giữ phiên. `document.cookie` không đọc được `vietclass_session`.
-- Đăng xuất trên trình duyệt thu hồi đúng một token ở Laravel, xóa cookie, đưa về `/login`, và `/dashboard` lại được bảo vệ.
+- Đăng nhập thành công trên trình duyệt để BFF lưu token vào cookie HttpOnly, chuyển tới trang đích và dùng token đó làm Bearer khi gọi Laravel.
+- Tải lại `/dashboard` hoặc một trang `/academic/...` vẫn giữ phiên.
+- Đăng xuất trên trình duyệt thu hồi đúng một token ở Laravel, xóa cookie first-party, đưa về `/login`, và `/dashboard` lại được bảo vệ.
 
 ## Lỗi và trường hợp ngoại lệ
 
@@ -96,7 +96,7 @@ Lỗi nghiệp vụ của thao tác đăng nhập được throw dưới dạng 
 - Chưa có endpoint hay màn hình đăng ký, đổi mật khẩu, đặt lại mật khẩu, làm mới token, hoặc quản trị token. Màn hình `/login` vì vậy không có liên kết đăng ký hay quên mật khẩu.
 - Giá trị role được trả về và được hiển thị dưới dạng nhãn. Phân quyền theo role cho từng endpoint được mô tả riêng tại [Phân quyền theo chức năng](phan-quyen.md); tài liệu này chỉ nói về việc xác định danh tính, không nói về việc danh tính đó được làm gì.
 - Phiên trình duyệt kết thúc khi cookie hết hạn hoặc khi đăng xuất; không có gia hạn tự động.
-- CORS chỉ cho phép origin cấu hình qua `CORS_ALLOWED_ORIGINS`; credentialed browser session cần origin khớp allowlist và header cho phép credentials.
+- CORS chỉ cho phép origin cấu hình qua `CORS_ALLOWED_ORIGINS`; browser API requests chỉ dùng Bearer token, không dùng credentials hoặc cookie API.
 - Manifest, icon và native Service Worker hỗ trợ cài VietClasses trong secure context production. Service Worker chỉ cache tài liệu fallback ngoại tuyến cùng manifest, icon và artwork công khai cần thiết; không cache API, HTML đã xác thực, dữ liệu React Query, tệp riêng tư, session hoặc mutation.
 - Khi app đã hydrate mà mất mạng, giao diện React hiển thị trạng thái ngoại tuyến. Khi mở hoặc làm mới navigation lúc offline, Service Worker trả branded fallback tĩnh; fallback không có dữ liệu tài khoản và không cho làm việc offline. `http://app.vietclass.test:3000` chỉ là môi trường phát triển, không phải bằng chứng installability production.
 
@@ -106,6 +106,6 @@ Lỗi nghiệp vụ của thao tác đăng nhập được throw dưới dạng 
 - Kiểm thử xác định: `api/tests/Behavioral/AuthenticationTest.php`, `api/tests/Security/AuthenticationSecurityTest.php`
 - Schema: `docs/database.md`
 - Module Auth của frontend: `frontend/src/modules/auth/` (`index.ts` cho client, `server.ts` chỉ cho server)
-- Request browser và CORS credentials: `frontend/src/lib/api/browser-request.ts`
+- Browser BFF và request transport: `frontend/app/api/v1/[...path]/route.ts`, `frontend/src/lib/api/browser-request.ts`
 - Manifest/icon và metadata: `frontend/public/app-icons/web/site.webmanifest`, `frontend/app/layout.tsx`
 - Bảo vệ đường dẫn: `frontend/proxy.ts` và `frontend/app/(protected)/layout.tsx`

@@ -12,17 +12,12 @@ use App\Modules\Auth\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cookie;
 use Laravel\Sanctum\NewAccessToken;
 
 final class AuthController extends BaseController
 {
     /**
      * Authenticate credentials and return a fresh bearer token.
-     *
-     * The same token is also written to an HttpOnly cookie so a browser can authenticate
-     * without ever exposing it to JavaScript. Non-browser clients ignore the cookie and
-     * send the token from the body as an `Authorization` header.
      */
     public function login(LoginRequest $request, LoginAction $login): JsonResponse
     {
@@ -42,14 +37,7 @@ final class AuthController extends BaseController
             'token_type' => 'Bearer',
             'expires_at' => $expiresAt,
             'user' => CurrentUserResource::make($data['user'])->resolve($request),
-        ])->withCookie(cookie(
-            name: (string) config('authentication.session_cookie'),
-            value: $data['token']->plainTextToken,
-            // The cookie dies with the token it carries; path, domain, secure, and
-            // SameSite come from the shared session cookie configuration.
-            minutes: $expiresAt === null ? 0 : (int) now()->diffInMinutes($expiresAt),
-            httpOnly: true,
-        ));
+        ]);
     }
 
     /**
@@ -72,7 +60,7 @@ final class AuthController extends BaseController
     }
 
     /**
-     * Revoke the current bearer token and clear the browser's session cookie.
+     * Revoke the current bearer token.
      */
     public function logout(Request $request, LogoutAction $logout): Response|JsonResponse
     {
@@ -82,8 +70,6 @@ final class AuthController extends BaseController
             return $this->actionFailure(result: $result);
         }
 
-        return $this->noContent()->withCookie(
-            Cookie::forget((string) config('authentication.session_cookie')),
-        );
+        return $this->noContent();
     }
 }
