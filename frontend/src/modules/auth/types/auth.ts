@@ -15,9 +15,8 @@ export type CurrentUser = {
   avatar: AvatarValue;
 };
 
-/** Login response returned by Laravel before the token is stored in a cookie. */
+/** Login response returned by the same-origin BFF; the bearer stays in its HttpOnly cookie. */
 export type LoginResponse = {
-  token: string;
   expires_at: string;
   user: CurrentUser;
 };

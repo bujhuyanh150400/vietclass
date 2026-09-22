@@ -20,22 +20,15 @@ nên phiên bản PHP và extension của host là một phần điều kiện t
 
 ## 2. Điều kiện tiên quyết trên host
 
-### 2.1 Entry `/etc/hosts`
+### 2.1 Hostname local
 
-```
-127.0.0.1 app.vietclass.test api.vietclass.test
-```
+Mặc định mở app tại `http://localhost:3000`. Browser chỉ gọi Next.js same-origin BFF;
+Next.js mới gọi Laravel qua `API_BASE_URL`, nên không cần entry `/etc/hosts` và không
+có cookie auth nào đi trực tiếp tới API.
 
-App và API cố ý nằm trên hai hostname khác nhau để cookie phiên được thử đúng kiểu
-cross-origin như production. Hai hostname phải chung một parent domain, nếu không
-cookie hết same-site và `SameSite=Lax` không còn áp dụng. TLD `.test` được RFC 6761
-dành riêng cho mục đích này nên không bao giờ đụng DNS thật.
-
-Ba nơi phụ thuộc vào cặp hostname này và phải đổi cùng nhau nếu đổi tên:
-`frontend/.env.local` (`APP_ORIGIN`, `NEXT_PUBLIC_API_ORIGIN`, `ALLOWED_ORIGIN`),
-`api/.env` (`SESSION_DOMAIN`, `CORS_ALLOWED_ORIGINS`).
-
-Trên Windows + WSL2, entry đặt ở `C:\Windows\System32\drivers\etc\hosts`.
+Nếu cần mô phỏng hostname production, chỉ cần đổi `APP_ORIGIN` và `ALLOWED_ORIGIN`
+trong `frontend/.env.local`; `API_BASE_URL` vẫn là địa chỉ server-to-server. CORS của
+Laravel chỉ còn phục vụ các client gọi API trực tiếp, không phải browser flow của app.
 
 ### 2.2 Extension `pdo_pgsql` cho PHP CLI
 
@@ -56,8 +49,8 @@ cài.
 make dev
 ```
 
-Rồi mở **`http://app.vietclass.test:3000`** — không phải `localhost:3000`. Cookie
-phiên gắn với domain, nên đăng nhập ở `localhost` không mang sang được.
+Rồi mở **`http://localhost:3000`**. Cookie phiên first-party `HttpOnly` gắn với
+domain frontend và được Next.js BFF sử dụng.
 
 ### 3.1 Dữ liệu minh họa cho màn học sinh
 
@@ -113,7 +106,7 @@ Offline shell không chứa session hoặc dữ liệu học vụ. Service Worke
 | Triệu chứng | Nguyên nhân | Cách sửa |
 | --- | --- | --- |
 | Màn hình báo `Không kết nối được dịch vụ xác thực`; `api/storage/logs/laravel.log` có `could not find driver (Connection: pgsql, …)`; API trả 500 | PHP CLI thiếu `pdo_pgsql` | Mục 2.2, rồi khởi động lại `make dev` |
-| Trình duyệt chặn request với lỗi CORS; API luôn trả `Access-Control-Allow-Origin: http://app.vietclass.test:3000` | Đang mở app bằng `localhost:3000` nên origin không khớp allowlist | Thêm entry ở mục 2.1 và mở bằng `app.vietclass.test:3000` |
+| Trình duyệt chặn request với lỗi CORS | Code browser đang gọi thẳng Laravel thay vì same-origin BFF, hoặc route BFF chưa chạy | Kiểm tra `frontend/app/api/v1/[...path]/route.ts`, `API_BASE_URL`, rồi restart `make dev` |
 | Dashboard báo `Không kết nối được dịch vụ xác thực`; log Laravel có `SQLSTATE[08006] ... 127.0.0.1:5432 ... Connection refused` dù container Postgres đang healthy | Container Postgres cũ được tạo không có mapping `127.0.0.1:5432->5432/tcp`, thường do chạy Compose không nạp `.env.dev` | Dừng `make dev` bằng `Ctrl+C`, chạy `make dev-down && make dev` để recreate container từ Makefile (volume dữ liệu được giữ), rồi kiểm tra `docker compose --env-file .env.dev -f compose.dev.yml ps` |
 | `make dev` dừng với `Failed to listen on 0.0.0.0:8000 (reason: Address already in use)` | Một tiến trình hoặc container khác đang giữ cổng 8000 | `ss -ltnp \| grep :8000` để tìm chủ sở hữu rồi dừng nó, hoặc đổi `DEV_API_PORT` cùng với cổng trong `frontend/.env.local` |
 | `FATAL: An unexpected Turbopack error occurred`, hoặc HMR lặp `Cell … no longer exists in task …` | Cache tăng dần trong `frontend/.next` đã hỏng | Dừng dev, `rm -rf frontend/.next`, chạy lại. Không có gì trong repo sai; `.next` chỉ là cache và sẽ được dựng lại |

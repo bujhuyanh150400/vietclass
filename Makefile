@@ -33,10 +33,10 @@ setup-app-dev: dev-init ## Bootstrap the API and frontend applications for devel
 
 # Start the local API and frontend together and clean them up on exit.
 #
-# The app and the API live on separate hostnames here (see frontend/.env.example) so
-# the session cookie is exercised cross-origin the way production will be.
+# The browser talks to the same-origin Next.js BFF. Next.js and SSR reach Laravel
+# server-to-server through API_BASE_URL, so the bearer token never enters browser JS.
 #
-# Both servers therefore bind DEV_BIND_HOST, 0.0.0.0 by default: a server bound to the
+# Both servers bind DEV_BIND_HOST, 0.0.0.0 by default: a server bound to the
 # loopback inside WSL2 is reachable only as "localhost", so a browser on the Windows
 # host cannot reach it under any other hostname. On native Linux or macOS set
 # DEV_BIND_HOST=127.0.0.1 in .env.dev. DEV_API_PORT keeps the API off a port another
@@ -47,9 +47,9 @@ dev: ## Start infrastructure, Laravel API, and Next.js frontend.
 		. .env.dev; \
 		bind_host="$${DEV_BIND_HOST:-0.0.0.0}"; \
 		api_port="$${DEV_API_PORT:-8001}"; \
-		printf 'App:  %s\nAPI:  %s\n\n' \
+		printf 'App:  %s\nAPI:  %s (server-side)\n\n' \
 			"$$(sed -n 's/^APP_ORIGIN=//p' frontend/.env.local 2>/dev/null | head -1)" \
-			"$$(sed -n 's/^NEXT_PUBLIC_API_ORIGIN=//p' frontend/.env.local 2>/dev/null | head -1)"; \
+			"$$(sed -n 's/^API_BASE_URL=//p' frontend/.env.local 2>/dev/null | head -1)"; \
 		api_pid=; \
 		frontend_pid=; \
 		trap 'if [[ -n "$$api_pid" ]]; then kill "$$api_pid" 2>/dev/null || true; fi; if [[ -n "$$frontend_pid" ]]; then kill "$$frontend_pid" 2>/dev/null || true; fi' EXIT; \
