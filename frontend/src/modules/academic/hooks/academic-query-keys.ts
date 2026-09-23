@@ -31,6 +31,8 @@ export const academicQueryKeys = {
   },
   guardians: {
     root: () => ["academic", "guardians"] as const,
+    list: (params: object) => ["academic", "guardians", "list", params] as const,
+    detail: (id: number) => ["academic", "guardians", "detail", id] as const,
     options: (search: string) => ["academic", "guardians", "options", search] as const,
   },
   students: {

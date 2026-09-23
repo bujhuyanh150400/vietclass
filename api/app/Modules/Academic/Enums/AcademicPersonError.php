@@ -27,6 +27,12 @@ enum AcademicPersonError: string implements ErrorDeclarationEnum
     /** No profile eligible to act as a guardian carries the given identifier. */
     case GuardianNotFound = 'IDENTITY-007';
 
+    /** Another guardian already has this exact name and phone. */
+    case GuardianDuplicate = 'IDENTITY-008';
+
+    /** A primary guardian needs an explicitly selected replacement. */
+    case PrimaryGuardianReplacementRequired = 'IDENTITY-009';
+
     /**
      * Return the HTTP status this business failure reaches the API boundary with.
      */
@@ -34,6 +40,8 @@ enum AcademicPersonError: string implements ErrorDeclarationEnum
     {
         return match ($this) {
             self::TeacherNotFound, self::StudentNotFound, self::UserNotFound, self::ProfileNotFound, self::GuardianNotFound => 404,
+            self::GuardianDuplicate => 409,
+            self::PrimaryGuardianReplacementRequired => 422,
             self::AccountNotProvisioned => 409,
             self::ProfileForbidden => 403,
         };

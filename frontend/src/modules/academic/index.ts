@@ -2,6 +2,8 @@ export type {
   ClassStatus,
   Enrollment,
   Gender,
+  Guardian,
+  GuardianStudent,
   GradeLevel,
   GuardianOption,
   GuardianRelationship,
@@ -21,6 +23,8 @@ export type {
 
 export type {
   CreateClassRequest,
+  DeleteGuardianRequest,
+  GuardianRequest,
   CreateStudentRequest,
   CreateTeacherRequest,
   EnrolStudentsRequest,
@@ -55,6 +59,13 @@ export { RoomFormContainer } from "./containers/room-form-container";
 export { RoomEditContainer } from "./containers/room-edit-container";
 
 export { TeachersContainer } from "./containers/teachers-container";
+export { GuardiansContainer } from "./containers/guardians-container";
+export { GuardianDetailContainer } from "./containers/guardian-detail-container";
+export { GuardianFormContainer } from "./containers/guardian-form-container";
+export { GuardianEditLoader } from "./components/guardian-edit-loader";
+export { GuardianForm } from "./components/guardian-form";
+export { GuardianDetailView } from "./components/guardian-detail-view";
+export { GuardianDeleteDialog } from "./components/guardian-delete-dialog";
 export { TeacherDetailContainer } from "./containers/teacher-detail-container";
 export { TeacherFormContainer } from "./containers/teacher-form-container";
 export { TeacherEditContainer } from "./containers/teacher-edit-container";

@@ -23,6 +23,7 @@ function toClientError(status: number, payload: unknown): ApiClientError {
     status,
     message,
     isJsonObject(payload) ? payload.errors : undefined,
+    isJsonObject(payload) ? payload.meta : undefined,
   );
 }
 

@@ -73,6 +73,29 @@ export type Room = {
   updated_at: string | null;
 };
 
+/** A student linked from a guardian record. */
+export type GuardianStudent = {
+  id: number;
+  full_name: string;
+  grade_level: GradeLevel;
+  relationship: GuardianRelationship;
+  is_primary: boolean;
+};
+
+/** A role-pure guardian profile and its complete student roster. */
+export type Guardian = {
+  id: number;
+  full_name: string;
+  phone: string;
+  email: string | null;
+  gender: Gender;
+  address: string | null;
+  note: string | null;
+  students: GuardianStudent[];
+  created_at: string | null;
+  updated_at: string | null;
+};
+
 /** A subject currently taught by a teacher. */
 export type TeacherSubject = {
   id: number;

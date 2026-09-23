@@ -94,7 +94,7 @@ Last verified: 2026-09-14
 ## profiles
 
     # note
-    - Mỗi teacher, student hoặc guardian là một row; một người có nhiều role vẫn chỉ có một row `profiles`.
+    - Mỗi teacher, student hoặc guardian là một row; một người có nhiều role vẫn chỉ có một row `profiles`. Guardian CRUD dùng profile role-pure với `user_id = NULL`, không tạo bảng guardian riêng, không thêm migration hay backfill.
     - `metadata` chỉ dành cho raw import data và one-off custom fields. Dữ liệu cần filter, sort, foreign key hoặc validation phải là column riêng.
 
     # cấu trúc
@@ -148,7 +148,7 @@ Last verified: 2026-09-14
 ## student_guardians
 
     # note
-    - Link many-to-many giữa student và các profile đóng vai trò guardian. Một student có thể có bố và mẹ; một guardian có thể liên kết nhiều student.
+    - Link many-to-many giữa student và các profile đóng vai trò guardian. Một student có thể có bố và mẹ; một guardian có thể liên kết nhiều student. Guardian CRUD chỉ quản lý profile không có user/teacher/student role và không cho profile không có link trở thành guardian quản lý.
 
     # cấu trúc
     - `id` (BIGINT auto-increment primary key) — Link identifier.

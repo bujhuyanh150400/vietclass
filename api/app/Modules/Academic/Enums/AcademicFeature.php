@@ -44,8 +44,20 @@ enum AcademicFeature: string implements FeatureEnum
     /** Lock or unlock a student's login account. */
     case StudentToggleActive = 'student.toggle_active';
 
-    /** Search the guardians already on file, so a student can be linked to one. */
+    /** See every guardian record. */
     case GuardianList = 'guardian.list';
+
+    /** See one guardian record and its linked students. */
+    case GuardianView = 'guardian.view';
+
+    /** Create an independent guardian profile and roster. */
+    case GuardianCreate = 'guardian.create';
+
+    /** Change an independent guardian profile and roster. */
+    case GuardianUpdate = 'guardian.update';
+
+    /** Delete an independent guardian profile and its links. */
+    case GuardianDelete = 'guardian.delete';
 
     /** Change a profile's independently persisted avatar. */
     case ProfileAvatarUpdate = 'profile.avatar_update';
@@ -130,6 +142,10 @@ enum AcademicFeature: string implements FeatureEnum
             self::StudentUpdate => 'Sửa hồ sơ học sinh',
             self::StudentToggleActive => 'Khóa hoặc mở tài khoản học sinh',
             self::GuardianList => 'Xem danh sách phụ huynh',
+            self::GuardianView => 'Xem chi tiết phụ huynh',
+            self::GuardianCreate => 'Tạo hồ sơ phụ huynh',
+            self::GuardianUpdate => 'Sửa hồ sơ phụ huynh',
+            self::GuardianDelete => 'Xóa hồ sơ phụ huynh',
             self::ProfileAvatarUpdate => 'Đổi ảnh đại diện hồ sơ',
             self::SubjectList => 'Xem danh sách môn học',
             self::SubjectView => 'Xem chi tiết môn học',
@@ -175,6 +191,7 @@ enum AcademicFeature: string implements FeatureEnum
     {
         return match ($this) {
             self::ProfileAvatarUpdate => UserRole::cases(),
+            self::GuardianList, self::GuardianView => [UserRole::Admin, UserRole::Teacher],
             default => [UserRole::Admin],
         };
     }

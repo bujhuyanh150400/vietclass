@@ -64,13 +64,15 @@ trait HandleApi
      * Returns a client-safe error response for controller-level API failures.
      *
      * @param  array<string, array<int, string>>  $errors
+     * @param  array<string, mixed>  $meta
      */
-    protected function error(string $message, int $status, array $errors = []): JsonResponse
+    protected function error(string $message, int $status, array $errors = [], array $meta = []): JsonResponse
     {
         return ApiResponseFactory::error(
             message: $message,
             status: $status,
             errors: $errors,
+            meta: $meta,
         );
     }
 
@@ -94,6 +96,7 @@ trait HandleApi
         return $this->error(
             message: $result->getMessage() ?? 'Yêu cầu không hợp lệ.',
             status: $error->httpStatus(),
+            meta: $result->getMeta(),
         );
     }
 }

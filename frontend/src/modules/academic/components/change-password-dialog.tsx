@@ -67,8 +67,8 @@ export function ChangePasswordDialog({
           <DialogHeader>
             <DialogTitle>Đổi mật khẩu</DialogTitle>
             <DialogDescription>
-              Đặt mật khẩu mới cho tài khoản của {subjectName}. Các phiên đăng nhập
-              hiện tại vẫn tiếp tục hoạt động.
+              Đặt mật khẩu mới cho tài khoản của {subjectName}. Sau khi đổi, tài khoản này
+              sẽ cần đăng nhập lại trên các thiết bị.
             </DialogDescription>
           </DialogHeader>
 

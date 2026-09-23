@@ -10,6 +10,31 @@ import type {
   TeacherStatus,
 } from "./academic";
 
+/** One complete student link in a guardian mutation payload. */
+export type GuardianStudentRequest = {
+  student_profile_id: number;
+  relationship: GuardianRelationship;
+  is_primary: boolean;
+};
+
+/** Payload accepted by guardian create and update endpoints. */
+export type GuardianRequest = {
+  full_name: string;
+  phone: string;
+  email: string | null;
+  gender: Gender;
+  address: string | null;
+  note: string | null;
+  students: GuardianStudentRequest[];
+  /** Replacement guardian ids keyed by students losing this guardian as primary. */
+  replacements?: Record<number, number>;
+};
+
+/** Student replacement ids used by guardian deletion. */
+export type DeleteGuardianRequest = {
+  replacements?: Record<number, number>;
+};
+
 /** Payload accepted by the subject create and update endpoints. */
 export type SubjectRequest = {
   name: string;
@@ -63,27 +88,17 @@ type StudentProfileRequest = {
 /**
  * One person on a student's guardian roster.
  *
- * Each entry is one of two shapes, told apart by which keys it carries: an
- * identifier links somebody already on file, while a name and gender record somebody
- * new. Sending keys from both is refused, so the unused half is omitted rather than
- * nulled. `relationship` is required either way.
+ * Each entry links an existing guardian profile. Contact data is managed by Guardian
+ * CRUD, so student forms never create or reuse profiles from typed fields.
  *
- * `is_primary` marks the main contact. At most one entry may carry it; when none
- * does, the API takes the first.
+ * `is_primary` marks the main contact. A non-empty roster must declare exactly one
+ * primary entry; the API never chooses one implicitly.
  */
-export type StudentGuardianEntry =
-  | {
-      guardian_profile_id: number;
-      relationship: GuardianRelationship;
-      is_primary?: boolean;
-    }
-  | {
-      name: string;
-      gender: Gender;
-      phone?: string | null;
-      relationship: GuardianRelationship;
-      is_primary?: boolean;
-    };
+export type StudentGuardianEntry = {
+  guardian_profile_id: number;
+  relationship: GuardianRelationship;
+  is_primary: boolean;
+};
 
 /**
  * The guardian half of a student payload.

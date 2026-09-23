@@ -27,12 +27,16 @@ final class ApiResponseFactory
      *
      * @param  array<string, array<int, string>>  $errors
      */
-    public static function error(string $message, int $status, array $errors = []): JsonResponse
+    public static function error(string $message, int $status, array $errors = [], array $meta = []): JsonResponse
     {
         $payload = ['message' => $message];
 
         if ($errors !== []) {
             $payload['errors'] = $errors;
+        }
+
+        if ($meta !== []) {
+            $payload['meta'] = $meta;
         }
 
         return response()->json($payload, $status);

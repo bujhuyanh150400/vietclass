@@ -1,6 +1,6 @@
 # Quản lý học sinh
 
-Last Verified: 2026-09-21
+Last Verified: 2026-09-22
 
 ## Tổng quan
 
@@ -21,28 +21,25 @@ Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/a
 - Họ tên, giới tính và khối lớp của học sinh là bắt buộc. Số điện thoại, ngày sinh, địa chỉ và ghi chú của học sinh đều không bắt buộc.
 - Học sinh **không có** trường email. Hồ sơ nhân thân có cột email nhưng đường tạo và sửa học sinh không nhận và không trả về nó.
 - Ngày sinh, nếu có, phải trước ngày hôm nay.
-- Một học sinh liên kết được **nhiều phụ huynh hoặc người giám hộ**, và một người cũng theo dõi được nhiều học sinh. Cả tạo và sửa đều nhận danh sách đó qua khóa `guardians`, tối đa 10 người.
-- Mỗi phần tử của `guardians` là **một trong hai dạng**, hệ thống phân biệt bằng những khóa có trong phần tử chứ không bằng một cờ chế độ riêng:
-  - **Người có sẵn** — gửi `guardian_profile_id`. Hồ sơ được chỉ định được dùng đúng như vậy, không suy lại từ tên. Dạng này **cấm** gửi kèm `name`: gửi cả hai làm cho ý định "ghi đè hồ sơ có sẵn hay không" trở nên nhập nhằng.
-  - **Người mới** — gửi `name` kèm `gender`; `phone` tùy chọn.
-- `relationship` là **bắt buộc ở cả hai dạng**: một liên kết không nói người đó là ai với học sinh thì không ghi lại được điều gì có ích.
-- `is_primary` đánh dấu người liên hệ chính. Nhiều nhất **một** phần tử được mang cờ này; không phần tử nào mang thì hệ thống lấy phần tử đầu tiên. Một học sinh đã có người liên kết thì luôn có người liên hệ chính — ràng buộc này do một partial unique index trên bảng bảo đảm, không phải do mã ứng dụng.
+- Một học sinh liên kết được **nhiều phụ huynh hoặc người giám hộ**, và một người cũng theo dõi được nhiều học sinh. Cả tạo và sửa đều nhận danh sách đó qua khóa `guardians`, tối đa 10 người. Student form chỉ chọn guardian role-pure đã tồn tại.
+- Mỗi phần tử của `guardians` gửi `guardian_profile_id`, `relationship` và `is_primary`; student form không tạo guardian mới từ dữ liệu tên/điện thoại.
+- `relationship` là bắt buộc: một liên kết không nói người đó là ai với học sinh thì không ghi lại được điều gì có ích.
+- `is_primary` đánh dấu người liên hệ chính. Roster không rỗng phải chọn chính xác một primary; hệ thống không tự chọn row đầu tiên.
 - Cùng một `guardian_profile_id` không được xuất hiện hai lần trong một danh sách.
 - Hồ sơ được chỉ định bằng `guardian_profile_id` phải là hồ sơ **không mang vai trò học sinh**, và không được là chính học sinh đang sửa. Một học sinh không bao giờ được làm phụ huynh của học sinh khác.
-- Với dạng **người mới**: nếu số điện thoại **và** họ tên trùng với một hồ sơ đã có trong hệ thống, hồ sơ đó được dùng lại thay vì tạo mới; không có số điện thoại thì luôn tạo một hồ sơ mới. Nhờ vậy, hai anh chị em ruột được nhập từ hai lần tạo học sinh riêng biệt tự động dùng chung một hồ sơ phụ huynh. Cấp tài khoản đăng nhập cho phụ huynh sau này chỉ là một lần cập nhật hồ sơ đó, không cần chuyển đổi dữ liệu.
 - Sửa hồ sơ đọc `guardians` là **danh sách đầy đủ**: ai không có trong danh sách sẽ bị gỡ liên kết. Thêm người, gỡ người và đổi người liên hệ chính vì thế đều là cùng một thao tác gửi danh sách mong muốn, không cần endpoint riêng cho từng việc.
-- **Không gửi khóa `guardians`** thì mọi liên kết hiện tại được giữ nguyên — đây là điều kiện để một màn hình chỉ sửa thông tin hồ sơ mà không hiển thị phụ huynh vẫn lưu được. Gửi **mảng rỗng** là chuyện khác: nó nói "không còn ai" và gỡ hết.
+- **Không gửi khóa `guardians`** thì mọi liên kết hiện tại được giữ nguyên. Gửi **mảng rỗng** là chuyện khác: nó nói "không còn ai" và gỡ hết.
 - Gỡ liên kết **không xóa hồ sơ người đó**: họ có thể vẫn là phụ huynh của một học sinh khác.
 - Sửa hồ sơ **không bao giờ sửa hồ sơ nhân thân của phụ huynh**. Sửa tên hay số điện thoại của một người là thay đổi về người đó, không phải về liên kết của học sinh này với họ; nhờ vậy chỉnh danh sách của một anh/chị/em không còn khả năng làm hỏng dữ liệu của người kia.
-- Tìm phụ huynh có sẵn dùng endpoint riêng `GET /api/v1/academic/guardians/options`, chỉ trả về những hồ sơ **đang là phụ huynh của ai đó**: liệt kê mọi hồ sơ không mang vai trò học sinh sẽ đưa cả danh bạ giáo viên vào một ô chọn phụ huynh. Hồ sơ mang vai trò học sinh bị loại. Kết quả sắp theo họ tên và mang theo số điện thoại, vì hai phụ huynh trùng tên là chuyện thường và số điện thoại là thứ phân biệt được họ.
-- Tìm phụ huynh **bỏ qua dấu tiếng Việt và không phân biệt hoa thường**: gõ `Hung` ra `Nguyễn Văn Hùng`, gõ `Do Thi Uoc` ra `Đỗ Thị Ước`. Gõ có dấu vẫn tìm được như thường. Điều này **khác** quy tắc dùng lại hồ sơ phụ huynh theo SĐT và họ tên khi nhập tay — quy tắc đó vẫn so khớp **chính xác**, vì nó tự quyết định hai bản ghi có phải cùng một người hay không, còn ô tìm chỉ đưa ra ứng viên để người dùng chọn.
+- Tìm phụ huynh có sẵn dùng endpoint riêng `GET /api/v1/academic/guardians/options`, chỉ trả về những hồ sơ **đang là phụ huynh của ai đó** và đồng thời không có tài khoản, vai trò giáo viên hoặc vai trò học sinh. Kết quả sắp theo họ tên và mang theo số điện thoại, vì hai phụ huynh trùng tên là chuyện thường và số điện thoại là thứ phân biệt được họ.
+- Tìm phụ huynh **bỏ qua dấu tiếng Việt và không phân biệt hoa thường**: gõ `Hung` ra `Nguyễn Văn Hùng`, gõ `Do Thi Uoc` ra `Đỗ Thị Ước`. Gõ có dấu vẫn tìm được như thường. Kết quả chỉ là các hồ sơ để người dùng chọn liên kết.
 - Số điện thoại học sinh và phụ huynh, nếu có, phải bắt đầu bằng `0` và có 10 hoặc 11 chữ số. Không số nào trong hai số này cần duy nhất — hồ sơ giáo viên, học sinh và phụ huynh dùng chung một bảng nhân thân, và anh chị em ruột thường dùng chung số của phụ huynh.
 - Trạng thái học tập gồm `0` Đang học, `1` Tạm nghỉ, `2` Dừng hẳn. Mặc định khi tạo là Đang học. Trường này sửa được trong biểu mẫu hồ sơ, nhưng **màn danh sách không hiển thị và không lọc theo nó** — xem mục "Màn danh sách học sinh".
 - Trạng thái học tập và trạng thái tài khoản là hai thứ khác nhau: khóa tài khoản chỉ chặn đăng nhập, không đổi việc học sinh đang học hay đã nghỉ.
 - Một học sinh có thể có nhiều phụ huynh, và danh sách trả về tất cả, người liên hệ chính đứng đầu. Biểu mẫu tạo và sửa hồ sơ đều ghi được cả danh sách đó.
 - Danh sách cũng trả về các lớp học sinh **đang** theo học. Lớp đã nghỉ không xuất hiện: quy tắc "còn đang học" dùng đúng định nghĩa chung của ghi danh, xem [Ghi danh vào lớp](../academic/ghi-danh.md).
 - Không có thao tác xóa học sinh. Ngừng theo học bằng cách đổi trạng thái học tập hoặc khóa tài khoản; hồ sơ luôn được giữ để lịch sử ghi danh trỏ tới nó không bị hỏng.
-- Đổi mật khẩu không thu hồi các token đang có.
+- Đổi mật khẩu thu hồi toàn bộ token đang có của đúng tài khoản học sinh. Học sinh cần đăng nhập lại trên các thiết bị.
 - Hồ sơ học sinh có ảnh đại diện riêng. Tạo học sinh gửi ảnh kèm trong cùng một yêu cầu; sửa hồ sơ ghi ảnh bằng endpoint riêng của nó nhưng vẫn nằm trong cùng nút **Lưu thay đổi** của tờ hồ sơ, xem [Ảnh đại diện hồ sơ](avatar.md). Ảnh được ghi **sau** khi các trường hồ sơ được chấp nhận, nên một trường bị từ chối không làm đổi ảnh.
 
 ## Hướng dẫn thao tác
@@ -53,16 +50,16 @@ Mọi endpoint nằm dưới tiền tố `/api/v1` và cần header `Authorizati
 | --- | --- |
 | Xem danh sách | `GET /api/v1/academic/students` |
 | Tạo, không có phụ huynh | `POST /api/v1/academic/students` với `username`, `password`, `full_name`, `gender`, `grade_level` |
-| Tạo, kèm phụ huynh | thêm `guardians` — mỗi phần tử là `guardian_profile_id` (người có sẵn) hoặc `name` + `gender` (người mới), kèm `relationship` |
+| Tạo, kèm phụ huynh | thêm `guardians` — mỗi phần tử là `guardian_profile_id`, `relationship` và `is_primary` |
 | Tìm phụ huynh có sẵn | `GET /api/v1/academic/guardians/options` với `q` và `limit` |
 | Xem chi tiết | `GET /api/v1/academic/students/{id}` |
 | Sửa hồ sơ | `PUT /api/v1/academic/students/{id}` với `full_name`, `gender`, `grade_level`, `status`; `guardians` tùy chọn và được đọc là danh sách đầy đủ |
 | Khóa hoặc mở tài khoản | `PATCH /api/v1/academic/students/{id}/account` với `is_active` |
 | Đổi mật khẩu | `PATCH /api/v1/academic/students/{id}/password` với `password` |
 
-`GET /api/v1/academic/guardians/options` cần quyền riêng `guardian.list` (mặc định chỉ Quản trị viên) và trả về mảng phẳng, mỗi mục gồm `id` (là `profile_id`), `label` (họ tên) và `phone`. `q` tối đa 100 ký tự, `limit` từ 1 đến 50 và mặc định 20.
+`GET /api/v1/academic/guardians/options` cần quyền `student.update` (mặc định chỉ Quản trị viên) và trả về mảng phẳng, mỗi mục gồm `id` (là `profile_id`), `label` (họ tên) và `phone`. `q` tối đa 100 ký tự, `limit` từ 1 đến 50 và mặc định 20.
 
-Trường tùy chọn: `phone`, `dob`, `guardians`, `address`, `note`, và `status` khi tạo. Mỗi phần tử của `guardians` gồm `guardian_profile_id` **hoặc** `name` + `gender` (+ `phone` tùy chọn), kèm `relationship` bắt buộc và `is_primary` tùy chọn. Khi tạo còn nhận `avatar` — xem [Ảnh đại diện hồ sơ](avatar.md) cho cả hai dạng JSON và multipart.
+Trường tùy chọn: `phone`, `dob`, `guardians`, `address`, `note`, và `status` khi tạo. Mỗi phần tử của `guardians` gồm `guardian_profile_id`, `relationship` bắt buộc và `is_primary` bắt buộc khi roster không rỗng. Khi tạo còn nhận `avatar` — xem [Ảnh đại diện hồ sơ](avatar.md) cho cả hai dạng JSON và multipart.
 
 Giới tính (học sinh và phụ huynh): `0` Nam, `1` Nữ, `2` Khác. Khối lớp: `0` Tiền tiểu học, `1`–`12` theo số lớp. Quan hệ phụ huynh: `0` Bố, `1` Mẹ, `2` Người giám hộ — chỉ ba lựa chọn, không có ô "Khác" riêng vì nó sẽ nằm cạnh `2` mà không nói thêm được gì.
 
@@ -85,40 +82,13 @@ Nút tự tạo tên đăng nhập bỏ dấu tiếng Việt, bỏ khoảng tr�
 
 Khối `04` là một **danh sách** chứ không phải một phụ huynh: thanh trên cùng đếm số người đang được liên kết và mang nút **Thêm phụ huynh**; bên dưới là từng hàng, mỗi hàng gồm chữ cái đầu tên, họ tên, số điện thoại, ô **quan hệ với học sinh**, nút chọn **Liên hệ chính**, và nút thùng rác để gỡ. Chưa có ai thì chỗ đó là một ô trống có hình minh họa và nút thêm.
 
-Mỗi hàng mang nhãn nói rõ nó là gì, vì hàng sắp tạo hồ sơ, hàng vừa liên kết và hàng đã lưu trông giống hệt nhau nếu không nói ra:
+Mỗi hàng chọn một guardian đã có, quan hệ và radio **Liên hệ chính**. Roster không rỗng phải chọn chính xác một primary; hệ thống không tự gán row đầu tiên hoặc tạo hồ sơ từ tên/điện thoại. Muốn tạo guardian mới, Admin mở [Quản lý phụ huynh](phu-huynh.md).
 
-| Nhãn | Nghĩa | Xuất hiện ở |
-| --- | --- | --- |
-| **Sẽ tạo mới** | Người nhập tay, lưu xong mới có hồ sơ | Cả hai màn |
-| **Mới thêm** | Người có sẵn, vừa được liên kết trong phiên sửa này, chưa lưu | Chỉ màn sửa |
-| *(không nhãn)* | Liên kết đã lưu trên hồ sơ | Chỉ màn sửa |
+Nút **Thêm phụ huynh** chỉ tìm trong options directory đã được lọc role-pure. Ô tìm bỏ dấu tiếng Việt và kết quả hiển thị số điện thoại để phân biệt hồ sơ trùng tên.
 
-Màn tạo không dùng nhãn **Mới thêm**: ở đó hàng nào cũng chưa lưu, nên nhãn đó chỉ là nhiễu.
+Hộp thoại trả dòng đã chọn về form; liên kết chỉ được ghi khi bấm **Tạo học sinh** / **Lưu thay đổi**.
 
-**Liên hệ chính** là một nhóm radio trải suốt danh sách, nên không bao giờ đánh dấu được hai người. Người đầu tiên được thêm tự động nhận cờ này; gỡ người đang giữ cờ thì cờ chuyển cho người còn lại đầu danh sách, để một danh sách còn người luôn có số điện thoại để gọi trước.
-
-Nút **Thêm phụ huynh** mở một hộp thoại có hai thẻ:
-
-- **Phụ huynh có sẵn** — ô tìm theo tên hoặc số điện thoại, áp dụng sau khoảng dừng nhập. Kết quả hiện kèm chữ cái đầu tên, họ tên và số điện thoại; người đã có trong danh sách bị làm mờ và mang nhãn **Đã liên kết**. Chọn một người thì hiện thẻ **Sẽ liên kết**. Ô **Quan hệ với học sinh** nằm dưới cùng và bắt buộc.
-- **Tạo phụ huynh mới** — bốn trường họ tên, số điện thoại, giới tính và quan hệ.
-
-Ô tìm phụ huynh bỏ dấu: gõ `Hung` ra `Hùng`, gõ `Do Thi Uoc` ra `Đỗ Thị Ước`. Mọi ô tìm khác trong ứng dụng đều như vậy.
-
-Thẻ **Tạo phụ huynh mới** kiểm tra trùng trước khi thêm, để hai hồ sơ của cùng một người không cùng tồn tại. Ba tình huống, mỗi tình huống một lối ra riêng vì chúng khác nhau thật chứ không phải ba mức của cùng một cảnh báo:
-
-| Tình huống | Ý nghĩa | Lựa chọn |
-| --- | --- | --- |
-| Trùng người **đã có trong danh sách** của học sinh này | Không còn gì để thêm | **Đóng và xem danh sách** |
-| Trùng **số điện thoại** với một người khác trong hệ thống | Số điện thoại nhận ra một người chắc chắn hơn tên tiếng Việt, nên nhiều khả năng cùng một người hoặc gõ nhầm số | **Liên kết người này** hoặc **Sửa số điện thoại** |
-| Chỉ trùng **họ tên** | Tên tiếng Việt trùng nhau là chuyện thường, nên đây là nhắc chứ không phải chặn | **Liên kết người này** hoặc **Vẫn tạo người mới** |
-
-So khớp **bỏ dấu và không phân biệt hoa thường**, nên gõ `bui minh son` vẫn nhận ra `Bùi Minh Sơn`. Số điện thoại được rút về chữ số và quy `+84`/`84` về `0` trước khi so, và chỉ so khi đủ 9 chữ số trở lên. Kiểm tra chạy lúc bấm **Thêm vào hồ sơ** chứ không chạy trong lúc gõ, vì một truy vấn còn dở dang khi người dùng bấm nút sẽ để lọt bản trùng.
-
-Đây là **lớp trợ giúp ở giao diện**, không phải ràng buộc của API: số điện thoại cố ý không duy nhất (anh chị em ruột dùng chung số của phụ huynh), nên bấm **Vẫn tạo người mới** vẫn tạo được người thứ hai trùng tên. Nếu không gọi được danh bạ, thao tác thêm vẫn chạy bình thường thay vì bị chặn.
-
-Hộp thoại **không gọi API**. Nó trả một hàng về cho biểu mẫu và danh sách chỉ được ghi khi bấm **Tạo học sinh** / **Lưu thay đổi** — nhờ vậy người dùng thêm ba người, đổi ý về một người, rồi rời đi mà chưa ghi gì cả.
-
-Chế độ sửa dùng đúng khối đó, mở sẵn với những người học sinh đang liên kết. Khác biệt nằm ở lời văn, vì lời hứa khác nhau: màn sửa nói thêm **"Thay đổi chỉ được lưu khi bạn nhấn Lưu thay đổi"** dưới danh sách, ô trống ghi **"Hồ sơ chưa liên kết phụ huynh"**, và thông báo nổi khi thêm hoặc gỡ đều nhắc phải nhấn **Lưu thay đổi** để xác nhận — trên màn tạo thì nhắc nhấn **Tạo học sinh**.
+Chế độ sửa dùng đúng khối đó, mở sẵn với những người học sinh đang liên kết. Khác biệt nằm ở lời văn, vì lời hứa khác nhau: màn sửa nói thêm **"Thay đổi chỉ được lưu khi bạn nhấn Lưu thay đổi"** dưới danh sách, ô trống ghi **"Hồ sơ chưa có liên kết"**, và thông báo nổi khi thêm hoặc gỡ đều nhắc phải nhấn **Lưu thay đổi** để xác nhận — trên màn tạo thì nhắc nhấn **Tạo học sinh**.
 
 Gỡ một hàng chỉ gỡ **liên kết**, không xóa hồ sơ người đó: họ có thể vẫn là phụ huynh của học sinh khác, và thao tác này cũng chỉ có hiệu lực sau khi lưu.
 
@@ -128,7 +98,7 @@ Hàng **Hủy** / **Tạo học sinh** nằm ở mép dưới của tờ hồ s�
 
 - Từ tên hoặc ảnh học sinh, mục **Xem hồ sơ**, và đường dẫn `/academic/students/{id}`, người dùng mở trang chi tiết. Mục **Sửa hồ sơ** ở danh sách và nút **Sửa hồ sơ** trên trang chi tiết mở `/academic/students/{id}/edit`. Lưu thành công quay về `/academic/students/{id}`; tạo mới vẫn quay về `/academic/students`.
 - Trang chi tiết là màn đọc theo capability. Có `student.view` thì đọc được hồ sơ; API vẫn là rào chắn quyền cuối cùng. Có `student.update` thì hiện **Sửa hồ sơ**; **Đổi mật khẩu** chỉ hiện khi đồng thời có tài khoản đăng nhập. Có `student.toggle_active` thì hiện **Khóa tài khoản** hoặc **Mở tài khoản**, cũng chỉ khi học sinh có tài khoản. Thiếu capability tương ứng thì action đó không xuất hiện; không có tài khoản thì không có action tài khoản.
-- Khối **Thông tin cá nhân** che một phần số điện thoại học sinh và gắn nhãn **Đã che**. Khối **Người giám hộ** hiển thị toàn bộ roster, đếm số người, đặt **Liên hệ chính** ở đầu nếu có, và che số điện thoại từng người. Không có thao tác guardian riêng trên trang này; thêm, sửa hoặc gỡ thực hiện trong **Sửa hồ sơ**.
+- Khối **Thông tin cá nhân** che một phần số điện thoại học sinh và gắn nhãn **Đã che**. Khối **Người giám hộ** hiển thị toàn bộ roster, đếm số người, đặt **Liên hệ chính** ở đầu nếu có, và che số điện thoại từng người. Thêm, sửa hoặc gỡ liên kết thực hiện trong **Sửa hồ sơ**.
 - Tab **Lớp đang học** chỉ đọc `active_enrollments`, tức các ghi danh còn hiệu lực. Mỗi dòng có tên lớp, mã lớp, môn học và link **Xem lớp** tới `/academic/classes/{classId}`. Trang này không ghi danh, chuyển lớp hoặc cho nghỉ; các thao tác đó thuộc [Ghi danh vào lớp](../academic/ghi-danh.md). Khi không có lớp còn hiệu lực, trang hiện trạng thái trống và link **Mở danh sách lớp** tới `/academic/classes`.
 - Hai tab **Điểm thưởng** và **Báo cáo học tập** luôn hiển thị nhưng mang badge **Sắp có** và panel tĩnh. Chúng không hiển thị số liệu, không có thao tác và không gọi dữ liệu module chưa được triển khai.
 
@@ -170,14 +140,13 @@ Trên trình duyệt:
 ## Lỗi và trường hợp ngoại lệ
 
 - Trùng tên đăng nhập trả `422` gắn vào `username`: `Có tài khoản đã dùng tên đăng nhập này, vui lòng chọn tên khác.`
-- Lỗi của danh sách phụ huynh gắn vào đúng phần tử, ví dụ `guardians.0.name`. Một phần tử không nêu ai cả trả `Vui lòng chọn một phụ huynh có sẵn hoặc nhập tên phụ huynh mới.`; nhập tay mà thiếu giới tính trả `Vui lòng chọn giới tính phụ huynh.`; thiếu `relationship` trả `Vui lòng chọn quan hệ của phụ huynh với học sinh.`
-- Gửi cùng lúc `guardian_profile_id` và `name` trong một phần tử trả `422` gắn vào `guardians.{i}.guardian_profile_id`: `Chọn phụ huynh có sẵn hoặc nhập phụ huynh mới, không gửi cả hai.`
+- Lỗi của danh sách phụ huynh gắn vào đúng phần tử, ví dụ `guardians.0.guardian_profile_id`; mỗi phần tử phải chọn một hồ sơ có sẵn, quan hệ và cờ liên hệ chính.
 - Cùng một `guardian_profile_id` xuất hiện hai lần trả `422` ở phần tử thứ hai: `Phụ huynh này đã có trong danh sách của học sinh.`
 - Nhiều hơn một phần tử mang `is_primary` trả `422` gắn vào `guardians`: `Chỉ một phụ huynh được đánh dấu là liên hệ chính.`
 - Quá 10 phần tử trả `422` gắn vào `guardians`.
 - `guardian_profile_id` không tồn tại, trỏ vào một hồ sơ mang vai trò học sinh, hoặc trỏ vào chính học sinh đang sửa, trả `404` (`IDENTITY-007`): `Không tìm thấy phụ huynh.` Yêu cầu bị từ chối không để lại tài khoản hay hồ sơ nào.
 - Ngày sinh không ở quá khứ trả `422` gắn vào `dob`: `Ngày sinh phải trước ngày hôm nay.`
-- Số điện thoại sai định dạng trả `422` gắn vào `phone` (`Số điện thoại không hợp lệ.`) hoặc `guardians.{i}.phone` (`Số điện thoại phụ huynh không hợp lệ.`).
+- Số điện thoại học sinh sai định dạng trả `422` gắn vào `phone` (`Số điện thoại không hợp lệ.`).
 - Mật khẩu dưới 8 ký tự trả `422` gắn vào `password`.
 - Không tìm thấy học sinh trả `404`: `Không tìm thấy học sinh.`
 - Không đủ quyền trả `403`; thiếu token trả `401`.
@@ -201,10 +170,10 @@ Trên trình duyệt:
 
 - Không có chức năng xóa học sinh.
 - Không đổi được tên đăng nhập sau khi tạo.
-- Đổi mật khẩu không thu hồi token đang hoạt động.
+- Đổi mật khẩu thu hồi token đang hoạt động của đúng tài khoản.
 - Chưa có điểm thưởng, liên kết Zalo, điểm danh hay học phí.
-- Không sửa được **hồ sơ nhân thân của phụ huynh** (họ tên, số điện thoại, giới tính) từ màn học sinh. Nhập sai thì gỡ liên kết rồi thêm lại người đúng; chưa có màn quản lý phụ huynh riêng.
-- `GET /api/v1/academic/guardians/options` chỉ liệt kê phụ huynh **đã là phụ huynh của ai đó**. Một hồ sơ chưa gắn với học sinh nào không tìm ra được ở đây, dù `guardian_profile_id` vẫn nhận nó.
+- **Hồ sơ nhân thân của phụ huynh** (họ tên, số điện thoại, giới tính) được quản lý tại [Quản lý phụ huynh](phu-huynh.md), không đổi từ hồ sơ học sinh.
+- `GET /api/v1/academic/guardians/options` chỉ liệt kê phụ huynh **đã là phụ huynh của ai đó**; student form chỉ nhận hồ sơ guardian-pure đã có.
 - Màn danh sách không xem và không lọc được theo trạng thái học tập. Muốn biết trạng thái của một học sinh thì mở hồ sơ. API vẫn nhận `status[]` nên vẫn lọc được qua API.
 - Liên kết cũ tới danh sách có tham số `?status=…` không còn tác dụng: tham số bị bỏ qua và danh sách hiện như không lọc, không có cảnh báo nào.
 - Ghi danh vào lớp không sửa được từ màn học sinh; cột Lớp đang học chỉ để xem. Việc ghi danh làm trong hồ sơ lớp học.

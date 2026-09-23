@@ -1,6 +1,6 @@
 # Quản lý giáo viên
 
-Last Verified: 2026-09-18
+Last Verified: 2026-09-22
 
 ## Tổng quan
 
@@ -24,7 +24,7 @@ Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/a
 - Màu đại diện, nếu có, phải là mã hex sáu ký tự dạng `#FD7110`.
 - Không có thao tác xóa giáo viên. Ngừng cộng tác bằng cách đổi trạng thái làm việc hoặc khóa tài khoản; bản ghi hồ sơ luôn được giữ để các lớp và lịch sử trỏ tới nó không bị hỏng.
 - Khóa tài khoản chỉ chặn đăng nhập, không đụng tới hồ sơ.
-- Đổi mật khẩu không thu hồi các token đang có. Giáo viên không bị đăng xuất khỏi các thiết bị khác.
+- Đổi mật khẩu thu hồi toàn bộ token đang có của đúng tài khoản giáo viên. Giáo viên cần đăng nhập lại trên các thiết bị.
 - Hồ sơ giáo viên có ảnh đại diện riêng. Khi tạo, ảnh được gửi cùng hồ sơ; khi sửa, ảnh mẫu hoặc ảnh tải lên được chọn ngay trong biểu mẫu và lưu cùng nút **Lưu thay đổi** qua endpoint ảnh đại diện, xem [Ảnh đại diện hồ sơ](avatar.md).
 
 ## Hướng dẫn thao tác
@@ -98,7 +98,7 @@ Trên trình duyệt:
 
 - Không có chức năng xóa giáo viên.
 - Không đổi được tên đăng nhập sau khi tạo.
-- Đổi mật khẩu không thu hồi token đang hoạt động.
+- Đổi mật khẩu thu hồi token đang hoạt động của đúng tài khoản.
 - Cấu hình lương và các nghiệp vụ tài chính chưa có.
 - Danh sách chọn trả tối đa 50 bản ghi mỗi lần gọi; combobox bộ môn và lớp phụ trách tìm tiếp bằng tham số `q` khi danh mục vượt quá giới hạn này.
 
