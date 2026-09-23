@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CircleAlert, Pencil, Plus, Search } from "lucide-react";
 import { useState } from "react";
@@ -181,7 +183,7 @@ export function GuardianPickerDialog({
 
     if (source === "existing") {
       if (picked === null) {
-        setError("Hãy chọn một phụ huynh trong danh sách, hoặc chuyển sang thẻ Tạo phụ huynh mới.");
+        setError("Hãy chọn một phụ huynh có sẵn trong danh sách.");
 
         return;
       }
@@ -235,7 +237,7 @@ export function GuardianPickerDialog({
       setChecking(false);
     }
 
-    commit({ profile_id: null, name: typedName, phone: typedPhone, gender, relationship });
+    setError("Hãy tạo hồ sơ phụ huynh trong mục Quản lý phụ huynh trước khi liên kết.");
   }
 
   /** Takes the warning's advice and links the person it found instead. */
@@ -283,18 +285,12 @@ export function GuardianPickerDialog({
               clearDuplicate();
             }}
           >
-            <TabsList variant="segmented" className="grid-cols-2">
+            <TabsList variant="segmented" className="grid-cols-1">
               <TabsTrigger
                 value="existing"
                 className="rounded-[3px] text-[11px] font-medium data-[state=active]:bg-vc-ink data-[state=active]:text-vc-paper"
               >
                 Phụ huynh có sẵn
-              </TabsTrigger>
-              <TabsTrigger
-                value="new"
-                className="rounded-[3px] text-[11px] font-medium data-[state=active]:bg-vc-ink data-[state=active]:text-vc-paper"
-              >
-                Tạo phụ huynh mới
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -330,8 +326,11 @@ export function GuardianPickerDialog({
                   </>
                 ) : results.length === 0 ? (
                   <p className="p-2.5 text-[11px] leading-[1.6] text-muted-foreground">
-                    Không tìm thấy phụ huynh phù hợp. Chuyển sang thẻ Tạo phụ huynh mới để
-                    thêm người chưa có trong hệ thống.
+                    Không tìm thấy phụ huynh phù hợp. Admin có thể mở{" "}
+                    <Link className="font-semibold underline" href="/academic/guardians/new">
+                      Quản lý phụ huynh
+                    </Link>{" "}
+                    để thêm hồ sơ rồi quay lại liên kết.
                   </p>
                 ) : (
                   results.map((guardian) => {
@@ -556,7 +555,7 @@ export function GuardianPickerDialog({
                         onClick={() => {
                           if (relationship !== undefined) {
                             commit({
-                              profile_id: null,
+                              profile_id: 0,
                               name: name.trim(),
                               phone: phone.trim(),
                               gender,

@@ -39,7 +39,7 @@ test('the guardian directory permission is available to administrators by defaul
     $features = collect(AcademicFeature::cases())->keyBy->value;
 
     expect($features->keys()->all())->toContain('guardian.list')
-        ->and($features['guardian.list']->defaultRoles())->toBe([UserRole::Admin])
+        ->and($features['guardian.list']->defaultRoles())->toBe([UserRole::Admin, UserRole::Teacher])
         ->and($features['guardian.list']->group())->toBe('guardian');
 });
 

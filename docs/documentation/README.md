@@ -7,6 +7,7 @@
 | System | [Quản lý tệp](system/quan-ly-tep.md) | Thư viện tệp riêng tư theo tài khoản, hạn mức lưu trữ theo vai trò, thùng rác 30 ngày và liên kết tạm thời để mở nội dung. |
 | Academic | [Ảnh đại diện hồ sơ](academic/avatar.md) | Ảnh đại diện dùng chung cho tài khoản, học sinh và giáo viên: không dùng ảnh, ảnh trong thư viện tệp, hoặc ảnh DiceBear dựng tại thiết bị. |
 | Academic | [Quản lý giáo viên](academic/giao-vien.md) | Hồ sơ giáo viên kèm tài khoản đăng nhập, trạng thái làm việc và khóa mở tài khoản. |
+| Academic | [Quản lý phụ huynh](academic/phu-huynh.md) | Hồ sơ phụ huynh role-pure, roster học sinh và quyền đọc chỉ dành cho giáo viên. |
 | Academic | [Quản lý học sinh](academic/hoc-sinh.md) | Hồ sơ học sinh kèm tài khoản đăng nhập, trạng thái học tập, danh sách phụ huynh và các lớp đang theo học. |
 | Academic | [Quản lý môn học](academic/mon-hoc.md) | Danh mục môn học, khóa và mở môn theo các lớp đang dùng. |
 | Academic | [Quản lý phòng học](academic/phong-hoc.md) | Danh mục phòng, sức chứa, trạng thái sẵn sàng và điều kiện xóa. |

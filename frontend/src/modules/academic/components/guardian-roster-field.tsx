@@ -191,19 +191,13 @@ export function GuardianRosterField({
   const full = count >= MAX_GUARDIANS;
   const primaryKey = value.find((draft) => draft.is_primary)?.key ?? "";
 
-  /** Appends one person, making them the main contact when nobody else is. */
+  /** Appends one existing guardian without silently selecting a primary. */
   function add(entry: Omit<GuardianDraft, "key" | "is_primary" | "is_saved">): void {
-    onChange([...value, { ...entry, key: draftKey(), is_primary: count === 0, is_saved: false }]);
+    onChange([...value, { ...entry, key: draftKey(), is_primary: false, is_saved: false }]);
     showToast({ variant: "success", title: copy.added(entry.name) });
   }
 
-  /**
-   * Drops one person, promoting the first of the rest when the main contact leaves.
-   *
-   * A roster that still has somebody on it always names who to call first, so removing
-   * the flagged row has to hand the flag on rather than leave the school with a list
-   * and no first number.
-   */
+  /** Drops one person without silently choosing a replacement primary. */
   function remove(key: string): void {
     const removed = value.find((draft) => draft.key === key);
 
@@ -213,11 +207,7 @@ export function GuardianRosterField({
 
     const next = value.filter((draft) => draft.key !== key);
 
-    onChange(
-      removed.is_primary && next.length > 0
-        ? next.map((draft, index) => ({ ...draft, is_primary: index === 0 }))
-        : next,
-    );
+    onChange(next);
     showToast({ title: copy.removed(removed.name) });
   }
 

@@ -23,6 +23,8 @@ final readonly class ActionResult
         private mixed $data,
         private mixed $error,
         private ?string $message,
+        /** @var array<string, mixed> */
+        private array $meta = [],
     ) {}
 
     /**
@@ -46,9 +48,9 @@ final readonly class ActionResult
      * @param  TFailure  $error
      * @return ActionResult<never, TFailure>
      */
-    public static function error(mixed $error, ?string $message = null): self
+    public static function error(mixed $error, ?string $message = null, array $meta = []): self
     {
-        return new self(false, null, $error, $message);
+        return new self(false, null, $error, $message, $meta);
     }
 
     /** Reports whether this result carries the successful branch. */
@@ -81,5 +83,11 @@ final readonly class ActionResult
     public function getMessage(): ?string
     {
         return $this->message;
+    }
+
+    /** Returns safe metadata attached to an expected failure. */
+    public function getMeta(): array
+    {
+        return $this->meta;
     }
 }

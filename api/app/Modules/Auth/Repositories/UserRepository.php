@@ -85,6 +85,12 @@ final class UserRepository extends BaseRepository
         $user->forceFill(['password' => $password])->save();
     }
 
+    /** Delete every Sanctum token owned by exactly this account. */
+    public function deleteTokens(User $user): void
+    {
+        $user->tokens()->delete();
+    }
+
     /**
      * Lock or unlock an account. A locked account keeps any bearer token it was already
      * issued, so every permission check refuses it separately.

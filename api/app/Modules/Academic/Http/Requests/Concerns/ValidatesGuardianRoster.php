@@ -17,13 +17,8 @@ use Illuminate\Validation\Validator;
  * legal to save an edit with, and the rules live in one place rather than drifting
  * between the two requests.
  *
- * Each entry is one of two shapes, told apart by which keys it carries rather than by
- * a mode flag the caller must keep in step:
- *
- * - `guardian_profile_id` links somebody already on file. It prohibits the free-text
- *   fields, because sending both leaves it ambiguous whether the typed values are
- *   meant to overwrite the stored profile.
- * - `name` with `gender` records somebody new.
+ * Each entry names an existing guardian profile. Contact data belongs to Guardian
+ * CRUD, so student forms cannot create, reuse, or silently rewrite profiles.
  *
  * `relationship` is required either way: a link that does not say who the person is to
  * the student records nothing a reader could act on.
@@ -43,12 +38,12 @@ trait ValidatesGuardianRoster
         return [
             'guardians' => ['sometimes', 'array', 'max:'.self::MAX_GUARDIANS],
             'guardians.*' => ['array'],
-            'guardians.*.guardian_profile_id' => ['nullable', 'integer', 'min:1'],
-            'guardians.*.name' => ['nullable', 'string', 'max:255'],
-            'guardians.*.gender' => ['nullable', 'integer', Rule::in(Gender::values())],
-            'guardians.*.phone' => ['nullable', 'string', 'regex:/^0[0-9]{9,10}$/'],
+            'guardians.*.guardian_profile_id' => ['required', 'integer', 'distinct', 'min:1'],
+            'guardians.*.name' => ['prohibited'],
+            'guardians.*.gender' => ['prohibited'],
+            'guardians.*.phone' => ['prohibited'],
             'guardians.*.relationship' => ['required', 'integer', Rule::in(GuardianRelationship::values())],
-            'guardians.*.is_primary' => ['sometimes', 'boolean'],
+            'guardians.*.is_primary' => ['required', 'boolean'],
         ];
     }
 
@@ -61,78 +56,29 @@ trait ValidatesGuardianRoster
     {
         return [
             'guardians.max' => 'Một học sinh chỉ liên kết được tối đa '.self::MAX_GUARDIANS.' phụ huynh.',
-            'guardians.*.phone.regex' => 'Số điện thoại phụ huynh không hợp lệ.',
             'guardians.*.relationship.required' => 'Vui lòng chọn quan hệ của phụ huynh với học sinh.',
             'guardians.*.relationship.in' => 'Quan hệ của phụ huynh với học sinh không hợp lệ.',
         ];
     }
 
-    /**
-     * Apply the rules that span more than one key of an entry, or more than one entry.
-     *
-     * These cannot be written as rule strings: `prohibits` and `required_with` do not
-     * address a sibling key inside the same wildcard element, so the shape check is
-     * done here where both keys of the entry are in hand.
-     */
+    /** Validate that every non-empty student roster declares one explicit primary. */
     protected function validateGuardianRoster(Validator $validator): void
     {
         /** @var array<int, mixed> $roster */
         $roster = $this->input('guardians', []);
-
-        if (! is_array($roster)) {
+        if (! is_array($roster) || $roster === []) {
             return;
         }
 
-        $seenProfileIds = [];
         $primaryCount = 0;
-
-        foreach ($roster as $index => $entry) {
-            if (! is_array($entry)) {
-                continue;
-            }
-
-            $profileId = $entry['guardian_profile_id'] ?? null;
-            $name = $entry['name'] ?? null;
-
-            if ($profileId !== null && $name !== null) {
-                $validator->errors()->add(
-                    "guardians.{$index}.guardian_profile_id",
-                    'Chọn phụ huynh có sẵn hoặc nhập phụ huynh mới, không gửi cả hai.',
-                );
-            }
-
-            if ($profileId === null && $name === null) {
-                $validator->errors()->add(
-                    "guardians.{$index}.name",
-                    'Vui lòng chọn một phụ huynh có sẵn hoặc nhập tên phụ huynh mới.',
-                );
-            }
-
-            if ($profileId === null && $name !== null && ($entry['gender'] ?? null) === null) {
-                $validator->errors()->add(
-                    "guardians.{$index}.gender",
-                    'Vui lòng chọn giới tính phụ huynh.',
-                );
-            }
-
-            if ($profileId !== null) {
-                if (in_array($profileId, $seenProfileIds, strict: true)) {
-                    $validator->errors()->add(
-                        "guardians.{$index}.guardian_profile_id",
-                        'Phụ huynh này đã có trong danh sách của học sinh.',
-                    );
-                }
-
-                $seenProfileIds[] = $profileId;
-            }
-
-            if (filter_var($entry['is_primary'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+        foreach ($roster as $entry) {
+            if (is_array($entry) && filter_var($entry['is_primary'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
                 $primaryCount++;
             }
         }
 
-        if ($primaryCount > 1) {
-            $validator->errors()->add('guardians', 'Chỉ một phụ huynh được đánh dấu là liên hệ chính.');
+        if ($primaryCount !== 1) {
+            $validator->errors()->add('guardians', 'Danh sách phụ huynh phải chọn chính xác một liên hệ chính.');
         }
     }
 }

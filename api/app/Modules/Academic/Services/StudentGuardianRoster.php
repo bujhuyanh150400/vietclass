@@ -19,8 +19,8 @@ use App\Modules\Academic\Repositories\StudentGuardianRepository;
  * separate endpoints — and it is why a caller must send the roster it means rather
  * than a delta.
  *
- * Creating and editing a student share it, so the two paths cannot drift into
- * resolving the same entry to different profiles.
+ * Creating and editing a student share it, so both paths link only existing
+ * role-pure guardian profiles and cannot drift into creating contacts implicitly.
  */
 final class StudentGuardianRoster
 {
@@ -47,15 +47,40 @@ final class StudentGuardianRoster
     public function apply(int $studentProfileId, array $roster): void
     {
         $resolved = [];
+        $primaryCount = 0;
 
         foreach ($roster as $entry) {
             $guardian = $this->resolveProfile($entry, studentProfileId: $studentProfileId);
+            $isPrimary = filter_var($entry['is_primary'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $primaryCount += $isPrimary ? 1 : 0;
 
             $resolved[] = [
                 'profile' => $guardian,
                 'relationship' => GuardianRelationship::from((int) $entry['relationship']),
-                'is_primary' => filter_var($entry['is_primary'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'is_primary' => $isPrimary,
             ];
+        }
+
+        if ($resolved !== [] && $primaryCount !== 1) {
+            throw new ActionError(
+                message: 'Danh sách phụ huynh phải chọn chính xác một liên hệ chính.',
+                code: AcademicPersonError::PrimaryGuardianReplacementRequired,
+            );
+        }
+
+        $currentLinks = $this->guardians->forStudent($studentProfileId);
+        $currentPrimary = $currentLinks->firstWhere('is_primary', true);
+        $incomingByProfile = collect($resolved)->keyBy(fn (array $link): int => $link['profile']->id);
+        if ($currentPrimary !== null) {
+            $replacement = $incomingByProfile->get($currentPrimary->guardian_profile_id);
+            $incomingPrimary = collect($resolved)->firstWhere('is_primary', true);
+            $remaining = $currentLinks->whereNotIn('guardian_profile_id', $incomingByProfile->keys());
+            if ($incomingByProfile->isNotEmpty() && ($replacement === null || ! $replacement['is_primary']) && $remaining->isNotEmpty() && $incomingPrimary === null) {
+                throw new ActionError(
+                    message: 'Vui lòng chọn người liên hệ chính thay thế cho học sinh.',
+                    code: AcademicPersonError::PrimaryGuardianReplacementRequired,
+                );
+            }
         }
 
         $keep = array_map(static fn (array $link): int => $link['profile']->id, $resolved);
@@ -71,16 +96,15 @@ final class StudentGuardianRoster
             );
         }
 
-        $primary = $this->choosePrimary($resolved);
-
-        if ($primary !== null) {
-            $this->guardians->markPrimary($studentProfileId, $primary);
+        foreach ($resolved as $link) {
+            if ($link['is_primary']) {
+                $this->guardians->markPrimary($studentProfileId, $link['profile']->id);
+            }
         }
     }
 
     /**
-     * Return the profile one roster entry names, creating it when the entry describes
-     * somebody new.
+     * Return the existing role-pure profile one roster entry names.
      *
      * A caller who picked somebody already on file sends their identifier, and it is
      * used as given: re-deriving them from a name would defeat the point of picking.
@@ -88,11 +112,8 @@ final class StudentGuardianRoster
      * because "may this profile act as a guardian" is a rule about the records
      * involved, not about the shape of the payload.
      *
-     * Somebody typed in reuses an existing profile when both the phone number and the
-     * name already belong to an eligible person, which is what makes two siblings
-     * entered from two forms resolve to one guardian instead of two. Somebody typed in
-     * without a phone number always gets a profile of their own, because there is
-     * nothing to match on.
+     * A student payload never creates or reuses a profile from contact fields; the
+     * Admin creates guardians through the independent Guardian CRUD surface first.
      *
      * @param  array<string, mixed>  $entry
      */
@@ -120,48 +141,9 @@ final class StudentGuardianRoster
             return $guardian;
         }
 
-        $phone = $entry['phone'] ?? null;
-
-        if ($phone !== null) {
-            $existing = $this->profiles->findGuardianByPhoneAndName(
-                (string) $phone,
-                (string) $entry['name'],
-            );
-
-            if ($existing instanceof Profile && $existing->id !== $studentProfileId) {
-                return $existing;
-            }
-        }
-
-        return $this->profiles->create([
-            'full_name' => $entry['name'],
-            'phone' => $phone,
-            'gender' => $entry['gender'],
-        ]);
-    }
-
-    /**
-     * Decide which link is the main contact.
-     *
-     * The roster names one, and when it names none the first entry is taken: a student
-     * with somebody linked always has a main contact, because the whole point of the
-     * flag is that the school knows who to call first. The request already refuses a
-     * roster naming more than one.
-     *
-     * @param  list<array{profile: Profile, relationship: GuardianRelationship, is_primary: bool}>  $resolved
-     */
-    private function choosePrimary(array $resolved): ?int
-    {
-        if ($resolved === []) {
-            return null;
-        }
-
-        foreach ($resolved as $link) {
-            if ($link['is_primary']) {
-                return $link['profile']->id;
-            }
-        }
-
-        return $resolved[0]['profile']->id;
+        throw new ActionError(
+            message: 'Vui lòng chọn một phụ huynh có sẵn.',
+            code: AcademicPersonError::GuardianNotFound,
+        );
     }
 }

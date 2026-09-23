@@ -84,28 +84,15 @@ const GRADE_CHOICES = GRADE_LEVELS.map((grade) => ({
 /**
  * Turns the roster the form is holding into the entries the API reads.
  *
- * Each row becomes one of the two shapes the endpoint accepts, chosen by whether the
- * person already has a profile: an identifier links them, a name and gender create
- * them. Keys from the other shape are omitted rather than sent as null, because the
- * API tells the shapes apart by which keys are present and refuses a payload carrying
- * both.
+ * Every row links an existing guardian profile; contact data is managed by Guardian
+ * CRUD and is never sent from the student form.
  */
 function guardianPayload(drafts: GuardianDraft[]): StudentGuardianEntry[] {
-  return drafts.map((draft) =>
-    draft.profile_id === null
-      ? {
-          name: draft.name,
-          gender: draft.gender,
-          phone: emptyToNull(draft.phone),
-          relationship: draft.relationship,
-          is_primary: draft.is_primary,
-        }
-      : {
-          guardian_profile_id: draft.profile_id,
-          relationship: draft.relationship,
-          is_primary: draft.is_primary,
-        },
-  );
+  return drafts.map((draft) => ({
+    guardian_profile_id: draft.profile_id,
+    relationship: draft.relationship,
+    is_primary: draft.is_primary,
+  }));
 }
 
 /**

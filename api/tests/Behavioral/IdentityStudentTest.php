@@ -32,11 +32,6 @@ function studentPayload(array $overrides = []): array
         'full_name' => 'Phạm Thùy Linh',
         'gender' => Gender::Female->value,
         'grade_level' => GradeLevel::Grade9->value,
-        'guardians' => [[
-            'name' => 'Phạm Văn D',
-            'gender' => Gender::Male->value,
-            'relationship' => GuardianRelationship::Father->value,
-        ]],
         ...$overrides,
     ];
 }
@@ -68,10 +63,10 @@ test('a student payload never reports a credential back', function () {
         ->and($response->getContent())->not->toContain('matkhau123');
 });
 
-test('a roster entry needs a name while student contact details do not', function () {
+test('a roster entry must select an existing guardian while student contact details do not', function () {
     $this->postJson('/api/v1/academic/students', studentPayload([
-        'guardians' => [['gender' => Gender::Male->value, 'relationship' => GuardianRelationship::Father->value]],
-    ]))->assertJsonValidationErrorFor('guardians.0.name');
+        'guardians' => [['gender' => Gender::Male->value, 'relationship' => GuardianRelationship::Father->value, 'is_primary' => true]],
+    ]))->assertJsonValidationErrorFor('guardians.0.guardian_profile_id');
 
     $this->postJson('/api/v1/academic/students', studentPayload())
         ->assertCreated()
@@ -94,17 +89,6 @@ test('student and guardian phone numbers are checked for shape', function () {
         ->assertJsonValidationErrorFor('phone')
         ->assertJsonPath('errors.phone.0', 'Số điện thoại không hợp lệ.');
 
-    $this->postJson('/api/v1/academic/students', studentPayload([
-        'guardians' => [[
-            'name' => 'Phạm Văn D',
-            'gender' => Gender::Male->value,
-            'relationship' => GuardianRelationship::Father->value,
-            'phone' => 'abc',
-        ]],
-    ]))
-        // Named through `assertJsonValidationErrors` rather than a JSON path, because
-        // the error key itself contains dots and a path would read them as nesting.
-        ->assertJsonValidationErrors(['guardians.0.phone' => 'Số điện thoại phụ huynh không hợp lệ.']);
 });
 
 test('a duplicate login name is reported against the username field', function () {
@@ -129,11 +113,6 @@ test('updating a student cannot change the login name', function () {
         'full_name' => 'Tên mới',
         'gender' => Gender::Male->value,
         'grade_level' => GradeLevel::Grade10->value,
-        'guardians' => [[
-            'name' => 'Phụ huynh mới',
-            'gender' => Gender::Female->value,
-            'relationship' => GuardianRelationship::Mother->value,
-        ]],
         'status' => StudentStatus::Paused->value,
         'username' => 'hs_khac',
     ])

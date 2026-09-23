@@ -4,6 +4,7 @@ use App\Modules\Academic\Enums\AcademicFeature;
 use App\Modules\Academic\Http\Controllers\ClassController;
 use App\Modules\Academic\Http\Controllers\EnrollmentController;
 use App\Modules\Academic\Http\Controllers\GuardianController;
+use App\Modules\Academic\Http\Middleware\RejectTeacherGuardianMutation;
 use App\Modules\Academic\Http\Controllers\ProfileAvatarController;
 use App\Modules\Academic\Http\Controllers\RoomController;
 use App\Modules\Academic\Http\Controllers\StudentController;
@@ -53,9 +54,36 @@ Route::middleware('auth:sanctum')->prefix('academic')->name('academic.')->group(
     });
 
     Route::prefix('guardians')->name('guardians.')->group(function (): void {
-        Route::get('options', [GuardianController::class, 'options'])
+        Route::get('/', [GuardianController::class, 'index'])
             ->middleware(Authorize::using(AcademicFeature::GuardianList))
+            ->name('index');
+
+        Route::get('options', [GuardianController::class, 'options'])
+            ->middleware(RejectTeacherGuardianMutation::class)
+            ->middleware(Authorize::using(AcademicFeature::StudentUpdate))
             ->name('options');
+
+        Route::post('/', [GuardianController::class, 'store'])
+            ->middleware(RejectTeacherGuardianMutation::class)
+            ->middleware(Authorize::using(AcademicFeature::GuardianCreate))
+            ->name('store');
+
+        Route::get('{guardian}', [GuardianController::class, 'show'])
+            ->whereNumber('guardian')
+            ->middleware(Authorize::using(AcademicFeature::GuardianView))
+            ->name('show');
+
+        Route::put('{guardian}', [GuardianController::class, 'update'])
+            ->whereNumber('guardian')
+            ->middleware(RejectTeacherGuardianMutation::class)
+            ->middleware(Authorize::using(AcademicFeature::GuardianUpdate))
+            ->name('update');
+
+        Route::delete('{guardian}', [GuardianController::class, 'destroy'])
+            ->whereNumber('guardian')
+            ->middleware(RejectTeacherGuardianMutation::class)
+            ->middleware(Authorize::using(AcademicFeature::GuardianDelete))
+            ->name('destroy');
     });
 
     Route::prefix('students')->name('students.')->group(function (): void {

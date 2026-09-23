@@ -7,6 +7,7 @@ use App\Core\Repositories\BaseRepository;
 use App\Modules\Academic\Models\Profile;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 final class ProfileRepository extends BaseRepository
 {
@@ -50,6 +51,66 @@ final class ProfileRepository extends BaseRepository
         return $this->modelQuery()->lockForUpdate()->find($profileId);
     }
 
+    /** Return only role-pure profiles that currently have at least one guardian link. */
+    private function guardianQuery(): Builder
+    {
+        return $this->modelQuery()
+            ->whereNull('user_id')
+            ->whereDoesntHave('teacherProfile')
+            ->whereDoesntHave('studentProfile')
+            ->whereHas('guardianLinks');
+    }
+
+    /** Return a locked guardian record with its complete student roster. */
+    public function findGuardian(int $profileId, bool $lock = false): ?Profile
+    {
+        $query = $this->guardianQuery()->with('guardianLinks.studentProfile.profile');
+
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        return $query->find($profileId);
+    }
+
+    /** Return one eager-loaded page of guardian records in stable order. */
+    public function paginateGuardians(ListQuery $query): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        $builder = $this->guardianQuery()->with('guardianLinks.studentProfile.profile');
+
+        if ($query->hasSearch()) {
+            $this->whereAnyUnaccentedLike($builder, ['full_name', 'phone'], (string) $query->searchLike());
+        }
+
+        $sort = match ($query->sort) {
+            'full_name', 'created_at', 'id' => $query->sort,
+            default => 'id',
+        };
+
+        return $builder
+            ->orderBy($sort, $query->direction)
+            ->paginate(perPage: $query->perPage, page: $query->page);
+    }
+
+    /** Return an exact duplicate among eligible guardian profiles. */
+    public function findGuardianDuplicate(string $phone, string $name, ?int $exceptId = null): ?Profile
+    {
+        // Serialize exact duplicate checks for the same identity because the existing
+        // schema intentionally has no unique constraint for guardian contact fields.
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            $lockKey = unpack('q', substr(hash('sha256', $name."\\0".$phone, true), 0, 8))[1];
+            DB::select('select pg_advisory_xact_lock(?)', [$lockKey]);
+        }
+
+        return $this->guardianQuery()
+            ->lockForUpdate()
+            ->when($exceptId !== null, fn (Builder $query): Builder => $query->where('id', '<>', $exceptId))
+            ->where('phone', $phone)
+            ->where('full_name', $name)
+            ->orderBy('id')
+            ->first();
+    }
+
     /**
      * Find the oldest existing profile that may be reused as a guardian: one that
      * already carries the exact same phone number and full name, and does not itself
@@ -72,12 +133,7 @@ final class ProfileRepository extends BaseRepository
      */
     public function findGuardianByPhoneAndName(string $phone, string $name): ?Profile
     {
-        return $this->modelQuery()
-            ->where('phone', $phone)
-            ->where('full_name', $name)
-            ->whereDoesntHave('studentProfile')
-            ->orderBy('id')
-            ->first();
+        return $this->findGuardianDuplicate(phone: $phone, name: $name);
     }
 
     /**
@@ -99,9 +155,7 @@ final class ProfileRepository extends BaseRepository
      */
     public function guardianOptions(ListQuery $query): Collection
     {
-        return $this->modelQuery()
-            ->whereHas('guardianLinks')
-            ->whereDoesntHave('studentProfile')
+        return $this->guardianQuery()
             ->when(
                 $query->hasSearch(),
                 fn (Builder $builder): Builder => $this->whereAnyUnaccentedLike(
@@ -126,8 +180,6 @@ final class ProfileRepository extends BaseRepository
      */
     public function findGuardianCandidate(int $profileId): ?Profile
     {
-        return $this->modelQuery()
-            ->whereDoesntHave('studentProfile')
-            ->find($profileId);
+        return $this->guardianQuery()->find($profileId);
     }
 }

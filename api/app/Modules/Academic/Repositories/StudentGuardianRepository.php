@@ -99,4 +99,37 @@ final class StudentGuardianRepository extends BaseRepository
             ->where('guardian_profile_id', $guardianProfileId)
             ->update(['is_primary' => true]);
     }
+
+    /** Lock all links for a guardian while its complete roster is replaced. */
+    public function forGuardianUpdate(int $guardianProfileId): Collection
+    {
+        return $this->modelQuery()
+            ->where('guardian_profile_id', $guardianProfileId)
+            ->lockForUpdate()
+            ->get();
+    }
+
+    /** Lock every link for one student before a primary transition. */
+    public function forStudentUpdate(int $studentProfileId): Collection
+    {
+        return $this->modelQuery()
+            ->where('student_profile_id', $studentProfileId)
+            ->lockForUpdate()
+            ->get();
+    }
+
+    /** Remove one guardian's links after the replacement checks have passed. */
+    public function removeGuardianLinks(int $guardianProfileId): void
+    {
+        $this->modelQuery()->where('guardian_profile_id', $guardianProfileId)->delete();
+    }
+
+    /** Remove one guardian link while preserving the linked profiles. */
+    public function removeLink(int $studentProfileId, int $guardianProfileId): void
+    {
+        $this->modelQuery()
+            ->where('student_profile_id', $studentProfileId)
+            ->where('guardian_profile_id', $guardianProfileId)
+            ->delete();
+    }
 }

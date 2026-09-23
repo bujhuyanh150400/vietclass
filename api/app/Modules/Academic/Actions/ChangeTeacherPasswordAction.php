@@ -9,6 +9,7 @@ use App\Modules\Academic\Models\TeacherProfile;
 use App\Modules\Auth\Models\User;
 use App\Modules\Academic\Repositories\TeacherRepository;
 use App\Modules\Auth\Repositories\UserRepository;
+use Illuminate\Support\Facades\DB;
 
 final class ChangeTeacherPasswordAction
 {
@@ -23,9 +24,8 @@ final class ChangeTeacherPasswordAction
     /**
      * Replace the password on a teacher's login account.
      *
-     * Existing bearer tokens are deliberately left alone: revoking them is a separate
-     * decision this release does not make, and doing it silently here would sign the
-     * teacher out of every device without anyone asking for that.
+     * Saving the hash and revoking this account's bearer tokens share one transaction,
+     * so a token-store failure cannot leave a changed password with live old sessions.
      *
      * @return ActionResult<null, AcademicPersonError>
      */
@@ -48,7 +48,10 @@ final class ChangeTeacherPasswordAction
                 );
             }
 
-            $this->users->changePassword($teacher->profile->user, $password);
+            DB::transaction(function () use ($teacher, $password): void {
+                $this->users->changePassword($teacher->profile->user, $password);
+                $this->users->deleteTokens($teacher->profile->user);
+            });
 
             return ActionResult::success();
         } catch (ActionError $error) {

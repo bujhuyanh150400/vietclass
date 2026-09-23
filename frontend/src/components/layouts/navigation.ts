@@ -73,7 +73,7 @@ export const NAVIGATION: NavigationGroup[] = [
     items: [
       { kind: "link", label: "Giáo viên", href: "/academic/teachers", icon: "teachers" },
       { kind: "link", label: "Học sinh", href: "/academic/students", icon: "students" },
-      { kind: "upcoming", label: "Phụ huynh", badge: "Sắp có", icon: "parents" },
+      { kind: "link", label: "Phụ huynh", href: "/academic/guardians", icon: "parents" },
     ],
   },
   {
@@ -129,6 +129,9 @@ const SUB_ROUTE_LABELS: Record<string, string> = {
   "/academic/students/new": "Thêm học sinh",
   "/academic/students/:id": "Chi tiết học sinh",
   "/academic/students/:id/edit": "Sửa hồ sơ học sinh",
+  "/academic/guardians/new": "Thêm phụ huynh",
+  "/academic/guardians/:id": "Chi tiết phụ huynh",
+  "/academic/guardians/:id/edit": "Sửa phụ huynh",
   "/academic/avatar": "Đổi ảnh đại diện",
 };
 

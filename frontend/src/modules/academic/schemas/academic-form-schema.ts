@@ -166,10 +166,8 @@ export type TeacherFormValues = z.output<typeof teacherEditSchema>;
 /**
  * One person on the roster the student form is building.
  *
- * Somebody already on file is carried as their `profile_id`; somebody being typed in
- * has none yet and carries the typed fields instead. Both keep `name` and `phone`
- * filled, because the roster draws every row the same way and a row that could not
- * name who it links to would be a row a reader cannot check.
+ * Every row names an existing guardian through `profile_id`; contact fields are display
+ * data only and are not sent by the student API.
  */
 // No `.default()` on any field: every row is built complete by the picker, so making
 // them optional would only split the draft into an input shape and an output shape
@@ -177,8 +175,8 @@ export type TeacherFormValues = z.output<typeof teacherEditSchema>;
 export const guardianDraftSchema = z.object({
   /** A stable key for the row while it is only in the form. */
   key: z.string().min(1),
-  /** The profile being linked, or null while the person is still being typed in. */
-  profile_id: z.number().int().positive().nullable(),
+  /** The existing role-pure profile being linked. */
+  profile_id: z.number().int().positive(),
   name: z
     .string()
     .min(1, { error: "Vui lòng nhập họ và tên phụ huynh." })

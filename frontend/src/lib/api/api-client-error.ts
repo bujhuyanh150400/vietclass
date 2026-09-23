@@ -49,16 +49,23 @@ function sanitizeFieldErrors(value: unknown): Record<string, string[]> {
 export class ApiClientError extends Error {
   readonly status: number;
   readonly fieldErrors: Record<string, string[]>;
+  readonly meta: { existing_guardian_id?: number; existing_guardian_name?: string };
 
   /**
    * Builds the error from an already client-safe status and message, keeping
    * only validation text that matches the declared field-error shape.
    */
-  constructor(status: number, message: string, fieldErrors?: unknown) {
+  constructor(status: number, message: string, fieldErrors?: unknown, meta?: unknown) {
     super(message);
     this.name = "ApiClientError";
     this.status = status;
     this.fieldErrors = sanitizeFieldErrors(fieldErrors);
+    this.meta = isJsonObject(meta)
+      ? {
+          ...(typeof meta.existing_guardian_id === "number" ? { existing_guardian_id: meta.existing_guardian_id } : {}),
+          ...(typeof meta.existing_guardian_name === "string" ? { existing_guardian_name: meta.existing_guardian_name } : {}),
+        }
+      : {};
   }
 
   /**
