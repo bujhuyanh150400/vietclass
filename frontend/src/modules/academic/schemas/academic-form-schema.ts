@@ -244,9 +244,11 @@ const classShape = {
     .string()
     .min(1, { error: "Vui lòng nhập tên lớp." })
     .max(50, { error: "Tên lớp không được vượt quá 50 ký tự." }),
-  subject_id: z.number().int().min(1, { error: "Vui lòng chọn môn học." }),
-  teacher_id: z.number().int().min(1, { error: "Vui lòng chọn giáo viên." }),
-  grade_level: gradeLevel,
+  subject_id: z.number().int().min(1, { error: "Vui lòng chọn môn học chính." }),
+  subject_ids: z.array(z.number().int().min(1)).min(1, { error: "Chọn ít nhất một môn học." }),
+  teacher_id: z.number().int().min(1, { error: "Vui lòng chọn giáo viên phụ trách." }),
+  assistant_teacher_ids: z.array(z.number().int().min(1)).default([]),
+  grade_level: z.number({ error: "Vui lòng chọn khối." }).pipe(gradeLevel),
   max_students: z
     .number()
     .int()
@@ -254,6 +256,20 @@ const classShape = {
     .max(65535),
   end_at: optionalDate.default(""),
 };
+
+/** Keep the selected primary subject inside the normalized subject set. */
+function validateClassPrimarySubject(
+  values: { subject_id: number; subject_ids: number[] },
+  context: z.RefinementCtx,
+): void {
+  if (!values.subject_ids.includes(values.subject_id)) {
+    context.addIssue({
+      code: "custom",
+      path: ["subject_id"],
+      message: "Môn chính phải nằm trong danh sách môn học của lớp.",
+    });
+  }
+}
 
 /** Creating a class, where the code and opening date are set for good. */
 export const classCreateSchema = z.object({
@@ -263,7 +279,7 @@ export const classCreateSchema = z.object({
     .min(1, { error: "Vui lòng nhập mã lớp." })
     .max(50, { error: "Mã lớp không được vượt quá 50 ký tự." }),
   start_at: requiredDate,
-});
+}).superRefine(validateClassPrimarySubject);
 
 /**
  * Editing a class, which can change neither its code nor its opening date. Both
@@ -274,7 +290,7 @@ export const classEditSchema = z.object({
   ...classShape,
   code: z.string().optional(),
   start_at: z.string().optional(),
-});
+}).superRefine(validateClassPrimarySubject);
 
 export type ClassFormInput = z.input<typeof classEditSchema>;
 export type ClassFormValues = z.output<typeof classEditSchema>;

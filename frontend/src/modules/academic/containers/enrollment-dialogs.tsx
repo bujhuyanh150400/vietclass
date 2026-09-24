@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller } from "react-hook-form";
 
-import { AsyncSelectField } from "@/components/shared/async-select-field";
 import { DateField } from "@/components/shared/date-field";
 import { Field, fieldAria } from "@/components/shared/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -19,7 +18,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useResourceForm } from "@/hooks/use-resource-form";
 
-import { useClassOptions } from "../hooks/use-classes";
+import { TransferClassOptionsField } from "../components/transfer-class-options-field";
 import {
   emptyToNull,
   enrollmentUpdateSchema,
@@ -138,11 +137,10 @@ export function EditEnrollmentDialog({
 }
 
 /**
- * Moves a student to another class of the same subject.
+ * Moves a student only to a class the server currently marks eligible.
  *
- * The picker offers every running class; the API is what refuses a target teaching
- * a different subject, and that refusal is shown here rather than filtered away,
- * because a class list narrowed silently would look like missing data.
+ * Ineligible targets remain visible with their reason; the transfer action still
+ * rechecks grade, complete subject set, capacity, and duplicate enrollment under lock.
  */
 export function TransferEnrollmentDialog({
   enrollment,
@@ -175,7 +173,7 @@ export function TransferEnrollmentDialog({
   return (
     <EnrollmentDialogShell
       title="Chuyển lớp"
-      description={`${enrollment.student_name ?? "Học sinh"} sẽ rời lớp này và vào lớp mới cùng ngày. Chỉ chuyển được sang lớp cùng môn học.`}
+      description={`${enrollment.student_name ?? "Học sinh"} sẽ rời lớp này và vào lớp mới cùng ngày. Lớp đích phải cùng khối, trùng toàn bộ môn học, còn chỗ và chưa có học sinh này.`}
       alertMessage={alertMessage}
       isSubmitting={isSubmitting}
       submitLabel="Chuyển lớp"
@@ -186,19 +184,11 @@ export function TransferEnrollmentDialog({
         control={form.control}
         name="class_id"
         render={({ field }) => (
-          <AsyncSelectField
-            name="class_id"
-            label="Lớp đích"
-            required
-            useOptions={useClassOptions}
-            value={field.value === 0 ? undefined : field.value}
+          <TransferClassOptionsField
+            enrollmentId={enrollment.id}
+            selectedId={field.value}
             onChange={field.onChange}
-            filterOption={(option) => option.id !== enrollment.class_id}
             error={errors.class_id?.message}
-            placeholder="Chọn lớp"
-            searchPlaceholder="Tìm lớp học…"
-            emptyMessage="Không tìm thấy lớp học phù hợp."
-            size="control"
           />
         )}
       />
@@ -326,7 +316,7 @@ function EnrollmentDialogShell({
 }) {
   return (
     <Dialog open onOpenChange={(next) => (next ? undefined : onClose())}>
-      <DialogContent>
+      <DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto">
         <form onSubmit={onSubmit} noValidate className="grid gap-4">
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>

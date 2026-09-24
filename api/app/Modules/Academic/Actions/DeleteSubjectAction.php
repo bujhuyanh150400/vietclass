@@ -7,6 +7,7 @@ use App\Core\Exceptions\ActionError;
 use App\Modules\Academic\Enums\AcademicError;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Academic\Repositories\SubjectRepository;
+use Illuminate\Support\Facades\DB;
 
 final class DeleteSubjectAction
 {
@@ -18,36 +19,37 @@ final class DeleteSubjectAction
     ) {}
 
     /**
-     * Remove a subject no class references.
+     * Remove a subject only after locking it and checking every class reference.
      *
-     * Every class counts here, not only the running ones. The fork checked running
-     * classes alone, so a subject still referenced by a finished class could be
-     * deleted and break that class's foreign key.
+     * Every class counts here, not only the running ones. The subject lock also
+     * serializes deletion with class creation and subject-set edits.
      *
      * @return ActionResult<null, AcademicError>
      */
     public function handle(int $subjectId): ActionResult
     {
         try {
-            $subject = $this->subjects->findById($subjectId);
+            DB::transaction(function () use ($subjectId): void {
+                $subject = $this->subjects->findByIdForUpdate($subjectId);
 
-            if (! $subject instanceof Subject) {
-                throw new ActionError(
-                    message: 'Không tìm thấy môn học.',
-                    code: AcademicError::SubjectNotFound,
-                );
-            }
+                if (! $subject instanceof Subject) {
+                    throw new ActionError(
+                        message: 'Không tìm thấy môn học.',
+                        code: AcademicError::SubjectNotFound,
+                    );
+                }
 
-            $classes = $this->subjects->countClasses($subject);
+                $classes = $this->subjects->countClasses($subject);
 
-            if ($classes > 0) {
-                throw new ActionError(
-                    message: "Môn học đang được dùng bởi {$classes} lớp, không thể xóa.",
-                    code: AcademicError::SubjectInUse,
-                );
-            }
+                if ($classes > 0) {
+                    throw new ActionError(
+                        message: "Môn học đang được dùng bởi {$classes} lớp, không thể xóa.",
+                        code: AcademicError::SubjectInUse,
+                    );
+                }
 
-            $this->subjects->delete($subject);
+                $this->subjects->delete($subject);
+            });
 
             return ActionResult::success();
         } catch (ActionError $error) {

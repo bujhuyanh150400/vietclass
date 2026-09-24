@@ -33,8 +33,10 @@ import {
 } from "../schemas/academic-form-schema";
 import type { Teacher } from "../types/academic";
 import { GENDER_LABELS, TEACHER_STATUS_LABELS } from "../utils/labels";
+import { teacherOffboardingAssignments } from "../utils/teacher-offboarding";
 import { randomAdventurer } from "../utils/adventurer";
 import { TeacherAccountSection } from "./teacher-account-section";
+import { TeacherOffboardingDialog } from "./teacher-offboarding-dialog";
 import "../styles/student-form.css";
 
 /** Fields the API may report validation messages for. */
@@ -82,6 +84,10 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
   );
   const [avatarTouched, setAvatarTouched] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [retirementOpen, setRetirementOpen] = useState(false);
+  const [retirementConfirmed, setRetirementConfirmed] = useState(false);
+  const [replacementTeacherIds, setReplacementTeacherIds] = useState<Record<number, number>>({});
+  const [replacementTeacherLabels, setReplacementTeacherLabels] = useState<Record<number, string>>({});
 
   const { form, onSubmit, alertMessage, isSubmitting } = useResourceForm<
     TeacherFormInput,
@@ -112,7 +118,10 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
       };
 
       if (isEditing) {
-        const saved = await update.mutateAsync(profile);
+        const saved = await update.mutateAsync({
+          ...profile,
+          ...(retirementConfirmed ? { replacement_teacher_ids: replacementTeacherIds } : {}),
+        });
 
         if (avatarTouched && avatar.type !== "none") {
           await saveAvatar.save({
@@ -261,9 +270,26 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
               required
               value={field.value}
               choices={STATUS_CHOICES}
-              onChange={field.onChange}
+              onChange={(value) => {
+                if (isEditing && teacher.status === 0 && value === 1) {
+                  setReplacementTeacherIds({});
+                  setReplacementTeacherLabels({});
+                  setRetirementConfirmed(false);
+                  setRetirementOpen(true);
+                  return;
+                }
+
+                if (value === 0) {
+                  setReplacementTeacherIds({});
+                  setReplacementTeacherLabels({});
+                  setRetirementConfirmed(false);
+                }
+                field.onChange(value);
+              }}
               error={errors.status?.message}
-              hint="Giáo viên đã nghỉ không chọn được khi mở lớp."
+              hint={isEditing && teacher.status === 1 && field.value === 0
+                ? "Mở lại trạng thái công tác không tự khôi phục các phân công đã gỡ; hãy phân công lại trong biểu mẫu sửa lớp."
+                : "Tách khỏi khóa tài khoản. Chuyển sang Đã nghỉ yêu cầu xác nhận phân công lớp."}
               size="control"
             />
           )}
@@ -444,7 +470,60 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
 
           <div className="p-7 lg:px-8">{profileSection}</div>
         </div>
+
+        {isEditing && retirementConfirmed ? (
+          <aside className="grid gap-2 border-t border-vc-rule bg-vc-tint p-4" aria-live="polite">
+            <strong className="text-sm">Kế hoạch phân công sẽ áp dụng khi lưu hồ sơ.</strong>
+            {Object.entries(replacementTeacherIds).length === 0 ? (
+              <p className="text-xs text-muted-foreground">Không có lớp phụ trách cần thay người.</p>
+            ) : (
+              <ul className="grid gap-1 text-xs">
+                {Object.entries(replacementTeacherIds).map(([classId, teacherId]) => {
+                  const schoolClass = teacher.classes.find((item) => item.id === Number(classId));
+                  return (
+                    <li key={classId}>
+                      <span className="font-mono">{schoolClass?.code ?? `Lớp #${classId}`}</span>
+                      {schoolClass === undefined ? "" : ` · ${schoolClass.name}`} → {replacementTeacherLabels[Number(classId)] ?? `Giáo viên #${teacherId}`}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            {teacherOffboardingAssignments(teacher).assistantClassIds.length > 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Gỡ {teacherOffboardingAssignments(teacher).assistantClassIds.length} vai trò trợ giảng đang hoạt động.
+              </p>
+            ) : null}
+            <p className="text-xs text-muted-foreground">Tài khoản đăng nhập không bị khóa theo thay đổi trạng thái công tác.</p>
+          </aside>
+        ) : null}
       </FormSheet>
+
+      {isEditing ? (
+        <TeacherOffboardingDialog
+          open={retirementOpen}
+          teacher={teacher}
+          replacements={replacementTeacherIds}
+          onReplacementsChange={setReplacementTeacherIds}
+          onReplacementLabelChange={(classId, label) => setReplacementTeacherLabels((current) => ({
+            ...current,
+            [classId]: label,
+          }))}
+          onOpenChange={(open) => {
+            setRetirementOpen(open);
+            if (!open) {
+              setReplacementTeacherIds({});
+              setReplacementTeacherLabels({});
+              setRetirementConfirmed(false);
+            }
+          }}
+          onConfirm={() => {
+            setRetirementConfirmed(true);
+            form.setValue("status", 1, { shouldDirty: true, shouldValidate: true });
+            setRetirementOpen(false);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

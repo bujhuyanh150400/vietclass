@@ -1,29 +1,27 @@
 import { browserRequest, browserRequestList } from "@/lib/api/browser-request";
 import type { Page } from "@/lib/api/contracts";
 
-import type { StudentListParams } from "./students-api";
-import type { Enrollment, Student } from "../types/academic";
 import type {
+  Enrollment,
+  EnrollmentStudentOption,
+  Student,
+  TransferClassOption,
+} from "../types/academic";
+import type {
+  AvailableStudentListRequest,
   EnrolStudentsRequest,
+  EnrollmentListRequest,
+  EnrollmentStudentOptionsRequest,
   LeaveClassRequest,
   TransferEnrollmentRequest,
+  TransferOptionsRequest,
   UpdateEnrollmentRequest,
 } from "../types/academic-requests";
-
-/** Query parameters accepted by the enrollment list endpoint. */
-export type EnrollmentListParams = {
-  q?: string;
-  page?: number;
-  per_page?: number;
-  sort?: "id" | "enrolled_at" | "left_at";
-  direction?: "asc" | "desc";
-  active_only?: boolean | 0 | 1;
-};
 
 /** Fetches one page of a class roster. */
 export async function fetchEnrollments(
   classId: number,
-  params: EnrollmentListParams,
+  params: EnrollmentListRequest,
 ): Promise<Page<Enrollment>> {
   return browserRequestList<Enrollment>(`/api/v1/academic/classes/${classId}/enrollments`, { params });
 }
@@ -31,10 +29,32 @@ export async function fetchEnrollments(
 /** Fetches the students who may still be added to a class. */
 export async function fetchAvailableStudents(
   classId: number,
-  params: StudentListParams,
+  params: AvailableStudentListRequest,
 ): Promise<Page<Student>> {
   return browserRequestList<Student>(
     `/api/v1/academic/classes/${classId}/available-students`,
+    { params },
+  );
+}
+
+/** Fetches paginated eligible and disabled student candidates for a class. */
+export async function fetchEnrollmentStudentOptions(
+  classId: number,
+  params: EnrollmentStudentOptionsRequest,
+): Promise<Page<EnrollmentStudentOption>> {
+  return browserRequestList<EnrollmentStudentOption>(
+    `/api/v1/academic/classes/${classId}/enrollment-student-options`,
+    { params },
+  );
+}
+
+/** Fetches paginated transfer candidates with their current eligibility reasons. */
+export async function fetchTransferOptions(
+  enrollmentId: number,
+  params: TransferOptionsRequest,
+): Promise<Page<TransferClassOption>> {
+  return browserRequestList<TransferClassOption>(
+    `/api/v1/academic/enrollments/${enrollmentId}/transfer-options`,
     { params },
   );
 }

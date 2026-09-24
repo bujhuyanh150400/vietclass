@@ -6,9 +6,12 @@ use App\Core\Data\ListQuery;
 use App\Core\Repositories\BaseRepository;
 use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Academic\Models\Profile;
+use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\StudentProfile;
+use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 final class ClassEnrollmentRepository extends BaseRepository
 {
@@ -40,19 +43,32 @@ final class ClassEnrollmentRepository extends BaseRepository
                 fn (Builder $builder): Builder => $builder->active(),
             )
             ->when(
+                $query->hasFilter('left_only') && (bool) $query->filter('left_only'),
+                fn (Builder $builder): Builder => $builder
+                    ->whereNotNull('left_at')
+                    ->where('left_at', '<=', now()->toDateString()),
+            )
+            ->when(
+                $query->hasFilter('has_note') && (bool) $query->filter('has_note'),
+                fn (Builder $builder): Builder => $builder->whereNotNull('note')->where('note', '<>', ''),
+            )
+            ->when(
                 $query->hasSearch(),
-                fn (Builder $builder): Builder => $builder->whereHas(
-                    'student.profile',
-                    fn (Builder $profile): Builder => $this->whereAnyUnaccentedLike($profile, ['full_name'], (string) $query->searchLike()),
-                ),
+                fn (Builder $builder): Builder => $builder->where(function (Builder $matches) use ($query): void {
+                    $pattern = (string) $query->searchLike();
+                    $matches->whereHas(
+                        'student.profile',
+                        fn (Builder $profile): Builder => $this->whereAnyUnaccentedLike($profile, ['full_name'], $pattern),
+                    )->orWhereRaw('student_id::text ILIKE ?', [$pattern]);
+                }),
             )
             ->orderBy($query->sort, $query->direction)
             ->paginate(perPage: $query->perPage, page: $query->page);
     }
 
     /**
-     * Return the students who may still be added to one class: their account is usable
-     * and they do not already hold a running enrolment there.
+     * Return every searchable student with account and running class details for the
+     * enrollment picker; the action annotates each row with current eligibility.
      *
      * Students who left the class previously are included, because re-enrolling is
      * allowed and keeps the earlier period as history. The exclusion stays a subquery
@@ -64,10 +80,54 @@ final class ClassEnrollmentRepository extends BaseRepository
      *
      * @return LengthAwarePaginator<int, StudentProfile>
      */
-    public function paginateAvailableForClass(int $classId, ListQuery $query): LengthAwarePaginator
+    public function paginateEnrollmentStudentOptions(ListQuery $query): LengthAwarePaginator
+    {
+        $pattern = (string) $query->searchLike();
+        $sortColumn = match ($query->sort) {
+            'full_name' => 'profiles.full_name',
+            'grade_level' => 'student_profiles.grade_level',
+            default => 'student_profiles.profile_id',
+        };
+
+        return StudentProfile::query()
+            ->join('profiles', 'profiles.id', '=', 'student_profiles.profile_id')
+            ->select('student_profiles.*')
+            ->with([
+                'profile:id,user_id,full_name,phone',
+                'profile.user:id,is_active',
+                'activeEnrollments.schoolClass:id,code,name',
+                'activeEnrollments.schoolClass.subjects:id,name',
+            ])
+            ->when(
+                $query->hasSearch(),
+                fn (Builder $students): Builder => $students->where(function (Builder $matches) use ($pattern): void {
+                    $this->whereAnyUnaccentedLike($matches, ['profiles.full_name', 'profiles.phone'], $pattern);
+                    $matches->orWhereRaw('student_profiles.profile_id::text ILIKE ?', [$pattern]);
+                }),
+            )
+            ->orderBy($sortColumn, $query->direction)
+            ->orderBy('student_profiles.profile_id', $query->direction)
+            ->paginate(perPage: $query->perPage, page: $query->page);
+    }
+
+    /**
+     * Return students with a usable account and matching grade who do not already hold
+     * a running enrolment in the class.
+     *
+     * Students who left the class previously are included, because re-enrolling is
+     * allowed and keeps the earlier period as history. The exclusion stays a subquery
+     * over enrolments rather than a relation on the student model: it is scoped to one
+     * class, which no relation on `StudentProfile` would express.
+     *
+     * `StudentProfile::activeEnrollments()` shares this module's active-enrolment
+     * definition so the student list and class roster cannot drift apart.
+     *
+     * @return LengthAwarePaginator<int, StudentProfile>
+     */
+    public function paginateAvailableForClass(SchoolClass $class, ListQuery $query): LengthAwarePaginator
     {
         $activeStudentIds = $this->modelQuery()
-            ->where('class_id', $classId)
+            ->where('class_id', $class->id)
             ->active()
             ->pluck('student_id');
 
@@ -81,9 +141,10 @@ final class ClassEnrollmentRepository extends BaseRepository
                 'profile.avatarFileLink.file',
                 'primaryGuardian.guardian',
                 'guardianLinks.guardian',
-                'activeEnrollments.schoolClass.subject',
+                'activeEnrollments.schoolClass.primarySubject',
             ])
             ->whereHas('profile.user', fn (Builder $user): Builder => $user->where('is_active', true))
+            ->where('grade_level', $class->grade_level->value)
             ->whereNotIn('profile_id', $activeStudentIds)
             ->when(
                 $query->hasSearch(),
@@ -99,12 +160,108 @@ final class ClassEnrollmentRepository extends BaseRepository
     }
 
     /**
+     * Return distinct active and historical classes a student has held, with period counts.
+     *
+     * @return LengthAwarePaginator<int, SchoolClass>
+     */
+    public function paginateClassesForStudent(int $studentId, ListQuery $query): LengthAwarePaginator
+    {
+        $periodCount = $this->modelQuery()
+            ->selectRaw('COUNT(*)')
+            ->whereColumn('class_id', 'classes.id')
+            ->where('student_id', $studentId);
+        $isCurrent = $this->modelQuery()
+            ->selectRaw('CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END')
+            ->whereColumn('class_id', 'classes.id')
+            ->where('student_id', $studentId)
+            ->active();
+
+        return SchoolClass::query()
+            ->select('classes.*')
+            ->selectSub($periodCount, 'enrollment_periods_count')
+            ->selectSub($isCurrent, 'is_current')
+            ->with([
+                'subjects' => fn ($subjects) => $subjects
+                    ->select('subjects.id', 'subjects.name')
+                    ->orderBy('subjects.id'),
+            ])
+            ->whereIn(
+                'classes.id',
+                $this->modelQuery()->select('class_id')->where('student_id', $studentId)->distinct(),
+            )
+            ->when(
+                $query->hasSearch(),
+                fn (Builder $classes): Builder => $this->whereAnyUnaccentedLike(
+                    $classes,
+                    ['code', 'name'],
+                    (string) $query->searchLike(),
+                ),
+            )
+            ->orderByDesc('is_current')
+            ->orderBy(
+                $query->sort === 'id' ? 'classes.id' : 'classes.'.$query->sort,
+                $query->direction,
+            )
+            ->paginate(perPage: $query->perPage, page: $query->page);
+    }
+
+    /**
+     * Return the requested target classes the student currently attends.
+     *
+     * @param  list<int>  $classIds
+     * @return list<int>
+     */
+    public function activeClassIdsForStudent(int $studentId, array $classIds): array
+    {
+        if ($classIds === []) {
+            return [];
+        }
+
+        return $this->modelQuery()
+            ->where('student_id', $studentId)
+            ->whereIn('class_id', $classIds)
+            ->active()
+            ->distinct()
+            ->orderBy('class_id')
+            ->pluck('class_id')
+            ->map(static fn ($classId): int => (int) $classId)
+            ->all();
+    }
+
+    /**
+     * Lock one enrolment row after its source and target class rows are locked.
+     */
+    public function findByIdForUpdate(int $enrollmentId): ?ClassEnrollment
+    {
+        return $this->modelQuery()->lockForUpdate()->find($enrollmentId);
+    }
+
+    /**
+     * Lock active periods for a class in ascending enrollment-ID order before closing them.
+     *
+     * @return Collection<int, ClassEnrollment>
+     */
+    public function lockActiveForClass(int $classId, CarbonInterface $on): Collection
+    {
+        return $this->modelQuery()
+            ->where('class_id', $classId)
+            ->active($on)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+    }
+
+    /**
      * Find one enrolment with the class and student it links.
      */
     public function findById(int $enrollmentId): ?ClassEnrollment
     {
         return $this->modelQuery()
-            ->with(['schoolClass', 'student.profile:id,full_name'])
+            ->with([
+                'schoolClass',
+                'student.profile:id,user_id,full_name',
+                'student.profile.user:id,is_active',
+            ])
             ->find($enrollmentId);
     }
 

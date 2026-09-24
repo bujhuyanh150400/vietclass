@@ -58,7 +58,7 @@ enum AcademicError: string implements ErrorDeclarationEnum
     /** The leave date falls before the join date. */
     case LeftBeforeEnrolled = 'ACADEMIC-015';
 
-    /** A transfer target must teach the same subject as the class being left. */
+    /** A transfer target must have the same complete subject set as the class being left. */
     case TransferSubjectMismatch = 'ACADEMIC-016';
 
     /** A transfer target must be a class that is still running. */
@@ -78,6 +78,12 @@ enum AcademicError: string implements ErrorDeclarationEnum
 
     /** A class grade is outside the selected subject's applicability range. */
     case SubjectGradeUnavailable = 'ACADEMIC-022';
+
+    /** The student's current grade differs from the class grade. */
+    case StudentGradeMismatch = 'ACADEMIC-023';
+
+    /** The student's login account is locked and cannot be newly enrolled. */
+    case StudentAccountInactive = 'ACADEMIC-024';
 
     /**
      * Return the HTTP status this business failure reaches the API boundary with.
@@ -108,7 +114,9 @@ enum AcademicError: string implements ErrorDeclarationEnum
             self::TransferSubjectMismatch,
             self::TransferTargetNotActive,
             self::RoomInactive,
-            self::SubjectGradeUnavailable => 422,
+            self::SubjectGradeUnavailable,
+            self::StudentGradeMismatch,
+            self::StudentAccountInactive => 422,
         };
     }
 }

@@ -1,12 +1,16 @@
 <?php
 
 use App\Modules\Academic\Enums\AcademicFeature;
+use App\Modules\Academic\Enums\GradeLevel;
+use App\Modules\Academic\Models\ClassEnrollment;
+use App\Modules\Academic\Models\SchoolClass;
+use App\Modules\Academic\Models\StudentProfile;
+use App\Modules\Auth\Enums\UserRole;
 use App\Modules\Auth\Models\Feature;
+use App\Modules\Auth\Models\User;
 use App\Modules\Auth\Repositories\FeatureRepository;
 use App\Modules\Auth\Support\FeatureRegistry;
 use App\Modules\Auth\Support\FeatureResolver;
-use App\Modules\Auth\Enums\UserRole;
-use App\Modules\Auth\Models\User;
 use Illuminate\Support\Facades\DB;
 
 dataset('academic endpoints', [
@@ -33,11 +37,15 @@ dataset('academic endpoints', [
     'student list' => ['getJson', '/api/v1/academic/students'],
     'student create' => ['postJson', '/api/v1/academic/students'],
     'student detail' => ['getJson', '/api/v1/academic/students/1'],
+    'student classes' => ['getJson', '/api/v1/academic/students/1/classes'],
+    'student enrollment history' => ['getJson', '/api/v1/academic/students/1/enrollment-events?class_id=1'],
+    'transfer options' => ['getJson', '/api/v1/academic/enrollments/1/transfer-options'],
     'student update' => ['putJson', '/api/v1/academic/students/1'],
     'student account' => ['patchJson', '/api/v1/academic/students/1/account'],
     'student password' => ['patchJson', '/api/v1/academic/students/1/password'],
     'roster' => ['getJson', '/api/v1/academic/classes/1/enrollments'],
     'available students' => ['getJson', '/api/v1/academic/classes/1/available-students'],
+    'enrollment student options' => ['getJson', '/api/v1/academic/classes/1/enrollment-student-options'],
     'enrol students' => ['postJson', '/api/v1/academic/classes/1/enrollments'],
     'enrolment update' => ['putJson', '/api/v1/academic/enrollments/1'],
     'enrolment transfer' => ['postJson', '/api/v1/academic/enrollments/1/transfer'],
@@ -111,6 +119,85 @@ test('a grant override opens one permission to a teacher', function () {
     $this->withToken($teacher->createToken('test')->plainTextToken)
         ->getJson('/api/v1/academic/subjects')
         ->assertOk();
+});
+
+test('a teacher override cannot expose administrator-only enrollment history', function () {
+    app(FeatureRepository::class)->upsertMany(app(FeatureRegistry::class)->all());
+
+    $teacher = User::factory()->create(['role' => UserRole::Teacher]);
+    DB::table('feature_user')->insert([
+        'user_id' => $teacher->id,
+        'feature_id' => Feature::query()->where('code', AcademicFeature::StudentView->value)->value('id'),
+        'granted' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    app(FeatureResolver::class)->flush();
+
+    $this->withToken($teacher->createToken('test')->plainTextToken);
+    $this->getJson('/api/v1/academic/students/1/enrollment-events?class_id=1')->assertForbidden();
+    $this->getJson('/api/v1/academic/students/1/classes')->assertForbidden();
+});
+
+test('teacher grants cannot expose administrator-only enrollment student options', function () {
+    app(FeatureRepository::class)->upsertMany(app(FeatureRegistry::class)->all());
+
+    $teacher = User::factory()->create(['role' => UserRole::Teacher]);
+    DB::table('feature_user')->insert([
+        'user_id' => $teacher->id,
+        'feature_id' => Feature::query()->where('code', AcademicFeature::ClassAddStudent->value)->value('id'),
+        'granted' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    app(FeatureResolver::class)->flush();
+
+    $this->withToken($teacher->createToken('test')->plainTextToken)
+        ->getJson('/api/v1/academic/classes/1/enrollment-student-options')
+        ->assertForbidden();
+});
+
+test('a teacher override cannot expose transfer class options', function () {
+    app(FeatureRepository::class)->upsertMany(app(FeatureRegistry::class)->all());
+
+    $teacher = User::factory()->create(['role' => UserRole::Teacher]);
+    DB::table('feature_user')->insert([
+        'user_id' => $teacher->id,
+        'feature_id' => Feature::query()->where('code', AcademicFeature::ClassTransferStudent->value)->value('id'),
+        'granted' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    app(FeatureResolver::class)->flush();
+
+    $class = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $student = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $enrollment = ClassEnrollment::factory()->create([
+        'class_id' => $class->id,
+        'student_id' => $student->profile_id,
+    ]);
+
+    $this->withToken($teacher->createToken('test')->plainTextToken)
+        ->getJson("/api/v1/academic/enrollments/{$enrollment->id}/transfer-options")
+        ->assertForbidden();
+});
+
+test('an administrator still needs student.view permission for enrollment history', function () {
+    app(FeatureRepository::class)->upsertMany(app(FeatureRegistry::class)->all());
+
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    DB::table('feature_user')->insert([
+        'user_id' => $admin->id,
+        'feature_id' => Feature::query()->where('code', AcademicFeature::StudentView->value)->value('id'),
+        'granted' => false,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    app(FeatureResolver::class)->flush();
+
+    $this->withToken($admin->createToken('test')->plainTextToken)
+        ->getJson('/api/v1/academic/students/1/enrollment-events?class_id=1')
+        ->assertForbidden();
 });
 
 test('an administrator whose account was locked after signing in loses every permission', function () {

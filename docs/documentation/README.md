@@ -11,5 +11,5 @@
 | Academic | [Quản lý học sinh](academic/hoc-sinh.md) | Hồ sơ học sinh kèm tài khoản đăng nhập, trạng thái học tập, danh sách phụ huynh và các lớp đang theo học. |
 | Academic | [Quản lý môn học](academic/mon-hoc.md) | Danh mục môn học, khóa và mở môn theo các lớp đang dùng. |
 | Academic | [Quản lý phòng học](academic/phong-hoc.md) | Danh mục phòng, sức chứa, trạng thái sẵn sàng và điều kiện xóa. |
-| Academic | [Quản lý lớp học](academic/lop-hoc.md) | Lớp học gắn môn và giáo viên, sĩ số tối đa, và việc kết thúc lớp. |
-| Academic | [Ghi danh vào lớp](academic/ghi-danh.md) | Thêm học sinh vào lớp, sửa thông tin ghi danh, chuyển lớp và cho nghỉ. |
+| Academic | [Quản lý lớp học](academic/lop-hoc.md) | Lớp học với nhiều môn, giáo viên phụ trách và trợ giảng, sĩ số tối đa, và việc kết thúc lớp. |
+| Academic | [Ghi danh vào lớp](academic/ghi-danh.md) | Thêm, sửa, chuyển lớp, cho nghỉ và xem lịch sử ghi danh theo lớp. |

@@ -1,4 +1,4 @@
-import type { TeacherListParams } from "../api/teachers-api";
+import type { TeacherListRequest } from "../types/academic-requests";
 
 /** Sort modes exposed by the teacher directory. */
 export type TeacherListSort = "newest" | "date-asc" | "name-asc" | "name-desc";
@@ -40,7 +40,7 @@ export type TeacherFilterState = {
 /** Converts visible controls to the teacher list's explicit API contract. */
 export function buildTeacherListParams(
   filters: TeacherFilterState & { sort: TeacherListSort },
-): Partial<TeacherListParams> {
+): Partial<TeacherListRequest> {
   const ordering = {
     newest: { sort: "joined_at", direction: "desc" },
     "date-asc": { sort: "joined_at", direction: "asc" },
@@ -48,7 +48,7 @@ export function buildTeacherListParams(
     "name-desc": { sort: "full_name", direction: "desc" },
   } satisfies Record<
     TeacherListSort,
-    { sort: NonNullable<TeacherListParams["sort"]>; direction: "asc" | "desc" }
+    { sort: NonNullable<TeacherListRequest["sort"]>; direction: "asc" | "desc" }
   >;
 
   return {

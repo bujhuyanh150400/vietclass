@@ -7,17 +7,24 @@ use App\Modules\Academic\Actions\EnrollStudentsAction;
 use App\Modules\Academic\Actions\LeaveClassAction;
 use App\Modules\Academic\Actions\ListAvailableStudentsAction;
 use App\Modules\Academic\Actions\ListEnrollmentsAction;
+use App\Modules\Academic\Actions\ListEnrollmentStudentOptionsAction;
+use App\Modules\Academic\Actions\ListTransferOptionsAction;
 use App\Modules\Academic\Actions\TransferEnrollmentAction;
 use App\Modules\Academic\Actions\UpdateEnrollmentAction;
 use App\Modules\Academic\Http\Requests\IndexEnrollmentRequest;
+use App\Modules\Academic\Http\Requests\IndexEnrollmentStudentOptionsRequest;
+use App\Modules\Academic\Http\Requests\IndexStudentRequest;
+use App\Modules\Academic\Http\Requests\IndexTransferOptionsRequest;
 use App\Modules\Academic\Http\Requests\LeaveClassRequest;
 use App\Modules\Academic\Http\Requests\StoreEnrollmentRequest;
 use App\Modules\Academic\Http\Requests\TransferEnrollmentRequest;
 use App\Modules\Academic\Http\Requests\UpdateEnrollmentRequest;
 use App\Modules\Academic\Http\Resources\EnrollmentResource;
-use App\Modules\Academic\Models\ClassEnrollment;
-use App\Modules\Academic\Http\Requests\IndexStudentRequest;
+use App\Modules\Academic\Http\Resources\EnrollmentStudentOptionResource;
 use App\Modules\Academic\Http\Resources\StudentResource;
+use App\Modules\Academic\Http\Resources\TransferClassOptionResource;
+use App\Modules\Academic\Models\ClassEnrollment;
+use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\StudentProfile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
@@ -64,6 +71,23 @@ final class EnrollmentController extends BaseController
         return $this->paginated($request, $page, StudentResource::class);
     }
 
+    /** Return one page of eligible and disabled students for the enrollment picker. */
+    public function studentOptions(
+        IndexEnrollmentStudentOptionsRequest $request,
+        ListEnrollmentStudentOptionsAction $students,
+        int $classId,
+    ): JsonResponse {
+        $result = $students->handle(classId: $classId, query: $request->toListQuery());
+        if (! $result->isSuccess()) {
+            return $this->actionFailure(result: $result);
+        }
+
+        /** @var LengthAwarePaginator<int, StudentProfile> $page */
+        $page = $result->getData();
+
+        return $this->paginated($request, $page, EnrollmentStudentOptionResource::class);
+    }
+
     /**
      * Enrol one or more students into a class.
      */
@@ -77,6 +101,7 @@ final class EnrollmentController extends BaseController
             studentIds: $request->studentIds(),
             enrolledAt: (string) $request->validated('enrolled_at'),
             note: $request->validated('note'),
+            actorId: (int) $request->user()->getAuthIdentifier(),
         );
 
         if (! $result->isSuccess()) {
@@ -100,7 +125,11 @@ final class EnrollmentController extends BaseController
         UpdateEnrollmentAction $update,
         int $enrollmentId,
     ): JsonResponse {
-        $result = $update->handle(enrollmentId: $enrollmentId, attributes: $request->validated());
+        $result = $update->handle(
+            enrollmentId: $enrollmentId,
+            attributes: $request->validated(),
+            actorId: (int) $request->user()->getAuthIdentifier(),
+        );
 
         if (! $result->isSuccess()) {
             return $this->actionFailure(result: $result);
@@ -112,9 +141,24 @@ final class EnrollmentController extends BaseController
         return $this->success(data: EnrollmentResource::make($enrollment)->resolve($request));
     }
 
-    /**
-     * Move a student to another class of the same subject.
-     */
+    /** Return one searchable page of target classes with transfer eligibility reasons. */
+    public function transferOptions(
+        IndexTransferOptionsRequest $request,
+        ListTransferOptionsAction $options,
+        int $enrollmentId,
+    ): JsonResponse {
+        $result = $options->handle(enrollmentId: $enrollmentId, query: $request->toListQuery());
+        if (! $result->isSuccess()) {
+            return $this->actionFailure(result: $result);
+        }
+
+        /** @var LengthAwarePaginator<int, SchoolClass> $page */
+        $page = $result->getData();
+
+        return $this->paginated($request, $page, TransferClassOptionResource::class);
+    }
+
+    /** Move a student to an active class with the same grade and complete subject set. */
     public function transfer(
         TransferEnrollmentRequest $request,
         TransferEnrollmentAction $transfer,
@@ -125,6 +169,7 @@ final class EnrollmentController extends BaseController
             targetClassId: (int) $request->validated('class_id'),
             leftAt: (string) $request->validated('left_at'),
             note: $request->validated('note'),
+            actorId: (int) $request->user()->getAuthIdentifier(),
         );
 
         if (! $result->isSuccess()) {
@@ -152,6 +197,7 @@ final class EnrollmentController extends BaseController
             enrollmentId: $enrollmentId,
             leftAt: (string) $request->validated('left_at'),
             reason: (string) $request->validated('reason'),
+            actorId: (int) $request->user()->getAuthIdentifier(),
         );
 
         if (! $result->isSuccess()) {

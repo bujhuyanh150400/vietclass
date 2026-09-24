@@ -1,4 +1,4 @@
-import type { SubjectListParams } from "../api/subjects-api";
+import type { SubjectListRequest } from "../types/academic-requests";
 import type { GradeLevel } from "../types/academic";
 
 /** Sort modes exposed by the subject catalogue. */
@@ -42,14 +42,14 @@ export type SubjectFilterState = { gradeLevel: GradeLevel | null; isActive: bool
 /** Converts visible controls to the backend query contract. */
 export function buildSubjectListParams(
   controls: SubjectFilterState & { sort: SubjectListSort },
-): Partial<SubjectListParams> {
+): Partial<SubjectListRequest> {
   const ordering = {
     newest: { sort: "created_at", direction: "desc" },
     "name-asc": { sort: "name", direction: "asc" },
     "name-desc": { sort: "name", direction: "desc" },
     "classes-asc": { sort: "active_classes_count", direction: "asc" },
     "classes-desc": { sort: "active_classes_count", direction: "desc" },
-  } satisfies Record<SubjectListSort, { sort: NonNullable<SubjectListParams["sort"]>; direction: "asc" | "desc" }>;
+  } satisfies Record<SubjectListSort, { sort: NonNullable<SubjectListRequest["sort"]>; direction: "asc" | "desc" }>;
 
   return {
     ...(controls.gradeLevel === null ? {} : { grade_level: controls.gradeLevel }),

@@ -1,5 +1,5 @@
-import type { RoomListParams } from "../api/rooms-api";
 import type { RoomFacility, RoomStatus } from "../types/academic";
+import type { RoomListRequest } from "../types/academic-requests";
 
 /** Sort modes exposed by the room list. */
 export type RoomListSort = "newest" | "name-asc" | "name-desc" | "capacity-asc" | "capacity-desc";
@@ -47,14 +47,14 @@ export type RoomFilterState = {
  */
 export function buildRoomListParams(
   controls: RoomFilterState & { sort: RoomListSort },
-): Partial<RoomListParams> {
+): Partial<RoomListRequest> {
   const ordering = {
     newest: { sort: "created_at", direction: "desc" },
     "name-asc": { sort: "name", direction: "asc" },
     "name-desc": { sort: "name", direction: "desc" },
     "capacity-asc": { sort: "capacity", direction: "asc" },
     "capacity-desc": { sort: "capacity", direction: "desc" },
-  } satisfies Record<RoomListSort, { sort: NonNullable<RoomListParams["sort"]>; direction: "asc" | "desc" }>;
+  } satisfies Record<RoomListSort, { sort: NonNullable<RoomListRequest["sort"]>; direction: "asc" | "desc" }>;
 
   return {
     ...(controls.status === null ? {} : { status: controls.status }),

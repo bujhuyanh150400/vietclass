@@ -114,7 +114,11 @@ final class ClassController extends BaseController
         ChangeClassStatusAction $change,
         int $classId,
     ): JsonResponse {
-        $result = $change->handle(classId: $classId, status: $request->status());
+        $result = $change->handle(
+            classId: $classId,
+            status: $request->status(),
+            actorId: (int) $request->user()->getAuthIdentifier(),
+        );
 
         if (! $result->isSuccess()) {
             return $this->actionFailure(result: $result);

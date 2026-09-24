@@ -20,11 +20,10 @@ import {
   fetchRoomOptions,
   fetchRooms,
   updateRoom,
-  type RoomListParams,
 } from "../api";
 import { academicQueryKeys } from "./academic-query-keys";
 import type { Option, Room, RoomFacility, RoomStatus } from "../types/academic";
-import type { RoomRequest } from "../types/academic-requests";
+import type { RoomListRequest, RoomRequest } from "../types/academic-requests";
 import { ROOM_FACILITIES, ROOM_STATUSES } from "../utils/labels";
 import {
   ROOM_LIST_SORTS,
@@ -80,7 +79,7 @@ export function useRoomList(): RoomListViewModel {
     capacityMin: controls.capacity_min,
     capacityMax: controls.capacity_max,
   };
-  const list = useResourceList<Room, RoomListParams>({
+  const list = useResourceList<Room, RoomListRequest>({
     queryKey: academicQueryKeys.rooms.list,
     fetcher: fetchRooms,
     emptyMessage: "Chưa có phòng học nào khớp với tìm kiếm.",

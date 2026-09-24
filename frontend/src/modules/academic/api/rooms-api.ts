@@ -1,38 +1,20 @@
 import { browserRequest, browserRequestList } from "@/lib/api/browser-request";
 import type { Page } from "@/lib/api/contracts";
 
-import type { Option, Room, RoomFacility, RoomStatus } from "../types/academic";
-import type { RoomRequest } from "../types/academic-requests";
-
-/** Query parameters accepted by the room list endpoint. */
-export type RoomListParams = {
-  q?: string;
-  page?: number;
-  per_page?: number;
-  sort?: "id" | "name" | "capacity" | "created_at";
-  direction?: "asc" | "desc";
-  status?: RoomStatus;
-  // Repeated as `facilities[]=0&facilities[]=9`, which is what axios's default
-  // serializer emits for an array and what Laravel reads back as a list. The API
-  // narrows to rooms carrying every value given, not any of them.
-  facilities?: RoomFacility[];
-  capacity_min?: number;
-  capacity_max?: number;
-};
-
-/** Query parameters accepted by the room option endpoint. */
-export type RoomOptionParams = {
-  q?: string;
-  limit?: number;
-};
+import type { Option, Room, RoomStatus } from "../types/academic";
+import type {
+  RoomListRequest,
+  RoomOptionRequest,
+  RoomRequest,
+} from "../types/academic-requests";
 
 /** Fetches one page of rooms. */
-export async function fetchRooms(params: RoomListParams): Promise<Page<Room>> {
+export async function fetchRooms(params: RoomListRequest): Promise<Page<Room>> {
   return browserRequestList<Room>("/api/v1/academic/rooms", { params });
 }
 
 /** Fetches the rooms a schedule may be assigned to. */
-export async function fetchRoomOptions(params: RoomOptionParams): Promise<Option[]> {
+export async function fetchRoomOptions(params: RoomOptionRequest): Promise<Option[]> {
   return browserRequest<Option[]>("/api/v1/academic/rooms/options", { params });
 }
 

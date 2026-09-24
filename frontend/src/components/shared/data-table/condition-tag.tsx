@@ -94,17 +94,19 @@ export function ConditionsBar({
   clearAllLabel = "Xóa tất cả",
   heading,
   align = "end",
+  showClearAll = true,
   children,
 }: {
   onClearAll: () => void;
   clearAllLabel?: string;
   heading?: string;
   align?: "start" | "end";
+  showClearAll?: boolean;
   children: ReactNode;
 }) {
   const inline = align === "start";
 
-  const clearAll = (
+  const clearAll = showClearAll ? (
     <Button
       type="button"
       variant="ghost"
@@ -114,7 +116,7 @@ export function ConditionsBar({
     >
       {clearAllLabel}
     </Button>
-  );
+  ) : null;
 
   const headingLabel = heading ? (
     <span className="shrink-0 text-xs font-semibold text-muted-foreground">{heading}</span>
@@ -134,7 +136,7 @@ export function ConditionsBar({
   }
 
   return (
-    <div className="flex items-center gap-[7px]" aria-label="Điều kiện đang áp dụng">
+    <div className="flex min-h-8 items-center gap-[7px]" aria-label="Điều kiện đang áp dụng">
       <div className="flex min-w-0 grow items-center gap-[7px] overflow-x-auto">
         {headingLabel}
         {children}

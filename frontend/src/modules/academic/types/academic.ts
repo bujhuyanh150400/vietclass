@@ -107,9 +107,28 @@ export type TeacherClass = {
   id: number;
   code: string;
   name: string;
-  subject_id: number;
+  subject_id: number | null;
   subject_name: string | null;
   status: ClassStatus;
+};
+
+/** A teacher's current assignment as an assistant rather than a lead. */
+export type TeacherAssistantClass = TeacherClass;
+
+/** One teacher attached to a class team. */
+export type ClassTeacherAssignment = {
+  id: number;
+  name: string | null;
+  status: TeacherStatus;
+};
+
+/** One subject assigned to a class, with its primary marker where available. */
+export type ClassSubject = {
+  id: number;
+  name: string;
+  is_active: boolean;
+  grade_levels: GradeLevel[];
+  is_primary: boolean;
 };
 
 /** A teacher profile together with the state of its login account. */
@@ -128,6 +147,11 @@ export type Teacher = {
   joined_at: string | null;
   subjects: TeacherSubject[];
   classes: TeacherClass[];
+  assistant_classes: TeacherAssistantClass[];
+  /** Historical lead assignments; absent until the API supplies them. */
+  ended_classes?: TeacherClass[];
+  /** Historical assistant assignments; absent until the API supplies them. */
+  ended_assistant_classes?: TeacherAssistantClass[];
   username?: string | null;
   is_account_active?: boolean | null;
   created_at: string | null;
@@ -141,11 +165,15 @@ export type SchoolClass = {
   name: string;
   subject_id: number;
   subject_name?: string | null;
+  subjects: ClassSubject[];
   teacher_id: number;
   teacher_name?: string | null;
+  teacher_status?: TeacherStatus | null;
+  assistant_teachers: ClassTeacherAssignment[];
   grade_level: GradeLevel;
   max_students: number;
   active_students_count?: number;
+  past_enrollments_count?: number;
   status: ClassStatus;
   start_at: string | null;
   end_at: string | null;
@@ -225,3 +253,126 @@ export type Enrollment = {
   created_at: string | null;
   updated_at: string | null;
 };
+
+/** One active or historical class in a student's distinct class list. */
+export type StudentClass = {
+  id: number;
+  code: string;
+  name: string;
+  grade_level: GradeLevel;
+  status: ClassStatus;
+  is_current: boolean;
+  enrollment_periods_count: number;
+  subjects: Pick<ClassSubject, "id" | "name">[];
+};
+
+/** A current class membership summary shown in the enrollment picker. */
+export type EnrollmentStudentClass = {
+  class_id: number;
+  name: string;
+  code: string;
+  subjects: Pick<ClassSubject, "id" | "name">[];
+};
+
+/** One student row with current add eligibility and an explicit disabled reason. */
+export type EnrollmentStudentOption = {
+  id: number;
+  profile_id: number;
+  full_name: string;
+  phone: string | null;
+  grade_level: GradeLevel;
+  status: StudentStatus;
+  is_account_active: boolean | null;
+  active_enrollments: EnrollmentStudentClass[];
+  is_eligible: boolean;
+  disabled_reason:
+    | "account_missing"
+    | "account_inactive"
+    | "grade_mismatch"
+    | "already_enrolled"
+    | "class_full"
+    | "class_ended"
+    | null;
+};
+
+/** A destination class with current transfer eligibility and its complete team. */
+export type TransferClassOption = {
+  id: number;
+  code: string;
+  name: string;
+  grade_level: GradeLevel;
+  status: ClassStatus;
+  subjects: (Pick<ClassSubject, "id" | "name"> & { is_primary: boolean })[];
+  teacher: ClassTeacherAssignment | null;
+  assistant_teachers: ClassTeacherAssignment[];
+  current_student_count: number;
+  max_students: number;
+  is_eligible: boolean;
+  disabled_reason:
+    | "class_ended"
+    | "grade_mismatch"
+    | "subject_mismatch"
+    | "already_enrolled"
+    | "class_full"
+    | null;
+};
+
+/** The enrollment period/class projection common to history events and legacy rows. */
+export type EnrollmentHistoryPeriod = {
+  id: number;
+  class: {
+    id: number;
+    code: string;
+    name: string;
+    subjects: Pick<ClassSubject, "id" | "name">[];
+  };
+};
+
+/** Persisted values captured before and after an enrollment edit event. */
+export type EnrollmentSnapshot = {
+  enrolled_at: string;
+  left_at: string | null;
+  note: string | null;
+};
+
+/** Immutable event kinds stored by the academic enrollment event table. */
+export type EnrollmentHistoryEventType = 0 | 1 | 2 | 3 | 4 | 5;
+
+type EnrollmentHistoryEventBase = {
+  kind: "event";
+  id: number;
+  effective_on: string;
+  note: string | null;
+  created_at: string;
+  enrollment: EnrollmentHistoryPeriod;
+  related_enrollment: EnrollmentHistoryPeriod | null;
+  actor: { id: number; username: string } | null;
+};
+
+/** Timeline event recorded by one successful enrollment mutation. */
+export type EnrollmentHistoryEvent =
+  | (EnrollmentHistoryEventBase & {
+      event_type: 1;
+      metadata: { before: EnrollmentSnapshot; after: EnrollmentSnapshot };
+    })
+  | (EnrollmentHistoryEventBase & {
+      event_type: 0 | 2 | 3 | 4 | 5;
+      metadata: Record<string, never>;
+    });
+
+/** Period created before detailed event history existed; no event is inferred. */
+export type LegacyEnrollmentHistoryEntry = {
+  kind: "legacy_enrollment";
+  id: number;
+  effective_on: string;
+  note: string | null;
+  enrollment: EnrollmentHistoryPeriod & {
+    enrolled_at: string | null;
+    left_at: string | null;
+    note: string | null;
+  };
+  actor: null;
+};
+
+/** Discriminated union returned by the administrator-only per-class history API. */
+export type EnrollmentHistoryEntry = EnrollmentHistoryEvent | LegacyEnrollmentHistoryEntry;

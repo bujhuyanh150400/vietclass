@@ -4,14 +4,16 @@ use App\Modules\Academic\Actions\LeaveClassAction;
 use App\Modules\Academic\Actions\TransferEnrollmentAction;
 use App\Modules\Academic\Actions\UpdateEnrollmentAction;
 use App\Modules\Academic\Enums\AcademicError;
+use App\Modules\Academic\Enums\GradeLevel;
 use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Academic\Models\SchoolClass;
+use App\Modules\Academic\Models\StudentProfile;
+use App\Modules\Academic\Models\Subject;
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Auth\Models\User;
 use App\Modules\System\Enums\FileLinkType;
 use App\Modules\System\Models\FileLink;
 use App\Modules\System\Models\ManagedFile;
-use App\Modules\Auth\Enums\UserRole;
-use App\Modules\Academic\Models\StudentProfile;
-use App\Modules\Auth\Models\User;
 
 beforeEach(function (): void {
     $this->admin = User::factory()->create(['role' => UserRole::Admin]);
@@ -19,8 +21,11 @@ beforeEach(function (): void {
 });
 
 test('students are enrolled into a class from a shared join date', function () {
-    $class = SchoolClass::factory()->create(['start_at' => now()->subMonth()->toDateString()]);
-    $students = StudentProfile::factory()->count(2)->create();
+    $class = SchoolClass::factory()->create([
+        'grade_level' => GradeLevel::Grade9,
+        'start_at' => now()->subMonth()->toDateString(),
+    ]);
+    $students = StudentProfile::factory()->count(2)->create(['grade_level' => GradeLevel::Grade9]);
 
     $this->postJson("/api/v1/academic/classes/{$class->id}/enrollments", [
         'student_ids' => $students->pluck('profile_id')->all(),
@@ -34,9 +39,65 @@ test('students are enrolled into a class from a shared join date', function () {
     $this->assertDatabaseCount('class_enrollments', 2);
 });
 
-test('the same student listed twice in one request is enrolled once', function () {
+test('class roster can filter to enrollment periods with a note', function () {
+    $class = SchoolClass::factory()->create();
+    $withNote = ClassEnrollment::factory()->create(['class_id' => $class->id, 'note' => 'Cần gọi phụ huynh.']);
+    ClassEnrollment::factory()->create(['class_id' => $class->id, 'note' => null]);
+
+    $this->getJson("/api/v1/academic/classes/{$class->id}/enrollments?active_only=1&has_note=1")
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $withNote->id);
+});
+
+test('class roster search matches a student profile id as the enrollment code', function () {
     $class = SchoolClass::factory()->create();
     $student = StudentProfile::factory()->create();
+    $enrollment = ClassEnrollment::factory()->create([
+        'class_id' => $class->id,
+        'student_id' => $student->profile_id,
+    ]);
+
+    $this->getJson("/api/v1/academic/classes/{$class->id}/enrollments?q={$student->profile_id}&active_only=1")
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $enrollment->id);
+});
+
+test('a grade-mismatched student rejects the whole enrollment batch', function () {
+    $class = SchoolClass::factory()->create([
+        'grade_level' => GradeLevel::Grade9,
+        'max_students' => 10,
+    ]);
+    $matching = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $mismatched = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade8]);
+
+    $this->postJson("/api/v1/academic/classes/{$class->id}/enrollments", [
+        'student_ids' => [$matching->profile_id, $mismatched->profile_id],
+        'enrolled_at' => now()->toDateString(),
+    ])->assertStatus(422)
+        ->assertJsonPath('message', 'Học sinh '.$mismatched->profile->full_name.' không cùng khối với lớp.');
+
+    $this->assertDatabaseCount('class_enrollments', 0);
+});
+
+test('a locked student cannot be enrolled even when sent directly to the API', function () {
+    $class = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $student = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $student->profile->user->forceFill(['is_active' => false])->save();
+
+    $this->postJson("/api/v1/academic/classes/{$class->id}/enrollments", [
+        'student_ids' => [$student->profile_id],
+        'enrolled_at' => now()->toDateString(),
+    ])->assertStatus(422)
+        ->assertJsonPath('message', 'Tài khoản học sinh đã bị khóa, không thể ghi danh.');
+
+    $this->assertDatabaseCount('class_enrollments', 0);
+});
+
+test('the same student listed twice in one request is enrolled once', function () {
+    $class = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $student = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade9]);
 
     $this->postJson("/api/v1/academic/classes/{$class->id}/enrollments", [
         'student_ids' => [$student->profile_id, $student->profile_id],
@@ -61,9 +122,12 @@ test('a join date cannot precede the class opening date', function () {
 });
 
 test('a batch that would overfill the class is refused outright', function () {
-    $class = SchoolClass::factory()->create(['max_students' => 2]);
+    $class = SchoolClass::factory()->create([
+        'grade_level' => GradeLevel::Grade9,
+        'max_students' => 2,
+    ]);
     ClassEnrollment::factory()->create(['class_id' => $class->id]);
-    $students = StudentProfile::factory()->count(2)->create();
+    $students = StudentProfile::factory()->count(2)->create(['grade_level' => GradeLevel::Grade9]);
 
     $this->postJson("/api/v1/academic/classes/{$class->id}/enrollments", [
         'student_ids' => $students->pluck('profile_id')->all(),
@@ -76,7 +140,12 @@ test('a batch that would overfill the class is refused outright', function () {
 });
 
 test('a student already studying in the class cannot be enrolled again', function () {
-    $existing = ClassEnrollment::factory()->create();
+    $class = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $student = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $existing = ClassEnrollment::factory()->create([
+        'class_id' => $class->id,
+        'student_id' => $student->profile_id,
+    ]);
 
     $this->postJson("/api/v1/academic/classes/{$existing->class_id}/enrollments", [
         'student_ids' => [$existing->student_id],
@@ -87,7 +156,12 @@ test('a student already studying in the class cannot be enrolled again', functio
 });
 
 test('a student who left may be enrolled again and keeps the earlier period', function () {
-    $previous = ClassEnrollment::factory()->left()->create();
+    $class = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $student = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $previous = ClassEnrollment::factory()->left()->create([
+        'class_id' => $class->id,
+        'student_id' => $student->profile_id,
+    ]);
 
     $this->postJson("/api/v1/academic/classes/{$previous->class_id}/enrollments", [
         'student_ids' => [$previous->student_id],
@@ -132,13 +206,22 @@ test('a roster reports every period including the ones already left', function (
         ->assertOk()
         ->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.is_active', true);
+
+    $this->getJson("/api/v1/academic/classes/{$class->id}/enrollments?left_only=1")
+        ->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.is_active', false);
 });
 
 test('the available student list hides those already studying in the class', function () {
-    $class = SchoolClass::factory()->create();
+    $class = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade9]);
     $enrolled = ClassEnrollment::factory()->create(['class_id' => $class->id]);
-    $returning = ClassEnrollment::factory()->left()->create(['class_id' => $class->id]);
-    $fresh = StudentProfile::factory()->create();
+    $returningStudent = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $returning = ClassEnrollment::factory()->left()->create([
+        'class_id' => $class->id,
+        'student_id' => $returningStudent->profile_id,
+    ]);
+    $fresh = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade9]);
     $locked = StudentProfile::factory()->create();
     $locked->profile->user->forceFill(['is_active' => false])->save();
 
@@ -150,9 +233,23 @@ test('the available student list hides those already studying in the class', fun
         ->and($ids)->not->toContain($locked->profile_id);
 });
 
+test('the available student list only offers students in the class grade', function () {
+    $class = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $matching = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $otherGrade = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade8]);
+
+    $ids = collect($this->getJson("/api/v1/academic/classes/{$class->id}/available-students")
+        ->assertOk()
+        ->json('data'))
+        ->pluck('id');
+
+    expect($ids)->toContain($matching->profile_id)
+        ->and($ids)->not->toContain($otherGrade->profile_id);
+});
+
 test('the available student list includes a file avatar without resource queries', function (): void {
-    $class = SchoolClass::factory()->create();
-    $student = StudentProfile::factory()->create();
+    $class = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $student = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade9]);
     $file = ManagedFile::factory()->for($student->profile->user, 'owner')->create();
     FileLink::factory()->for($file, 'file')->create([
         'type' => FileLinkType::ProfileAvatar,
@@ -195,6 +292,27 @@ test('a leave date cannot precede the join date', function () {
     ])
         ->assertStatus(422)
         ->assertJsonPath('message', 'Ngày rời lớp không thể trước ngày vào lớp ('.now()->format('d/m/Y').').');
+});
+
+test('reopening a closed period cannot exceed class capacity', function () {
+    $class = SchoolClass::factory()->create([
+        'start_at' => '2026-01-01',
+        'max_students' => 1,
+    ]);
+    ClassEnrollment::factory()->create(['class_id' => $class->id]);
+    $closed = ClassEnrollment::factory()->left()->create([
+        'class_id' => $class->id,
+        'enrolled_at' => '2026-02-01',
+        'left_at' => '2026-06-01',
+    ]);
+
+    $this->putJson("/api/v1/academic/enrollments/{$closed->id}", [
+        'enrolled_at' => '2026-02-01',
+        'left_at' => null,
+    ])->assertStatus(409)
+        ->assertJsonPath('message', 'Lớp đã đạt sĩ số tối đa (1/1 học sinh), không thể thêm.');
+
+    expect($closed->fresh()->left_at->toDateString())->toBe('2026-06-01');
 });
 
 test('reopening a closed period is refused while another one is running', function () {
@@ -245,9 +363,15 @@ test('a membership already ended cannot be ended again', function () {
 });
 
 test('a transfer closes the old period and opens a new one the same day', function () {
-    $enrollment = ClassEnrollment::factory()->create();
+    $source = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $student = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $enrollment = ClassEnrollment::factory()->create([
+        'class_id' => $source->id,
+        'student_id' => $student->profile_id,
+    ]);
     $target = SchoolClass::factory()->create([
-        'subject_id' => $enrollment->schoolClass->subject_id,
+        'subject_id' => $source->subject_id,
+        'grade_level' => GradeLevel::Grade9,
         'code' => 'LOP-MOI',
     ]);
 
@@ -264,6 +388,74 @@ test('a transfer closes the old period and opens a new one the same day', functi
 
     expect($old->left_at->toDateString())->toBe(now()->toDateString())
         ->and($old->note)->toContain('[Chuyển sang lớp: LOP-MOI]');
+});
+
+test('a locked student cannot transfer even when sent directly to the API', function () {
+    $source = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $student = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $student->profile->user->forceFill(['is_active' => false])->save();
+    $enrollment = ClassEnrollment::factory()->create([
+        'class_id' => $source->id,
+        'student_id' => $student->profile_id,
+    ]);
+    $target = SchoolClass::factory()->create([
+        'subject_id' => $source->subject_id,
+        'grade_level' => GradeLevel::Grade9,
+    ]);
+
+    $this->postJson("/api/v1/academic/enrollments/{$enrollment->id}/transfer", [
+        'class_id' => $target->id,
+        'left_at' => now()->toDateString(),
+    ])->assertStatus(422)
+        ->assertJsonPath('message', 'Tài khoản học sinh đã bị khóa, không thể ghi danh.');
+
+    expect($enrollment->fresh()->left_at)->toBeNull()
+        ->and(ClassEnrollment::query()->where('class_id', $target->id)->exists())->toBeFalse();
+});
+
+test('a transfer target must match the student grade', function () {
+    $source = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $student = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $enrollment = ClassEnrollment::factory()->create([
+        'class_id' => $source->id,
+        'student_id' => $student->profile_id,
+    ]);
+    $target = SchoolClass::factory()->create([
+        'subject_id' => $source->subject_id,
+        'grade_level' => GradeLevel::Grade8,
+    ]);
+
+    $this->postJson("/api/v1/academic/enrollments/{$enrollment->id}/transfer", [
+        'class_id' => $target->id,
+        'left_at' => now()->toDateString(),
+    ])->assertStatus(422)
+        ->assertJsonPath('message', 'Học sinh không cùng khối với lớp mới.');
+
+    expect($enrollment->fresh()->left_at)->toBeNull()
+        ->and(ClassEnrollment::query()->where('class_id', $target->id)->exists())->toBeFalse();
+});
+
+test('a transfer target must have the same complete subject set', function () {
+    $source = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $student = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $enrollment = ClassEnrollment::factory()->create([
+        'class_id' => $source->id,
+        'student_id' => $student->profile_id,
+    ]);
+    $target = SchoolClass::factory()->create([
+        'subject_id' => $source->subject_id,
+        'grade_level' => GradeLevel::Grade9,
+    ]);
+    $target->subjects()->attach(Subject::factory()->create()->id, ['is_primary' => false]);
+
+    $this->postJson("/api/v1/academic/enrollments/{$enrollment->id}/transfer", [
+        'class_id' => $target->id,
+        'left_at' => now()->toDateString(),
+    ])->assertStatus(422)
+        ->assertJsonPath('message', 'Chỉ được chuyển học sinh sang lớp cùng môn học.');
+
+    expect($enrollment->fresh()->left_at)->toBeNull()
+        ->and(ClassEnrollment::query()->where('class_id', $target->id)->exists())->toBeFalse();
 });
 
 test('a transfer target must teach the same subject', function () {
@@ -292,9 +484,15 @@ test('a transfer target must still be running', function () {
 });
 
 test('a transfer into a full class is refused and changes nothing', function () {
-    $enrollment = ClassEnrollment::factory()->create();
+    $source = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $student = StudentProfile::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $enrollment = ClassEnrollment::factory()->create([
+        'class_id' => $source->id,
+        'student_id' => $student->profile_id,
+    ]);
     $target = SchoolClass::factory()->create([
-        'subject_id' => $enrollment->schoolClass->subject_id,
+        'subject_id' => $source->subject_id,
+        'grade_level' => GradeLevel::Grade9,
         'max_students' => 1,
     ]);
     ClassEnrollment::factory()->create(['class_id' => $target->id]);

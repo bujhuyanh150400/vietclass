@@ -1,6 +1,7 @@
 # Quản lý giáo viên
 
-Last Verified: 2026-09-22
+Last Verified: 2026-09-24
+Related Task: `.tasks/phase-4-academic-lifecycle.md`
 
 ## Tổng quan
 
@@ -21,6 +22,9 @@ Chức năng dùng được cả qua API lẫn màn hình quản trị tại `/a
 - Số điện thoại và email **không cần duy nhất**, kể cả giữa các giáo viên với nhau. Hồ sơ giáo viên, học sinh và phụ huynh dùng chung một bảng nhân thân, nên một giáo viên có thể dùng chính số của mình làm số liên hệ phụ huynh cho con mà không bị chặn vì trùng.
 - Mật khẩu tối thiểu 8 ký tự, được lưu dưới dạng hash và không bao giờ xuất hiện trong phản hồi.
 - Trạng thái làm việc gồm `0` Đang làm việc và `1` Đã nghỉ. Chỉ giáo viên đang làm việc và có tài khoản chưa khóa mới xuất hiện trong danh sách chọn khi xếp lớp.
+- Khi chuyển trạng thái từ Đang làm việc sang Đã nghỉ, mọi lớp đang hoạt động do giáo viên phụ trách chính phải có một giáo viên thay thế đang làm việc. Các trợ giảng đang hoạt động được gỡ; nếu người thay thế là trợ giảng của chính lớp đó, họ được chuyển sang vai trò phụ trách trong cùng giao dịch. Nếu bất kỳ lớp nào thiếu người thay thế hoặc người thay không hợp lệ, toàn bộ cập nhật hồ sơ và phân công được hủy.
+- Phân công trên lớp đã kết thúc được giữ làm dữ liệu lịch sử; các kỳ ghi danh không bị thay đổi. Đổi trạng thái công tác trở lại Đang làm việc không tự khôi phục phân công cũ.
+- Khóa tài khoản và trạng thái công tác là hai thao tác độc lập; nghỉ việc không khóa hoặc mở khóa tài khoản.
 - Màu đại diện, nếu có, phải là mã hex sáu ký tự dạng `#FD7110`.
 - Không có thao tác xóa giáo viên. Ngừng cộng tác bằng cách đổi trạng thái làm việc hoặc khóa tài khoản; bản ghi hồ sơ luôn được giữ để các lớp và lịch sử trỏ tới nó không bị hỏng.
 - Khóa tài khoản chỉ chặn đăng nhập, không đụng tới hồ sơ.
@@ -37,9 +41,11 @@ Mọi endpoint nằm dưới tiền tố `/api/v1` và cần header `Authorizati
 | Lấy danh sách chọn | `GET /api/v1/academic/teachers/options` |
 | Tạo | `POST /api/v1/academic/teachers` với `username`, `password`, `full_name`, `phone`, `gender`, `status`, `joined_at`; `email` nếu có |
 | Xem chi tiết | `GET /api/v1/academic/teachers/{id}` |
-| Sửa hồ sơ | `PUT /api/v1/academic/teachers/{id}` với `full_name`, `phone`, `gender`, `status`, `joined_at`; `email` nếu có |
+| Sửa hồ sơ | `PUT /api/v1/academic/teachers/{id}` với `full_name`, `phone`, `gender`, `status`, `joined_at`; `email` nếu có. Khi đổi sang Đã nghỉ, gửi `replacement_teacher_ids` dạng map JSON `{ "<class_id>": <teacher_id> }` cho từng lớp đang phụ trách chính. |
 | Khóa hoặc mở tài khoản | `PATCH /api/v1/academic/teachers/{id}/account` với `is_active` |
 | Đổi mật khẩu | `PATCH /api/v1/academic/teachers/{id}/password` với `password` |
+
+Khi nghỉ giáo viên đang phụ trách lớp, map thay thế phải khai báo đủ từng lớp, ví dụ `{"12":34,"15":56}`; giáo viên chỉ làm trợ giảng không cần map. Các trường hồ sơ còn lại tiếp tục dùng cùng request và được lưu cùng đợt bàn giao.
 
 Trường tùy chọn khi tạo và sửa: `email`, `address`, `color_identification`. Khi tạo còn nhận `avatar` — xem [Ảnh đại diện hồ sơ](avatar.md) cho cả hai dạng JSON và multipart.
 
@@ -56,7 +62,7 @@ Từ khóa tìm kiếm **bỏ dấu tiếng Việt và không phân biệt hoa t
 - Danh sách trả về envelope `data` kèm `meta` gồm `current_page`, `per_page`, `total`, `last_page`.
 - Mỗi hồ sơ kèm `username` và `is_account_active` của tài khoản, không kèm bất kỳ thông tin xác thực nào.
 - Mỗi hồ sơ kèm `profile_id` và `avatar`; `avatar` là `null` khi giáo viên chưa chọn ảnh.
-- Mỗi hồ sơ kèm `subjects` là các bộ môn đang dạy (`id`, `name`) và `classes` là các lớp đang phụ trách (`id`, `code`, `name`, `subject_id`, `subject_name`, `status`).
+- Mỗi hồ sơ kèm `subjects` là các bộ môn của lớp đang phụ trách; `classes` liệt kê các lớp đang hoạt động do giáo viên phụ trách chính, còn `assistant_classes` liệt kê các lớp đang hoạt động mà giáo viên làm trợ giảng. Chỉ phản hồi chi tiết có thêm `ended_classes` và `ended_assistant_classes` để tách phân công của lớp đã kết thúc. Mỗi dòng lớp có `id`, `code`, `name`, `subject_id`, `subject_name` và `status`.
 - Tạo thành công trả `201`; giáo viên đăng nhập được ngay bằng tên đăng nhập và mật khẩu vừa đặt.
 - Sửa hồ sơ, khóa và mở tài khoản trả `200` cùng bản ghi sau khi cập nhật.
 - Đổi mật khẩu trả `204`; mật khẩu mới dùng được, mật khẩu cũ thì không.
@@ -66,7 +72,7 @@ Trên trình duyệt:
 
 - Mỗi thao tác thành công hiện một thông báo nổi ở góc dưới bên phải rồi tự đóng sau vài giây: `Đã tạo giáo viên và tài khoản đăng nhập.`, `Đã lưu thay đổi hồ sơ giáo viên.`, `Đã khóa tài khoản của <tên>.`, `Đã mở lại tài khoản của <tên>.`, `Đã đổi mật khẩu cho <tên>.` Thông báo vẫn hiển thị sau khi màn hình quay về danh sách giáo viên.
 - Danh sách giáo viên tự hiển thị bản ghi vừa tạo hoặc vừa sửa khi màn hình quay lại, không cần tải lại trang.
-- Chọn một giáo viên từ danh sách mở `/academic/teachers/{id}`. Màn hình chi tiết có hai tab `Hồ sơ giáo viên` và `Lớp đang dạy`; thêm `?tab=classes` để mở trực tiếp tab lớp đang dạy.
+- Chọn một giáo viên từ danh sách mở `/academic/teachers/{id}`. Màn hình chi tiết có hai tab `Hồ sơ giáo viên` và `Lớp đang dạy`; thêm `?tab=classes` để mở trực tiếp tab lớp đang dạy. Tab phân công tách lớp đang hoạt động theo vai trò phụ trách/trợ giảng và lớp đã kết thúc thành nhóm riêng, vẫn ghi rõ vai trò.
 - Nút `Sửa hồ sơ` trên màn hình chi tiết mở `/academic/teachers/{id}/edit`; đây là màn hình biểu mẫu, còn URL không có `/edit` chỉ đọc thông tin.
 - Màn hình chi tiết không hiển thị trường màu đại diện; quy tắc API `color_identification` vẫn giữ nguyên cho các luồng đã hỗ trợ trường này.
 
@@ -75,6 +81,7 @@ Trên trình duyệt:
 - Trùng tên đăng nhập trả `422` gắn vào `username`: `Có tài khoản đã dùng tên đăng nhập này, vui lòng chọn tên khác.`
 - Số điện thoại sai định dạng trả `422` gắn vào `phone`: `Số điện thoại không hợp lệ.` Email nhập sai định dạng trả `422` gắn vào `email`; để trống email được chấp nhận. Số điện thoại và email trùng với giáo viên khác không bị chặn.
 - Màu sai định dạng trả `422` gắn vào `color_identification`: `Màu phải ở dạng mã hex, ví dụ #FD7110.`
+- Khi nghỉ việc, thiếu người thay thế, tự chọn mình, chọn giáo viên đã nghỉ hoặc gửi phân công lớp không còn hợp lệ trả `422` gắn vào `replacement_teacher_ids.<class_id>`.
 - Mật khẩu dưới 8 ký tự trả `422` gắn vào `password`.
 - Không tìm thấy giáo viên trả `404`: `Không tìm thấy giáo viên.`
 - Không đủ quyền trả `403`; thiếu token trả `401`.
@@ -91,12 +98,13 @@ Trên trình duyệt:
 | --- | --- | --- | --- |
 | [Phân quyền theo chức năng](../auth/phan-quyen.md) | Tiên quyết | Quyết định ai gọi được các endpoint giáo viên. | Không đủ quyền thì nhận `403`. |
 | [Xác thực bearer token](../auth/authentication.md) | Trạng thái dùng chung | Hồ sơ giáo viên sở hữu một bản ghi tài khoản đăng nhập. | Khóa tài khoản giáo viên khiến người đó không đăng nhập được. |
-| Lớp học | Hạ nguồn | Lớp học phải có giáo viên đang làm việc phụ trách. | Giáo viên đã nghỉ không xuất hiện khi chọn giáo viên cho lớp. |
+| [Quản lý lớp học](lop-hoc.md) | Hạ nguồn và trạng thái dùng chung | Lớp hoạt động có một giáo viên phụ trách và 0..n trợ giảng; nghỉ việc gỡ vai trò trợ giảng và bàn giao lớp phụ trách. | Lớp hoạt động được bàn giao nguyên tử; lớp đã kết thúc giữ tham chiếu lịch sử. |
 | [Ảnh đại diện hồ sơ](avatar.md) | Trạng thái dùng chung | Hồ sơ giáo viên mang ảnh đại diện của chính nó, lưu độc lập với các trường hồ sơ. | Ảnh hiện trong danh sách và biểu mẫu giáo viên; khi sửa, ảnh mới được lưu cùng nút **Lưu thay đổi** của biểu mẫu. |
 
 ## Giới hạn hiện tại
 
 - Không có chức năng xóa giáo viên.
+- Trên biểu mẫu sửa giáo viên, chọn Đã nghỉ mở hộp xác nhận: mỗi lớp đang phụ trách cần một giáo viên thay thế; lớp trợ giảng được thông báo sẽ gỡ phân công. Hủy hộp thoại không lưu thay đổi.
 - Không đổi được tên đăng nhập sau khi tạo.
 - Đổi mật khẩu thu hồi token đang hoạt động của đúng tài khoản.
 - Cấu hình lương và các nghiệp vụ tài chính chưa có.
@@ -105,5 +113,5 @@ Trên trình duyệt:
 ## Tham chiếu kỹ thuật
 
 - Route: `api/app/Modules/Academic/Routes/api.php`
-- Kiểm thử xác định: các bài kiểm thử giáo viên trong `api/tests/Behavioral/` và `api/tests/Security/`
+- Kiểm thử xác định: `api/tests/Behavioral/AcademicTeacherTest.php` và `api/tests/Behavioral/IdentityTeacherTest.php`
 - Schema: `docs/database.md`

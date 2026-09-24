@@ -20,7 +20,6 @@ import {
   fetchTeachers,
   setTeacherAccountActive,
   updateTeacher,
-  type TeacherListParams,
 } from "../api";
 import { academicQueryKeys } from "./academic-query-keys";
 import type { Option, Teacher } from "../types/academic";
@@ -37,6 +36,7 @@ import {
 import type {
   CreateProfileSubmission,
   CreateTeacherRequest,
+  TeacherListRequest,
   UpdateTeacherRequest,
 } from "../types/academic-requests";
 
@@ -87,7 +87,7 @@ export function useTeacherList(): TeacherListViewModel {
   )
     ? controls.per_page
     : 20;
-  const list = useResourceList<Teacher, TeacherListParams>({
+  const list = useResourceList<Teacher, TeacherListRequest>({
     queryKey: academicQueryKeys.teachers.list,
     fetcher: fetchTeachers,
     emptyMessage: "Chưa có giáo viên nào khớp với điều kiện.",
@@ -229,6 +229,23 @@ export function useTeacherOptions(search = "") {
   });
 }
 
+/** Load a searchable teacher page including inactive rows for disabled-role hints. */
+export function useTeacherPickerOptions(search: string, page: number) {
+  const params: TeacherListRequest = {
+    q: search.trim(),
+    page,
+    per_page: 10,
+    sort: "full_name",
+    direction: "asc",
+  };
+
+  return useQuery({
+    queryKey: academicQueryKeys.teachers.picker(search, page),
+    queryFn: () => fetchTeachers(params),
+    placeholderData: (previous) => previous,
+  });
+}
+
 /**
  * Creates a teacher profile with its login account, then refreshes the list.
  */
@@ -253,6 +270,7 @@ export function useUpdateTeacher(id: number) {
     mutationFn: (body: UpdateTeacherRequest) => updateTeacher(id, body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.teachers.root() });
+      void queryClient.invalidateQueries({ queryKey: academicQueryKeys.classes.root() });
     },
   });
 }

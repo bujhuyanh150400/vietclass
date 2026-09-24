@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { DateField } from "@/components/shared/date-field";
 import { Field } from "@/components/shared/field";
@@ -21,8 +21,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
-import { useAvailableStudents, useEnrolStudents } from "../hooks/use-enrollments";
-import { GRADE_LEVEL_LABELS } from "../utils/labels";
+import { useEnrolStudents, useEnrollmentStudentOptions } from "../hooks/use-enrollments";
+import { enrollmentStudentDisabledReason } from "../utils/eligibility-reasons";
+import { GRADE_LEVEL_LABELS, STUDENT_STATUS_LABELS } from "../utils/labels";
 
 /** Today, as the API writes dates, used as the default join date. */
 function today(): string {
@@ -32,13 +33,9 @@ function today(): string {
 /**
  * Picks students to add to one class, all joining from the same date.
  *
- * The list offers only students who may actually be added — an account that still
- * works, and no running membership of this class — so a choice the API would refuse
- * is never presented. Someone who left the class before does appear, because
- * enrolling again is allowed and keeps the earlier period as history.
- *
- * Capacity is checked by the API for the whole batch at once, so a selection that
- * would overfill the class is refused as a whole and reported here.
+ * The paginated picker keeps ineligible candidates visible with the exact reason;
+ * only eligible students can be selected, and the server rechecks the whole batch
+ * against hard capacity before creating any enrollment periods.
  */
 export function AddStudentsDialog({
   classId,
@@ -56,18 +53,19 @@ export function AddStudentsDialog({
   const [selected, setSelected] = useState<number[]>([]);
   const [enrolledAt, setEnrolledAt] = useState(today());
   const [error, setError] = useState<string | null>(null);
+  const eligibilityById = useRef<Record<number, boolean>>({});
 
-  const available = useAvailableStudents(classId, search, page);
+  const available = useEnrollmentStudentOptions(classId, search, page);
   const enrol = useEnrolStudents(classId);
   const showToast = useToast();
 
   /** Adds or removes one student from the selection. */
-  function toggle(studentId: number) {
-    setSelected((current) =>
-      current.includes(studentId)
-        ? current.filter((id) => id !== studentId)
-        : [...current, studentId],
-    );
+  function toggle(studentId: number, eligible: boolean) {
+    eligibilityById.current[studentId] = eligible;
+    setSelected((current) => {
+      if (current.includes(studentId)) return current.filter((id) => id !== studentId);
+      return eligible ? [...current, studentId] : current;
+    });
   }
 
   /** Clears everything so the next opening starts fresh. */
@@ -84,10 +82,15 @@ export function AddStudentsDialog({
     setError(null);
 
     try {
-      // Counted before the reset below clears the selection.
-      const added = selected.length;
+      const eligibleSelection = selected.filter((id) => eligibilityById.current[id] === true);
+      if (eligibleSelection.length !== selected.length) {
+        setSelected(eligibleSelection);
+        setError("Điều kiện ghi danh đã thay đổi. Kiểm tra lại danh sách và chọn học sinh còn đủ điều kiện.");
+        return;
+      }
+      const added = eligibleSelection.length;
 
-      await enrol.mutateAsync({ student_ids: selected, enrolled_at: enrolledAt });
+      await enrol.mutateAsync({ student_ids: eligibleSelection, enrolled_at: enrolledAt });
 
       showToast({ variant: "success", title: `Đã thêm ${added} học sinh vào lớp.` });
       reset();
@@ -99,8 +102,14 @@ export function AddStudentsDialog({
     }
   }
 
-  const rows = available.data?.data ?? [];
+  const rows = useMemo(() => available.data?.data ?? [], [available.data?.data]);
   const meta = available.data?.meta;
+
+  useEffect(() => {
+    for (const student of rows) {
+      eligibilityById.current[student.id] = student.is_eligible;
+    }
+  }, [rows]);
 
   return (
     <Dialog
@@ -113,7 +122,7 @@ export function AddStudentsDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Thêm học sinh vào lớp</DialogTitle>
           <DialogDescription>{capacityHint}</DialogDescription>
@@ -152,38 +161,73 @@ export function AddStudentsDialog({
             />
           </div>
 
-          <div className="max-h-72 overflow-y-auto rounded-lg border">
+          <div className="max-h-72 overflow-y-auto rounded-panel border border-vc-rule bg-background">
             {available.isPending ? (
-              <div aria-hidden="true" className="grid gap-3 p-4">
-                <Skeleton className="h-5 w-full" />
-                <Skeleton className="h-5 w-full" />
-                <Skeleton className="h-5 w-2/3" />
+              <div aria-label="Đang tải học sinh" className="grid gap-3 p-4">
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-2/3" />
+              </div>
+            ) : available.isError ? (
+              <div className="grid justify-items-center gap-2 p-5 text-center text-sm">
+                <p role="alert">Không tải được danh sách học sinh.</p>
+                <Button type="button" size="sm" variant="outline" onClick={() => void available.refetch()}>
+                  Thử lại
+                </Button>
               </div>
             ) : rows.length === 0 ? (
               <p className="p-6 text-center text-sm text-muted-foreground">
-                Không còn học sinh nào có thể thêm vào lớp này.
+                Không tìm thấy học sinh phù hợp.
               </p>
             ) : (
-              <ul className="divide-y">
-                {rows.map((student) => (
-                  <li key={student.id} className="flex items-center gap-3 px-4 py-3">
-                    <Checkbox
-                      id={`student-${student.id}`}
-                      checked={selected.includes(student.id)}
-                      onCheckedChange={() => toggle(student.id)}
-                    />
-                    <Label
-                      htmlFor={`student-${student.id}`}
-                      className="grid flex-1 cursor-pointer gap-0.5 font-normal"
-                    >
-                      <span className="font-medium">{student.full_name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {GRADE_LEVEL_LABELS[student.grade_level]} ·{" "}
-                        {student.phone ?? "Chưa có số điện thoại"}
-                      </span>
-                    </Label>
-                  </li>
-                ))}
+              <ul className="divide-y divide-vc-rule">
+                {rows.map((student) => {
+                  const disabledReason = student.disabled_reason;
+                  const disabled = !student.is_eligible;
+
+                  return (
+                    <li key={student.id} className={`flex items-start gap-3 px-4 py-3 ${disabled ? "bg-vc-tint/40" : ""}`}>
+                      <Checkbox
+                        id={`student-${student.id}`}
+                        checked={selected.includes(student.id)}
+                        disabled={disabled}
+                        onCheckedChange={() => toggle(student.id, student.is_eligible)}
+                        aria-describedby={disabled && disabledReason ? `student-reason-${student.id}` : undefined}
+                      />
+                      <Label
+                        htmlFor={`student-${student.id}`}
+                        className={`grid flex-1 gap-1 font-normal ${disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
+                      >
+                        <span className="font-medium">{student.full_name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          Mã hồ sơ #{student.profile_id} · {GRADE_LEVEL_LABELS[student.grade_level]} · {student.phone ?? "Chưa có số điện thoại"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {STUDENT_STATUS_LABELS[student.status]}
+                        </span>
+                        {student.active_enrollments.length === 0 ? null : (
+                          <span className="text-xs text-muted-foreground">
+                            Đang học: {student.active_enrollments.map((schoolClass) => schoolClass.code).join(", ")}
+                          </span>
+                        )}
+                        {disabled && disabledReason !== null ? (
+                          <span id={`student-reason-${student.id}`} className="text-xs font-medium text-destructive">
+                            {enrollmentStudentDisabledReason(disabledReason)}
+                          </span>
+                        ) : null}
+                      </Label>
+                      {disabled && selected.includes(student.id) ? (
+                        <Button type="button" variant="ghost" size="sm" onClick={() => toggle(student.id, false)}>
+                          Bỏ chọn
+                        </Button>
+                      ) : (
+                        <span className={`shrink-0 rounded-control border px-2 py-1 text-[10px] font-semibold ${disabled ? "border-vc-control text-muted-foreground" : "border-vc-leaf/30 bg-vc-leaf/10 text-vc-leaf"}`}>
+                          {disabled ? "Không thể chọn" : "Có thể thêm"}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>

@@ -17,16 +17,20 @@ import {
   changeStudentPassword,
   createStudent,
   fetchStudent,
+  fetchStudentClasses,
+  fetchStudentEnrollmentHistory,
   fetchStudents,
   setStudentAccountActive,
   updateStudent,
-  type StudentListParams,
 } from "../api";
 import { academicQueryKeys } from "./academic-query-keys";
 import type { GradeLevel, Student } from "../types/academic";
 import type {
   CreateProfileSubmission,
   CreateStudentRequest,
+  StudentClassesRequest,
+  StudentEnrollmentHistoryRequest,
+  StudentListRequest,
   UpdateStudentRequest,
 } from "../types/academic-requests";
 import { GRADE_LEVELS } from "../utils/labels";
@@ -78,7 +82,7 @@ export function useStudentList(): StudentListViewModel {
     isActive: controls.is_active,
   };
   const pageSize = resolveStudentPageSize(controls.view, controls.per_page);
-  const list = useResourceList<Student, StudentListParams>({
+  const list = useResourceList<Student, StudentListRequest>({
     queryKey: academicQueryKeys.students.list,
     fetcher: fetchStudents,
     emptyMessage: "Chưa có học sinh nào khớp với tìm kiếm.",
@@ -178,6 +182,35 @@ export function useStudent(id: number) {
     queryFn: () => fetchStudent(id),
     retry: (failureCount, error) =>
       !(isApiClientError(error) && (error.status === 403 || error.status === 404)) && failureCount < 1,
+  });
+}
+
+/** Load one page of the classes a student currently or historically attended. */
+export function useStudentClasses(id: number, search: string, page: number, enabled = true) {
+  const params: StudentClassesRequest = { q: search, page, per_page: 10 };
+
+  return useQuery({
+    queryKey: academicQueryKeys.students.classes(id, params),
+    queryFn: () => fetchStudentClasses(id, params),
+    enabled: id > 0 && enabled,
+    placeholderData: (previous) => previous,
+  });
+}
+
+/** Load one student's event and legacy history page for a selected class. */
+export function useStudentEnrollmentHistory(
+  id: number,
+  classId: number | null,
+  page: number,
+  enabled = true,
+) {
+  const params: StudentEnrollmentHistoryRequest = { class_id: classId ?? 0, page, per_page: 10 };
+
+  return useQuery({
+    queryKey: academicQueryKeys.students.history(id, params),
+    queryFn: () => fetchStudentEnrollmentHistory(id, params),
+    enabled: id > 0 && classId !== null && enabled,
+    placeholderData: (previous) => previous,
   });
 }
 

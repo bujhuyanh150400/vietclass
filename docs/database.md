@@ -1,6 +1,6 @@
 # Database use: PostgreSQL
 
-Last verified: 2026-09-14
+Last verified: 2026-09-23
 
     # nguồn sự thật
     - Migrations dưới `api/database/migrations/` là executable source of truth.
@@ -214,7 +214,8 @@ Last verified: 2026-09-14
 
     # note
     - Quản lý subject, class, enrolment và teaching room.
-    - `classes.teacher_id` trỏ tới `teacher_profiles(profile_id)` và `class_enrollments.student_id` trỏ tới `student_profiles(profile_id)`, nên database không cho gán profile thiếu role tương ứng.
+    - `class_subjects` lưu toàn bộ môn của lớp, gồm một môn đại diện; `class_teachers` lưu lead và trợ giảng bằng `is_primary`. Bảng `classes` không lưu `subject_id` hay `teacher_id`; legacy scalar API fields chỉ là giá trị suy ra từ các quan hệ này.
+    - Các quan hệ môn và giáo viên tham chiếu đúng role qua `subjects` và `teacher_profiles(profile_id)`; `class_enrollments.student_id` trỏ tới `student_profiles(profile_id)`, nên database không cho gán profile thiếu role tương ứng.
     - `rooms` là resource độc lập, không tham chiếu bảng khác; chỉ được xóa khi không còn reference.
     - Không có soft deletion: class kết thúc bằng `status`, enrolment kết thúc bằng `left_at`, room bị hard-delete khi không còn reference.
     - `classes` và `class_enrollments` không có cột tiền. Các cột fee cũ đã bị loại bỏ; module tài chính tương lai sẽ sở hữu migration riêng.
@@ -240,14 +241,12 @@ Last verified: 2026-09-14
 ## classes
 
     # note
-    - Quản lý lớp học; `code` immutable sau khi tạo.
+    - Quản lý lớp học; `code` immutable sau khi tạo. Môn đại diện và đội ngũ lớp được suy ra từ các quan hệ có `is_primary`; không có scalar subject/teacher FK trên bảng này.
 
     # cấu trúc
     - `id` (BIGINT auto-increment primary key) — Class identifier.
     - `code` (VARCHAR(50)) — Immutable class code.
     - `name` (VARCHAR(50)) — Display name.
-    - `subject_id` (BIGINT, FK `subjects`) — Subject taught.
-    - `teacher_id` (BIGINT, FK `teacher_profiles(profile_id)`) — Teacher responsible; chỉ profile có teaching role.
     - `grade_level` (SMALLINT) — `0` pre-primary, `1`–`12` grade number.
     - `max_students` (SMALLINT, default `0`) — Places từ `1` tới `32767`; PostgreSQL không có unsigned integer, nên Form Request cap theo signed `smallint`. Fork dùng tinyint và cap ở 255.
     - `status` (SMALLINT, default `0`) — `0` Đang hoạt động, `1` Kết thúc.
@@ -257,10 +256,48 @@ Last verified: 2026-09-14
 
     # index
     - `unique(code)`.
-    - `index(subject_id)`.
-    - `index(teacher_id)`.
     - `index(grade_level)`.
     - `index(status)`.
+
+## class_subjects
+
+    # note
+    - Lưu toàn bộ môn một lớp dạy, gồm đúng một môn đại diện (`is_primary = true`) cho mỗi lớp. Partial unique index chặn nhiều hơn một môn primary; thao tác lớp bảo đảm có ít nhất một.
+
+    # cấu trúc
+    - `id` (BIGINT auto-increment primary key) — Link identifier.
+    - `class_id` (BIGINT, FK `classes` ON DELETE CASCADE) — Class.
+    - `subject_id` (BIGINT, FK `subjects` ON DELETE RESTRICT) — Subject in the class's complete subject set.
+    - `is_primary` (BOOLEAN, default `false`) — Môn đại diện của lớp.
+    - `created_at`, `updated_at` (timestamps) — Link lifecycle.
+
+    # index
+    - `unique(class_id, subject_id)`.
+    - `unique(class_id) WHERE is_primary` — PostgreSQL partial unique index; tối đa một môn đại diện mỗi lớp.
+    - `index(subject_id)`.
+
+    # migration
+    - `2026_09_23_065746_create_class_subjects_table.php` tạo bảng; `2026_09_23_065748_backfill_class_subjects.php` lưu backfill lịch sử của bảng cũ.
+    - `2026_09_23_081259_add_primary_flags_and_create_class_teachers_table.php` thêm cờ primary và bảng giáo viên.
+    - `2026_09_23_081300_backfill_class_relationships.php` backfill môn/lead chính và trợ giảng cũ; không suy diễn hay tạo enrollment event.
+    - `2026_09_23_081301_normalize_class_relationship_storage.php` bỏ các scalar FK cũ trên `classes` và bảng trợ giảng tạm.
+
+## class_teachers
+
+    # note
+    - Lưu lead (`is_primary = true`) và mọi trợ giảng (`false`) trong một quan hệ; mỗi class/teacher chỉ có một row. Partial unique index chặn nhiều hơn một lead; thao tác lớp bảo đảm có ít nhất một.
+
+    # cấu trúc
+    - `id` (BIGINT auto-increment primary key) — Link identifier.
+    - `class_id` (BIGINT, FK `classes` ON DELETE CASCADE) — Class.
+    - `teacher_id` (BIGINT, FK `teacher_profiles(profile_id)` ON DELETE RESTRICT) — Teacher.
+    - `is_primary` (BOOLEAN, default `false`) — Lead teacher versus assistant.
+    - `created_at`, `updated_at` (timestamps) — Assignment lifecycle.
+
+    # index
+    - `unique(class_id, teacher_id)`.
+    - `unique(class_id) WHERE is_primary` — PostgreSQL partial unique index; tối đa một lead mỗi lớp.
+    - `index(teacher_id)`.
 
 ## class_enrollments
 
@@ -285,10 +322,37 @@ Last verified: 2026-09-14
 
     # quan hệ đặc biệt
     - `StudentProfile::activeEnrollments()` là relation `HasMany` duy nhất đi ngược vào Academic, để student list hiển thị các class đang học.
-    - Các dependency còn lại là quan hệ nội bộ Academic: `classes.teacher_id`, `class_enrollments.student_id`, `ClassEnrollment` → `StudentProfile`, repository query `StudentProfile`, và `EnrollmentController` render `StudentResource`.
+    - Các dependency còn lại là quan hệ nội bộ Academic: `class_teachers.teacher_id`, `class_enrollments.student_id`, `ClassEnrollment` → `StudentProfile`, repository query `StudentProfile`, và `EnrollmentController` render `StudentResource`.
+    - `ClassEnrollment::events()` đọc các event bất biến của một period; migration không sinh history giả cho kỳ cũ.
     - `StudentResource` được dùng ở sáu call site; relation đi theo model nên không cần truyền dữ liệu thủ công qua từng endpoint.
     - `paginated()` nhận resource class name và tự gọi `$resourceClass::collection(...)`; không có seam để inject per-item data.
     - Thiếu eager load chỉ ảnh hưởng query count, không ảnh hưởng correctness; test student list pin query count để danh sách không tăng theo số row.
+
+## class_enrollment_events
+
+    # note
+    - Append-only audit history cho từng period trong `class_enrollments`; kỳ ghi danh vẫn là nguồn trạng thái hiện tại.
+    - Migration không backfill event cho kỳ cũ. PostgreSQL trigger chặn mọi `UPDATE`/`DELETE`; các foreign key `RESTRICT` giữ nguyên kỳ, actor và kỳ chuyển đối ứng.
+
+    # cấu trúc
+    - `id` (BIGINT auto-increment primary key) — Event identifier.
+    - `class_enrollment_id` (BIGINT, FK `class_enrollments` ON DELETE RESTRICT) — Period event mô tả.
+    - `related_enrollment_id` (BIGINT, nullable, FK `class_enrollments` ON DELETE RESTRICT) — Kỳ đối ứng của chuyển lớp.
+    - `actor_id` (BIGINT, nullable, FK `users` ON DELETE RESTRICT) — Tài khoản thực hiện; `NULL` khi actor không xác định hoặc event do hệ thống tạo.
+    - `event_type` (SMALLINT, `0`–`5`) — `Enrolled`, `Updated`, `Left`, `TransferredOut`, `TransferredIn`, `ClosedWithClass`.
+    - `effective_on` (DATE) — Ngày nghiệp vụ event có hiệu lực.
+    - `note` (TEXT, nullable) — Ghi chú snapshot bất biến.
+    - `metadata` (JSONB, default `'{}'`) — Snapshot có cấu trúc, gồm `before`/`after` cho event sửa period.
+    - `created_at`, `updated_at` (timestamptz) — `updated_at` không đổi sau insert.
+
+    # index
+    - `index(class_enrollment_id)`.
+    - `index(related_enrollment_id)`.
+    - `index(class_enrollment_id, created_at)` — Lấy timeline một kỳ ổn định theo thời điểm ghi.
+    - `index(event_type)`.
+
+    # migration
+    - `2026_09_23_090000_create_class_enrollment_events_table.php` tạo bảng, các foreign key/index/check constraint và trigger bất biến; không tạo event lịch sử tổng hợp.
 
 ## rooms
 

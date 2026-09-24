@@ -50,7 +50,7 @@ Keep this mapping current whenever schema ownership changes. Detailed columns, c
 | Backend scope | Schema responsibility | Current tables | Migration location |
 | --- | --- | --- | --- |
 | API / Auth | Login accounts, Sanctum tokens, permission catalogue, and per-user permission overrides. Role defaults stay in code. | `users`, `personal_access_tokens`, `features`, `feature_user` | `api/database/migrations/` |
-| API / Academic | Shared personal profiles, teaching and student roles, guardian links, subjects, classes, enrolment, and teaching rooms. | `profiles`, `teacher_profiles`, `student_profiles`, `student_guardians`, `subjects`, `classes`, `class_enrollments`, `rooms` | `api/database/migrations/` |
+| API / Academic | Shared personal profiles, teaching and student roles, guardian links, subjects, classes and teaching teams, enrolment, and teaching rooms. | `profiles`, `teacher_profiles`, `student_profiles`, `student_guardians`, `subjects`, `classes`, `class_subjects`, `class_teachers`, `class_enrollments`, `class_enrollment_events`, `rooms` | `api/database/migrations/` |
 | API / System | Mutable system settings, private file metadata, immutable ownership, and typed domain usage links. | `system_settings`, `files`, `file_links` | `api/database/migrations/` |
 | API / framework runtime | Laravel session, cache, and queue tables. | `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs` | `api/database/migrations/` |
 | API / future modules | Each module owns its schema mapping, but all migrations remain centralized. | — | `api/database/migrations/` |

@@ -2,32 +2,42 @@ import { browserRequest, browserRequestList } from "@/lib/api/browser-request";
 import type { Page } from "@/lib/api/contracts";
 
 import type {
-  GradeLevel,
+  EnrollmentHistoryEntry,
   Student,
-  StudentStatus,
+  StudentClass,
 } from "../types/academic";
 import type {
   CreateProfileSubmission,
   CreateStudentRequest,
+  StudentClassesRequest,
+  StudentEnrollmentHistoryRequest,
+  StudentListRequest,
   UpdateStudentRequest,
 } from "../types/academic-requests";
 import { profileCreateBody } from "./profile-create-body";
 
-/** Query parameters accepted by the student list endpoint. */
-export type StudentListParams = {
-  q?: string;
-  page?: number;
-  per_page?: number;
-  sort?: "id" | "full_name" | "grade_level" | "created_at";
-  direction?: "asc" | "desc";
-  is_active?: boolean | 0 | 1;
-  [key: `status[${number}]`]: StudentStatus;
-  [key: `grade_level[${number}]`]: GradeLevel;
-};
-
 /** Fetches one page of student profiles. */
-export async function fetchStudents(params: StudentListParams): Promise<Page<Student>> {
+export async function fetchStudents(params: StudentListRequest): Promise<Page<Student>> {
   return browserRequestList<Student>("/api/v1/academic/students", { params });
+}
+
+/** Fetches one page of distinct current and historical classes for a student. */
+export async function fetchStudentClasses(
+  id: number,
+  params: StudentClassesRequest,
+): Promise<Page<StudentClass>> {
+  return browserRequestList<StudentClass>(`/api/v1/academic/students/${id}/classes`, { params });
+}
+
+/** Fetches one page of a student's immutable and legacy history for one class. */
+export async function fetchStudentEnrollmentHistory(
+  id: number,
+  params: StudentEnrollmentHistoryRequest,
+): Promise<Page<EnrollmentHistoryEntry>> {
+  return browserRequestList<EnrollmentHistoryEntry>(
+    `/api/v1/academic/students/${id}/enrollment-events`,
+    { params },
+  );
 }
 
 /** Fetches one student profile. */

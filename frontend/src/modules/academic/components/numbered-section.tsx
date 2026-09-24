@@ -20,14 +20,18 @@ export function NumberedSection({
   title,
   description,
   className,
+  headingLevel = 2,
   children,
 }: {
   index: number;
   title: string;
   description: string;
   className?: string;
+  headingLevel?: 2 | 4;
   children: ReactNode;
 }) {
+  const Heading = headingLevel === 4 ? "h4" : "h2";
+
   return (
     <section className={cn("[&+&]:mt-[30px] [&+&]:border-t [&+&]:border-vc-rule [&+&]:pt-[30px]", className)}>
       <div className="mb-[22px] grid grid-cols-[34px_minmax(0,1fr)] items-start gap-3">
@@ -38,7 +42,7 @@ export function NumberedSection({
           {String(index).padStart(2, "0")}
         </span>
         <div className="pt-0.5">
-          <h2 className="text-lg leading-[1.45] font-semibold tracking-[-0.01em]">{title}</h2>
+          <Heading className="text-lg leading-[1.45] font-semibold tracking-[-0.01em]">{title}</Heading>
           <p className="mt-[3px] text-[11px] leading-[1.6] text-muted-foreground">{description}</p>
         </div>
       </div>

@@ -1,6 +1,7 @@
 # Quản lý học sinh
 
-Last Verified: 2026-09-22
+Last Verified: 2026-09-23
+Related Task: `.tasks/phase-4-academic-lifecycle.md` — Task 2.2
 
 ## Tổng quan
 
@@ -53,11 +54,15 @@ Mọi endpoint nằm dưới tiền tố `/api/v1` và cần header `Authorizati
 | Tạo, kèm phụ huynh | thêm `guardians` — mỗi phần tử là `guardian_profile_id`, `relationship` và `is_primary` |
 | Tìm phụ huynh có sẵn | `GET /api/v1/academic/guardians/options` với `q` và `limit` |
 | Xem chi tiết | `GET /api/v1/academic/students/{id}` |
+| Xem các lớp đang học và đã học | `GET /api/v1/academic/students/{id}/classes` |
+| Xem event lịch sử của một lớp | `GET /api/v1/academic/students/{id}/enrollment-events?class_id={class}` |
 | Sửa hồ sơ | `PUT /api/v1/academic/students/{id}` với `full_name`, `gender`, `grade_level`, `status`; `guardians` tùy chọn và được đọc là danh sách đầy đủ |
 | Khóa hoặc mở tài khoản | `PATCH /api/v1/academic/students/{id}/account` với `is_active` |
 | Đổi mật khẩu | `PATCH /api/v1/academic/students/{id}/password` với `password` |
 
 `GET /api/v1/academic/guardians/options` cần quyền `student.update` (mặc định chỉ Quản trị viên) và trả về mảng phẳng, mỗi mục gồm `id` (là `profile_id`), `label` (họ tên) và `phone`. `q` tối đa 100 ký tự, `limit` từ 1 đến 50 và mặc định 20.
+
+`GET /api/v1/academic/students/{id}/classes` phân trang các lớp distinct mà học sinh đang hoặc từng theo học; response mang `is_current` và số period. `GET .../enrollment-events` bắt buộc `class_id` và cần đồng thời vai trò Quản trị viên cùng quyền `student.view`. Mục có `kind: event` là lịch sử thật; period cũ chưa có event trả `kind: legacy_enrollment`, không phân tích ghi chú và không tạo sự kiện tổng hợp. Xem định dạng, paging và trường hợp `404` tại [Ghi danh vào lớp](../academic/ghi-danh.md).
 
 Trường tùy chọn: `phone`, `dob`, `guardians`, `address`, `note`, và `status` khi tạo. Mỗi phần tử của `guardians` gồm `guardian_profile_id`, `relationship` bắt buộc và `is_primary` bắt buộc khi roster không rỗng. Khi tạo còn nhận `avatar` — xem [Ảnh đại diện hồ sơ](avatar.md) cho cả hai dạng JSON và multipart.
 

@@ -1,33 +1,20 @@
 import { browserRequest, browserRequestList } from "@/lib/api/browser-request";
 import type { Page } from "@/lib/api/contracts";
 
-import type { GradeLevel, Option, Subject } from "../types/academic";
-import type { SubjectRequest } from "../types/academic-requests";
-
-/** Query parameters accepted by the subject list endpoint. */
-export type SubjectListParams = {
-  q?: string;
-  page?: number;
-  per_page?: number;
-  sort?: "id" | "name" | "created_at" | "active_classes_count";
-  direction?: "asc" | "desc";
-  is_active?: boolean | 0 | 1;
-  grade_level?: GradeLevel;
-};
-
-/** Query parameters accepted by the subject option endpoint. */
-export type SubjectOptionParams = {
-  q?: string;
-  limit?: number;
-};
+import type { Option, Subject } from "../types/academic";
+import type {
+  SubjectListRequest,
+  SubjectOptionRequest,
+  SubjectRequest,
+} from "../types/academic-requests";
 
 /** Fetches one page of subjects. */
-export async function fetchSubjects(params: SubjectListParams): Promise<Page<Subject>> {
+export async function fetchSubjects(params: SubjectListRequest): Promise<Page<Subject>> {
   return browserRequestList<Subject>("/api/v1/academic/subjects", { params });
 }
 
 /** Fetches the subjects a class may be assigned to. */
-export async function fetchSubjectOptions(params: SubjectOptionParams): Promise<Option[]> {
+export async function fetchSubjectOptions(params: SubjectOptionRequest): Promise<Option[]> {
   return browserRequest<Option[]>("/api/v1/academic/subjects/options", { params });
 }
 

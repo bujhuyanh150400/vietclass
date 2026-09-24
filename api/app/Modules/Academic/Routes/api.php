@@ -4,12 +4,12 @@ use App\Modules\Academic\Enums\AcademicFeature;
 use App\Modules\Academic\Http\Controllers\ClassController;
 use App\Modules\Academic\Http\Controllers\EnrollmentController;
 use App\Modules\Academic\Http\Controllers\GuardianController;
-use App\Modules\Academic\Http\Middleware\RejectTeacherGuardianMutation;
 use App\Modules\Academic\Http\Controllers\ProfileAvatarController;
 use App\Modules\Academic\Http\Controllers\RoomController;
 use App\Modules\Academic\Http\Controllers\StudentController;
 use App\Modules\Academic\Http\Controllers\SubjectController;
 use App\Modules\Academic\Http\Controllers\TeacherController;
+use App\Modules\Academic\Http\Middleware\RejectTeacherGuardianMutation;
 use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Support\Facades\Route;
 
@@ -99,6 +99,16 @@ Route::middleware('auth:sanctum')->prefix('academic')->name('academic.')->group(
             ->whereNumber('student')
             ->middleware(Authorize::using(AcademicFeature::StudentView))
             ->name('show');
+
+        Route::get('{student}/classes', [StudentController::class, 'classes'])
+            ->whereNumber('student')
+            ->middleware(Authorize::using(AcademicFeature::StudentView))
+            ->name('classes');
+
+        Route::get('{student}/enrollment-events', [StudentController::class, 'enrollmentHistory'])
+            ->whereNumber('student')
+            ->middleware(Authorize::using(AcademicFeature::StudentView))
+            ->name('enrollment-events');
 
         Route::put('{student}', [StudentController::class, 'update'])
             ->whereNumber('student')
@@ -222,6 +232,11 @@ Route::middleware('auth:sanctum')->prefix('academic')->name('academic.')->group(
             ->middleware(Authorize::using(AcademicFeature::ClassAddStudent))
             ->name('enrollments.available');
 
+        Route::get('{class}/enrollment-student-options', [EnrollmentController::class, 'studentOptions'])
+            ->whereNumber('class')
+            ->middleware(Authorize::using(AcademicFeature::ClassAddStudent))
+            ->name('enrollments.student-options');
+
         Route::post('{class}/enrollments', [EnrollmentController::class, 'store'])
             ->whereNumber('class')
             ->middleware(Authorize::using(AcademicFeature::ClassAddStudent))
@@ -229,6 +244,11 @@ Route::middleware('auth:sanctum')->prefix('academic')->name('academic.')->group(
     });
 
     Route::prefix('enrollments')->name('enrollments.')->group(function (): void {
+        Route::get('{enrollment}/transfer-options', [EnrollmentController::class, 'transferOptions'])
+            ->whereNumber('enrollment')
+            ->middleware(Authorize::using(AcademicFeature::ClassTransferStudent))
+            ->name('transfer-options');
+
         Route::put('{enrollment}', [EnrollmentController::class, 'update'])
             ->whereNumber('enrollment')
             ->middleware(Authorize::using(AcademicFeature::ClassUpdateStudentEnrollment))
