@@ -27,6 +27,8 @@ final class IndexEnrollmentRequest extends FormRequest
         return [
             ...$this->paginationRules(),
             'active_only' => ['sometimes', 'boolean'],
+            'left_only' => ['sometimes', 'boolean'],
+            'has_note' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -47,6 +49,6 @@ final class IndexEnrollmentRequest extends FormRequest
      */
     protected function filterKeys(): array
     {
-        return ['active_only'];
+        return ['active_only', 'left_only', 'has_note'];
     }
 }

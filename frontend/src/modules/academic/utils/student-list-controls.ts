@@ -1,5 +1,5 @@
 import type { GradeLevel } from "../types/academic";
-import type { StudentListParams } from "../api/students-api";
+import type { StudentListRequest } from "../types/academic-requests";
 
 /** The display modes the student list can switch between. */
 export type StudentListView = "table" | "grid";
@@ -45,8 +45,8 @@ export const STUDENT_TABLE_PAGE_SIZES = [20, 50, 100, 200] as const;
 /** Converts student controls into the Laravel list endpoint's query contract. */
 export function buildStudentListParams(
   controls: StudentListControlState,
-): Partial<StudentListParams> {
-  const params: Partial<StudentListParams> = {};
+): Partial<StudentListRequest> {
+  const params: Partial<StudentListRequest> = {};
 
   controls.gradeLevels.forEach((gradeLevel, index) => {
     params[`grade_level[${index}]`] = gradeLevel;
@@ -63,7 +63,7 @@ export function buildStudentListParams(
     newest: { sort: "created_at", direction: "desc" },
   } satisfies Record<
     StudentListSort,
-    { sort: NonNullable<StudentListParams["sort"]>; direction: "asc" | "desc" }
+    { sort: NonNullable<StudentListRequest["sort"]>; direction: "asc" | "desc" }
   >;
 
   return { ...params, ...sort[controls.sort] };

@@ -27,8 +27,8 @@ final class ClassRepository extends BaseRepository
     }
 
     /**
-     * Return one page of classes with the subject, teacher, and current headcount each
-     * one needs to be understood without a second request.
+     * Return one page of classes with their full subject set, teaching team, and current
+     * headcount so each row is understood without another request.
      *
      * @return LengthAwarePaginator<int, SchoolClass>
      */
@@ -37,11 +37,18 @@ final class ClassRepository extends BaseRepository
         return $this->withListRelations($this->modelQuery())
             ->when(
                 $query->hasSearch(),
-                fn (Builder $builder): Builder => $this->whereAnyUnaccentedLike(
-                    $builder,
-                    ['code', 'name'],
-                    (string) $query->searchLike(),
-                ),
+                function (Builder $classes) use ($query): Builder {
+                    return $classes->where(function (Builder $matches) use ($query): void {
+                        $this->whereAnyUnaccentedLike(
+                            $matches,
+                            ['code', 'name'],
+                            (string) $query->searchLike(),
+                        );
+                        if (ctype_digit((string) $query->search)) {
+                            $matches->orWhere('classes.id', (int) $query->search);
+                        }
+                    });
+                },
             )
             ->when(
                 $query->hasFilter('status'),
@@ -49,11 +56,16 @@ final class ClassRepository extends BaseRepository
             )
             ->when(
                 $query->hasFilter('subject_id'),
-                fn (Builder $builder): Builder => $builder->whereIn('subject_id', (array) $query->filter('subject_id')),
+                fn (Builder $builder): Builder => $builder->whereHas('subjects',
+                    fn (Builder $subjects): Builder => $subjects->whereIn('subjects.id', (array) $query->filter('subject_id')),
+                ),
             )
             ->when(
                 $query->hasFilter('teacher_id'),
-                fn (Builder $builder): Builder => $builder->whereIn('teacher_id', (array) $query->filter('teacher_id')),
+                fn (Builder $builder): Builder => $builder->whereHas(
+                    'primaryTeacher',
+                    fn (Builder $teachers): Builder => $teachers->whereIn('teacher_profiles.profile_id', (array) $query->filter('teacher_id')),
+                ),
             )
             ->when(
                 $query->hasFilter('grade_level'),
@@ -74,7 +86,10 @@ final class ClassRepository extends BaseRepository
         return $this->modelQuery()
             ->where('status', ClassStatus::Active)
             ->when($excludeId !== null, fn (Builder $builder): Builder => $builder->whereKeyNot($excludeId))
-            ->when($subjectId !== null, fn (Builder $builder): Builder => $builder->where('subject_id', $subjectId))
+            ->when($subjectId !== null, fn (Builder $builder): Builder => $builder->whereHas(
+                'subjects',
+                fn (Builder $subjects): Builder => $subjects->where('subjects.id', $subjectId),
+            ))
             ->when(
                 $query->hasSearch(),
                 fn (Builder $builder): Builder => $this->whereAnyUnaccentedLike(
@@ -86,6 +101,94 @@ final class ClassRepository extends BaseRepository
             ->orderBy('code')
             ->limit($query->perPage)
             ->get();
+    }
+
+    /**
+     * Search possible transfer destinations; the action annotates each row with the
+     * current rules while the transfer action rechecks them under locks on submit.
+     *
+     * @return LengthAwarePaginator<int, SchoolClass>
+     */
+    public function paginateTransferCandidates(int $sourceClassId, ListQuery $query): LengthAwarePaginator
+    {
+        return $this->withListRelations($this->modelQuery()->whereKeyNot($sourceClassId))
+            ->when(
+                $query->hasSearch(),
+                fn (Builder $classes): Builder => $this->whereAnyUnaccentedLike(
+                    $classes,
+                    ['code', 'name'],
+                    (string) $query->searchLike(),
+                ),
+            )
+            ->orderBy($query->sort === 'id' ? 'classes.id' : 'classes.'.$query->sort, $query->direction)
+            ->orderBy('classes.id', $query->direction)
+            ->paginate(perPage: $query->perPage, page: $query->page);
+    }
+
+    /**
+     * Read current teacher assignment IDs before taking teacher locks for a class edit.
+     *
+     * @return list<int>
+     */
+    public function teacherIdsForClass(int $classId): array
+    {
+        $class = $this->modelQuery()->with('teachers:profile_id')->find($classId);
+
+        return $class?->teachers->pluck('profile_id')->map(static fn ($id): int => (int) $id)->all() ?? [];
+    }
+
+    /**
+     * Report whether a currently enrolled student would mismatch a proposed class grade.
+     */
+    public function hasActiveEnrollmentWithDifferentGrade(int $classId, int $gradeLevel): bool
+    {
+        return ClassEnrollment::query()
+            ->where('class_id', $classId)
+            ->active()
+            ->whereHas('student', fn (Builder $students): Builder => $students->where('grade_level', '<>', $gradeLevel))
+            ->exists();
+    }
+
+    /**
+     * Find and lock a class before changing its relationships or capacity.
+     */
+    public function findByIdForUpdate(int $classId): ?SchoolClass
+    {
+        return $this->modelQuery()->lockForUpdate()->find($classId);
+    }
+
+    /**
+     * Lock a stable set of classes in ascending ID order for cross-class mutations.
+     *
+     * @param  list<int>  $classIds
+     * @return Collection<int, SchoolClass>
+     */
+    public function lockByIds(array $classIds): Collection
+    {
+        return $this->modelQuery()
+            ->whereIn('id', array_values(array_unique($classIds)))
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+    }
+
+    /**
+     * Lock active classes assigned to a teacher in ascending class-ID order, then reload assistant roles.
+     *
+     * @return Collection<int, SchoolClass>
+     */
+    public function lockActiveAssignmentsForTeacher(int $teacherId): Collection
+    {
+        return $this->modelQuery()
+            ->where('status', ClassStatus::Active)
+            ->whereHas(
+                'teachers',
+                fn (Builder $teachers): Builder => $teachers->where('teacher_profiles.profile_id', $teacherId),
+            )
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get()
+            ->load(['primaryTeacher:profile_id', 'assistantTeachers:profile_id']);
     }
 
     /**
@@ -131,18 +234,6 @@ final class ClassRepository extends BaseRepository
     }
 
     /**
-     * Close every running enrolment in a class as of the given date and report how many
-     * were closed. Used when a class finishes.
-     */
-    public function endActiveEnrollments(int $classId, CarbonInterface $on): int
-    {
-        return ClassEnrollment::query()
-            ->where('class_id', $classId)
-            ->active($on)
-            ->update(['left_at' => $on->toDateString()]);
-    }
-
-    /**
      * Attach the relations and counts every class listing reports.
      *
      * @param  Builder<SchoolClass>  $query
@@ -151,9 +242,19 @@ final class ClassRepository extends BaseRepository
     private function withListRelations(Builder $query): Builder
     {
         return $query
-            ->with(['subject:id,name', 'teacher.profile:id,full_name'])
+            ->with([
+                'primarySubject:id,name,is_active',
+                'subjects' => fn ($subjects) => $subjects
+                    ->select('subjects.id', 'subjects.name', 'subjects.is_active', 'subjects.grade_levels')
+                    ->orderBy('subjects.id'),
+                'primaryTeacher.profile:id,full_name',
+                'assistantTeachers.profile:id,full_name',
+            ])
             ->withCount([
                 'enrollments as active_students_count' => fn (Builder $builder): Builder => $builder->active(),
+                'enrollments as past_enrollments_count' => fn (Builder $builder): Builder => $builder
+                    ->whereNotNull('left_at')
+                    ->where('left_at', '<=', now()->toDateString()),
             ]);
     }
 }

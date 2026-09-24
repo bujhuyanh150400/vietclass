@@ -7,9 +7,9 @@ use App\Core\Data\ListQuery;
 use App\Core\Exceptions\ActionError;
 use App\Modules\Academic\Enums\AcademicError;
 use App\Modules\Academic\Models\SchoolClass;
+use App\Modules\Academic\Models\StudentProfile;
 use App\Modules\Academic\Repositories\ClassEnrollmentRepository;
 use App\Modules\Academic\Repositories\ClassRepository;
-use App\Modules\Academic\Models\StudentProfile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 final class ListAvailableStudentsAction
@@ -31,14 +31,15 @@ final class ListAvailableStudentsAction
     public function handle(int $classId, ListQuery $query): ActionResult
     {
         try {
-            if (! $this->classes->findById($classId) instanceof SchoolClass) {
+            $class = $this->classes->findById($classId);
+            if (! $class instanceof SchoolClass) {
                 throw new ActionError(
                     message: 'Không tìm thấy lớp học.',
                     code: AcademicError::ClassNotFound,
                 );
             }
 
-            return ActionResult::success($this->enrollments->paginateAvailableForClass($classId, $query));
+            return ActionResult::success($this->enrollments->paginateAvailableForClass($class, $query));
         } catch (ActionError $error) {
             return ActionResult::error(
                 error: $error->code(),

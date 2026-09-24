@@ -2,32 +2,48 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { EmptyState } from "@/components/shared/data-table/empty-state";
-import { useHasFeature } from "@/modules/auth";
+import { useCurrentUser, useHasFeature } from "@/modules/auth";
 import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
 import { useToast } from "@/components/shared/toast-provider";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
+import type { StudentClass } from "../types/academic";
+
 import { ChangePasswordDialog } from "../components/change-password-dialog";
 import { StudentDetailView, type StudentDetailTab } from "../components/student-detail-view";
-import { useChangeStudentPassword, useSetStudentAccountActive, useStudent } from "../hooks/use-students";
+import { StudentEnrollmentHistoryDialog } from "../components/student-class-history-view";
+import { studentDetailTab } from "../utils/detail-tab-state";
+import {
+  useChangeStudentPassword,
+  useSetStudentAccountActive,
+  useStudent,
+  useStudentClasses,
+  useStudentEnrollmentHistory,
+} from "../hooks/use-students";
+import { canViewStudentEnrollmentHistory } from "../utils/student-class-history";
 
 /** Loads one student and coordinates capability-safe detail actions. */
 export function StudentDetailContainer({ studentId }: { studentId: number }) {
   const query = useStudent(studentId);
   const canUpdate = useHasFeature("student.update");
   const canToggleAccount = useHasFeature("student.toggle_active");
+  const session = useCurrentUser(true);
+  const canViewHistory = session.isSuccess
+    && canViewStudentEnrollmentHistory(session.data.role, session.data.features);
 
   if (query.data !== undefined) {
     return (
       <LoadedStudentDetail
+        key={query.data.id}
         student={query.data}
         canUpdate={canUpdate}
         canToggleAccount={canToggleAccount}
+        canViewHistory={canViewHistory}
       />
     );
   }
@@ -127,10 +143,12 @@ function LoadedStudentDetail({
   student,
   canUpdate,
   canToggleAccount,
+  canViewHistory,
 }: {
   student: NonNullable<ReturnType<typeof useStudent>["data"]>;
   canUpdate: boolean;
   canToggleAccount: boolean;
+  canViewHistory: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -142,17 +160,31 @@ function LoadedStudentDetail({
   const [confirmingAccount, setConfirmingAccount] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [accountError, setAccountError] = useState<string | null>(null);
+  const [classPage, setClassPage] = useState(1);
+  const [historyClass, setHistoryClass] = useState<StudentClass | null>(null);
+  const [historyPage, setHistoryPage] = useState(1);
+  const historyTriggerRef = useRef<HTMLButtonElement | null>(null);
 
-  const requestedTab = searchParams.get("tab");
-  const activeTab: StudentDetailTab =
-    requestedTab === "classes" || requestedTab === "rewards" || requestedTab === "reports"
-      ? requestedTab
-      : "profile";
+  const activeTab = studentDetailTab(searchParams.get("tab"));
+  const shouldLoadClassList = canViewHistory && activeTab === "classes";
+  const studentClasses = useStudentClasses(student.id, "", classPage, shouldLoadClassList);
+  const history = useStudentEnrollmentHistory(
+    student.id,
+    historyClass?.id ?? null,
+    historyPage,
+    canViewHistory && activeTab === "classes" && historyClass !== null,
+  );
+
   const hasAccount = typeof student.user_id === "number" && student.user_id > 0;
   const accountIsActive = student.is_account_active !== false;
 
   /** Replaces only the tab query while preserving other URL state and scroll position. */
   function setDetailTab(nextTab: StudentDetailTab): void {
+    if (nextTab !== activeTab) {
+      setHistoryClass(null);
+      setHistoryPage(1);
+    }
+
     const params = new URLSearchParams(searchParams.toString());
 
     if (nextTab === "profile") {
@@ -163,6 +195,28 @@ function LoadedStudentDetail({
 
     const query = params.toString();
     router.replace(`${pathname}${query ? `?${query}` : ""}`, { scroll: false });
+  }
+
+  /** Opens the history query only after an Admin selects one class row. */
+  function openClassHistory(schoolClass: StudentClass, trigger: HTMLButtonElement): void {
+    historyTriggerRef.current = trigger;
+    setHistoryPage(1);
+    setHistoryClass(schoolClass);
+  }
+
+  /** Closes the class-scoped modal and resets its next open to the first page. */
+  function setHistoryOpen(open: boolean): void {
+    if (!open) {
+      setHistoryClass(null);
+      setHistoryPage(1);
+    }
+  }
+
+  /** Return keyboard focus to the exact history control that opened the modal. */
+  function restoreHistoryFocus(): void {
+    if (historyTriggerRef.current?.isConnected) {
+      historyTriggerRef.current.focus({ preventScroll: true });
+    }
   }
 
   /** Applies the requested account state after confirmation and reports the result. */
@@ -191,6 +245,15 @@ function LoadedStudentDetail({
         onTabChange={setDetailTab}
         canUpdate={canUpdate}
         canToggleAccount={hasAccount && canToggleAccount}
+        canViewHistory={canViewHistory}
+        studentClasses={studentClasses.data?.data ?? []}
+        studentClassesMeta={studentClasses.data?.meta ?? null}
+        studentClassesLoading={shouldLoadClassList && studentClasses.isFetching}
+        studentClassesError={shouldLoadClassList && studentClasses.isError}
+        classPage={classPage}
+        onClassPageChange={setClassPage}
+        onRetryStudentClasses={() => void studentClasses.refetch()}
+        onOpenClassHistory={openClassHistory}
         onToggleAccount={() => {
           if (!hasAccount || !canToggleAccount) return;
           setAccountError(null);
@@ -200,6 +263,21 @@ function LoadedStudentDetail({
           if (!hasAccount || !canUpdate) return;
           setChangingPassword(true);
         }}
+      />
+
+      <StudentEnrollmentHistoryDialog
+        open={canViewHistory && activeTab === "classes" && historyClass !== null}
+        student={student}
+        schoolClass={historyClass}
+        entries={history.data?.data ?? []}
+        meta={history.data?.meta ?? null}
+        isError={historyClass !== null && history.isError}
+        isFetching={history.isFetching}
+        page={historyPage}
+        onOpenChange={setHistoryOpen}
+        onPageChange={setHistoryPage}
+        onRetry={() => void history.refetch()}
+        onRestoreFocus={restoreHistoryFocus}
       />
 
       {hasAccount && canToggleAccount ? (

@@ -3,18 +3,18 @@
 namespace Database\Seeders;
 
 use App\Modules\Academic\Enums\ClassStatus;
-use App\Modules\Academic\Models\ClassEnrollment;
-use App\Modules\Academic\Models\SchoolClass;
-use App\Modules\Academic\Models\Subject;
 use App\Modules\Academic\Enums\Gender;
 use App\Modules\Academic\Enums\GradeLevel;
 use App\Modules\Academic\Enums\GuardianRelationship;
 use App\Modules\Academic\Enums\StudentStatus;
 use App\Modules\Academic\Enums\TeacherStatus;
-use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Academic\Models\ClassEnrollment;
 use App\Modules\Academic\Models\Profile;
+use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\StudentProfile;
+use App\Modules\Academic\Models\Subject;
 use App\Modules\Academic\Models\TeacherProfile;
+use App\Modules\Auth\Enums\UserRole;
 use App\Modules\Auth\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -183,18 +183,26 @@ final class StudentDemoSeeder extends Seeder
         foreach ($definitions as [$code, $name, $subjectName, $grade]) {
             $subject = Subject::query()->where('name', $subjectName)->firstOrFail();
 
-            $classes[$code] = SchoolClass::query()->firstOrCreate(
+            $class = SchoolClass::query()->firstOrCreate(
                 ['code' => $code],
                 [
                     'name' => $name,
-                    'subject_id' => $subject->id,
-                    'teacher_id' => $teacher->profile_id,
                     'grade_level' => $grade,
                     'max_students' => 30,
                     'status' => ClassStatus::Active,
                     'start_at' => now()->subMonths(3)->toDateString(),
                 ],
             );
+
+            if (! $class->subjects()->exists()) {
+                $class->subjects()->attach($subject->id, ['is_primary' => true]);
+            }
+
+            if (! $class->teachers()->exists()) {
+                $class->teachers()->attach($teacher->profile_id, ['is_primary' => true]);
+            }
+
+            $classes[$code] = $class;
         }
 
         return $classes;
@@ -317,10 +325,17 @@ final class StudentDemoSeeder extends Seeder
      */
     private function enrol(StudentProfile $student, array $classes, int $index, int $count): void
     {
-        $codes = array_keys($classes);
+        $matchingClasses = array_filter(
+            $classes,
+            fn (SchoolClass $class): bool => $class->grade_level === $student->grade_level,
+        );
+        $codes = array_keys($matchingClasses);
+        if ($codes === []) {
+            return;
+        }
 
         for ($offset = 0; $offset < $count; $offset++) {
-            $class = $classes[$codes[($index * 2 + $offset) % count($codes)]];
+            $class = $matchingClasses[$codes[($index * 2 + $offset) % count($codes)]];
 
             ClassEnrollment::query()->firstOrCreate(
                 [
@@ -346,7 +361,7 @@ final class StudentDemoSeeder extends Seeder
     }
 
     /**
-     * Record an enrolment the first demo student has already left.
+     * Record an enrolment one demo student has already left.
      *
      * It exists to prove the classes column reports only running enrolments: this
      * class must never appear beside that student, even though the row is there.
@@ -356,7 +371,7 @@ final class StudentDemoSeeder extends Seeder
     private function recordOneDepartedEnrolment(array $classes): void
     {
         $student = StudentProfile::query()
-            ->whereHas('profile.user', fn ($user) => $user->where('username', 'hsdemo01'))
+            ->whereHas('profile.user', fn ($user) => $user->where('username', 'hsdemo04'))
             ->first();
 
         if (! $student instanceof StudentProfile) {
@@ -365,7 +380,7 @@ final class StudentDemoSeeder extends Seeder
 
         ClassEnrollment::query()->firstOrCreate(
             [
-                'class_id' => $classes['ANH7-A']->id,
+                'class_id' => $classes['ANH9-A']->id,
                 'student_id' => $student->profile_id,
             ],
             [

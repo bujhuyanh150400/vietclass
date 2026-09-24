@@ -32,6 +32,10 @@ export function TeacherDetailView({
 }) {
   const hasAccount = typeof teacher.user_id === "number" && teacher.user_id > 0;
   const accountIsActive = teacher.is_account_active !== false;
+  const assignedClasses = teacher.classes.length + teacher.assistant_classes.length;
+  const endedClasses = teacher.ended_classes ?? [];
+  const endedAssistantClasses = teacher.ended_assistant_classes ?? [];
+  const hasEndedClasses = endedClasses.length + endedAssistantClasses.length > 0;
 
   return (
     <div className="grid gap-5">
@@ -47,9 +51,9 @@ export function TeacherDetailView({
           <span className="text-[10px] font-semibold tracking-[0.09em] text-muted-foreground uppercase">
             Hồ sơ giáo viên
           </span>
-          <h1 className="mt-1 text-[26px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">
+          <h2 className="mt-1 text-[26px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">
             {teacher.full_name}
-          </h1>
+          </h2>
           <p className="mt-1 font-mono text-[11px] text-muted-foreground">
             Mã hồ sơ #{teacher.id}
           </p>
@@ -136,9 +140,9 @@ export function TeacherDetailView({
             value="classes"
             className="min-w-0 gap-1 rounded-[4px] px-2 text-[11px] leading-tight font-semibold text-center text-muted-foreground sm:gap-1.5 sm:px-3 sm:text-xs data-[state=active]:border-vc-ink data-[state=active]:bg-vc-ink data-[state=active]:text-vc-paper"
           >
-            <span className="min-w-0">Lớp đang dạy</span>
+            <span className="min-w-0">Lớp phân công</span>
             <span className="shrink-0 rounded-[3px] border border-current px-1.5 py-0.5 text-[10px] leading-none">
-              {teacher.classes.length}
+              {assignedClasses}
             </span>
           </TabsTrigger>
         </TabsList>
@@ -220,17 +224,58 @@ export function TeacherDetailView({
 
         <TabsContent value="classes" className="mt-0 outline-none">
           <DetailCard
-            title="Lớp đang dạy"
-            description="Các lớp đang hoạt động theo phân công hiện tại."
-            action={<span className="rounded-control border border-vc-rule px-2 py-1 text-[11px] font-semibold">{teacher.classes.length} lớp</span>}
+            title="Lớp phân công"
+            description="Vai trò trong từng lớp và trạng thái lớp. Thay đổi phân công trong biểu mẫu sửa lớp."
+            action={<span className="rounded-control border border-vc-rule px-2 py-1 text-[11px] font-semibold">{assignedClasses} lớp đang hoạt động</span>}
           >
-            {teacher.classes.length === 0 ? (
-              <ClassesEmptyState />
-            ) : (
-              <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-                {teacher.classes.map((schoolClass) => (
-                  <TeacherClassCard key={schoolClass.id} schoolClass={schoolClass} />
-                ))}
+            {assignedClasses === 0 && !hasEndedClasses ? <ClassesEmptyState /> : (
+              <div className="grid gap-6">
+                <section className="grid gap-2.5" aria-label="Lớp phụ trách chính">
+                  <div>
+                    <h4 className="text-sm font-semibold">Phụ trách chính · {teacher.classes.length}</h4>
+                    <p className="text-xs text-muted-foreground">Giáo viên chịu trách nhiệm chính của lớp.</p>
+                  </div>
+                  {teacher.classes.length === 0 ? (
+                    <p className="rounded-control border border-dashed border-vc-rule p-3 text-xs text-muted-foreground">Không phụ trách chính lớp nào.</p>
+                  ) : (
+                    <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                      {teacher.classes.map((schoolClass) => (
+                        <TeacherClassCard key={schoolClass.id} schoolClass={schoolClass} role="Phụ trách" />
+                      ))}
+                    </div>
+                  )}
+                </section>
+                <section className="grid gap-2.5 border-t border-vc-rule pt-5" aria-label="Lớp trợ giảng">
+                  <div>
+                    <h4 className="text-sm font-semibold">Trợ giảng · {teacher.assistant_classes.length}</h4>
+                    <p className="text-xs text-muted-foreground">Hỗ trợ giáo viên phụ trách của lớp.</p>
+                  </div>
+                  {teacher.assistant_classes.length === 0 ? (
+                    <p className="rounded-control border border-dashed border-vc-rule p-3 text-xs text-muted-foreground">Không làm trợ giảng ở lớp nào.</p>
+                  ) : (
+                    <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                      {teacher.assistant_classes.map((schoolClass) => (
+                        <TeacherClassCard key={schoolClass.id} schoolClass={schoolClass} role="Trợ giảng" />
+                      ))}
+                    </div>
+                  )}
+                </section>
+                {hasEndedClasses ? (
+                  <section className="grid gap-2.5 border-t border-vc-rule pt-5" aria-label="Lớp đã kết thúc">
+                    <div>
+                      <h4 className="text-sm font-semibold">Lớp đã kết thúc · {endedClasses.length + endedAssistantClasses.length}</h4>
+                      <p className="text-xs text-muted-foreground">Giữ nguyên như dữ liệu lịch sử.</p>
+                    </div>
+                    <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                      {endedClasses.map((schoolClass) => (
+                        <TeacherClassCard key={`lead-${schoolClass.id}`} schoolClass={schoolClass} role="Phụ trách" />
+                      ))}
+                      {endedAssistantClasses.map((schoolClass) => (
+                        <TeacherClassCard key={`assistant-${schoolClass.id}`} schoolClass={schoolClass} role="Trợ giảng" />
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
               </div>
             )}
           </DetailCard>
@@ -256,7 +301,7 @@ function DetailCard({
     <section className="min-w-0 overflow-hidden rounded-panel border border-vc-rule bg-card shadow-vc-sheet">
       <header className="flex items-start justify-between gap-4 border-b border-vc-rule px-4 py-4 sm:px-5">
         <div className="min-w-0">
-          <h2 className="text-[17px] font-semibold">{title}</h2>
+          <h3 className="text-[17px] font-semibold">{title}</h3>
           <p className="mt-1 text-[11px] text-muted-foreground">{description}</p>
         </div>
         {action}
@@ -267,7 +312,7 @@ function DetailCard({
 }
 
 /** Renders one assigned class as a link to its existing class detail screen. */
-function TeacherClassCard({ schoolClass }: { schoolClass: TeacherClass }) {
+function TeacherClassCard({ schoolClass, role }: { schoolClass: TeacherClass; role: "Phụ trách" | "Trợ giảng" }) {
   return (
     <Link
       href={`/academic/classes/${schoolClass.id}`}
@@ -275,7 +320,7 @@ function TeacherClassCard({ schoolClass }: { schoolClass: TeacherClass }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="truncate text-sm font-semibold">{schoolClass.name}</h3>
+          <h5 className="truncate text-sm font-semibold">{schoolClass.name}</h5>
           <span className="mt-1 block font-mono text-[10px] text-muted-foreground">{schoolClass.code}</span>
         </div>
         <span className="grid size-7 shrink-0 place-items-center rounded-control border border-vc-rule bg-card">
@@ -286,16 +331,19 @@ function TeacherClassCard({ schoolClass }: { schoolClass: TeacherClass }) {
         <School aria-hidden="true" className="size-4 shrink-0" />
         <span className="truncate">{schoolClass.subject_name ?? "Môn học chưa cập nhật"}</span>
       </div>
-      <span
-        className={cn(
-          "w-fit rounded-control border px-2 py-1 text-[10px] font-semibold",
+      <div className="flex flex-wrap gap-2">
+        <span className="rounded-control border border-vc-rule bg-card px-2 py-1 text-[10px] font-semibold">{role}</span>
+        <span
+          className={cn(
+            "w-fit rounded-control border px-2 py-1 text-[10px] font-semibold",
           schoolClass.status === 0
             ? "border-vc-leaf/30 bg-vc-leaf/10 text-vc-leaf"
             : "border-vc-control bg-vc-tint text-muted-foreground",
         )}
-      >
-        {CLASS_STATUS_LABELS[schoolClass.status]}
-      </span>
+        >
+          {CLASS_STATUS_LABELS[schoolClass.status]}
+        </span>
+      </div>
       <span className="sr-only">Mở chi tiết lớp</span>
     </Link>
   );
@@ -307,7 +355,7 @@ function ClassesEmptyState() {
     <div className="grid min-h-36 place-items-center px-5 py-6 text-center">
       <div>
         <School aria-hidden="true" className="mx-auto size-8 text-muted-foreground" />
-        <h3 className="mt-3 text-sm font-semibold">Chưa phụ trách lớp nào</h3>
+        <h4 className="mt-3 text-sm font-semibold">Chưa được phân công lớp nào</h4>
         <p className="mt-1.5 text-xs text-muted-foreground">
           Khi có phân công, lớp đang dạy sẽ xuất hiện tại đây.
         </p>

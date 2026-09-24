@@ -13,9 +13,12 @@ import {
   fetchGuardians,
   fetchGuardianOptions,
   updateGuardian,
-  type GuardianListParams,
 } from "../api/guardians-api";
-import type { DeleteGuardianRequest, GuardianRequest } from "../types/academic-requests";
+import type {
+  DeleteGuardianRequest,
+  GuardianListRequest,
+  GuardianRequest,
+} from "../types/academic-requests";
 import type { Guardian, Student } from "../types/academic";
 import {
   buildGuardianListParams,
@@ -43,7 +46,7 @@ export function useGuardianRecords(): GuardianListViewModel {
     view: parseAsStringLiteral(["table", "grid"] as const).withDefault("table"),
     per_page: parseAsNumberLiteral([20, 50, 100, 200] as const).withDefault(20),
   }, { history: "replace", clearOnDefault: true });
-  const list = useResourceList<Guardian, GuardianListParams>({
+  const list = useResourceList<Guardian, GuardianListRequest>({
     queryKey: academicQueryKeys.guardians.list,
     fetcher: fetchGuardians,
     emptyMessage: "Chưa có hồ sơ phụ huynh phù hợp.",

@@ -1,6 +1,7 @@
 import type { AvatarCreateSelection } from "./avatar";
 
 import type {
+  ClassStatus,
   Gender,
   GradeLevel,
   GuardianRelationship,
@@ -72,7 +73,9 @@ export type CreateTeacherRequest = TeacherProfileRequest & {
 };
 
 /** Payload accepted by the teacher update endpoint. */
-export type UpdateTeacherRequest = TeacherProfileRequest;
+export type UpdateTeacherRequest = TeacherProfileRequest & {
+  replacement_teacher_ids?: Record<number, number>;
+};
 
 type StudentProfileRequest = {
   full_name: string;
@@ -138,7 +141,9 @@ export type UpdateStudentRequest = StudentProfileRequest & StudentGuardianReques
 type ClassRequest = {
   name: string;
   subject_id: number;
+  subject_ids?: number[];
   teacher_id: number;
+  assistant_teacher_ids?: number[];
   grade_level: GradeLevel;
   max_students: number;
   end_at: string | null;
@@ -179,3 +184,142 @@ export type LeaveClassRequest = {
   left_at: string;
   reason: string;
 };
+
+/** Query parameters accepted by the class list endpoint. */
+export type ClassListRequest = {
+  q?: string;
+  page?: number;
+  per_page?: number;
+  sort?: "id" | "code" | "name" | "start_at" | "created_at";
+  direction?: "asc" | "desc";
+  [key: `status[${number}]`]: ClassStatus;
+  [key: `subject_id[${number}]`]: number;
+  [key: `teacher_id[${number}]`]: number;
+  [key: `grade_level[${number}]`]: GradeLevel;
+};
+
+/** Query parameters accepted by the class option endpoint. */
+export type ClassOptionRequest = { q?: string; limit?: number };
+
+/** Query parameters accepted by the subject list endpoint. */
+export type SubjectListRequest = {
+  q?: string;
+  page?: number;
+  per_page?: number;
+  sort?: "id" | "name" | "created_at" | "active_classes_count";
+  direction?: "asc" | "desc";
+  is_active?: boolean | 0 | 1;
+  grade_level?: GradeLevel;
+};
+
+/** Query parameters accepted by the subject option endpoint. */
+export type SubjectOptionRequest = { q?: string; limit?: number };
+
+/** Query parameters accepted by the teacher list endpoint. */
+export type TeacherListRequest = {
+  q?: string;
+  page?: number;
+  per_page?: number;
+  sort?: "id" | "full_name" | "joined_at" | "created_at";
+  direction?: "asc" | "desc";
+  is_active?: boolean | 0 | 1;
+  subject_id?: number | number[];
+  class_id?: number | number[];
+  joined_from?: string;
+  joined_to?: string;
+  [key: `status[${number}]`]: TeacherStatus;
+};
+
+/** Query parameters accepted by the teacher option endpoint. */
+export type TeacherOptionRequest = { q?: string; limit?: number };
+
+/** Query parameters accepted by the student list endpoint. */
+export type StudentListRequest = {
+  q?: string;
+  page?: number;
+  per_page?: number;
+  sort?: "id" | "full_name" | "grade_level" | "created_at";
+  direction?: "asc" | "desc";
+  is_active?: boolean | 0 | 1;
+  [key: `status[${number}]`]: StudentStatus;
+  [key: `grade_level[${number}]`]: GradeLevel;
+};
+
+/** Search and paging accepted by the eligible-student endpoint. */
+export type AvailableStudentListRequest = StudentListRequest;
+
+/** Search and paging accepted by the legacy class roster endpoint. */
+export type EnrollmentListRequest = {
+  q?: string;
+  page?: number;
+  per_page?: number;
+  sort?: "id" | "enrolled_at" | "left_at";
+  direction?: "asc" | "desc";
+  active_only?: boolean | 0 | 1;
+  left_only?: boolean | 0 | 1;
+  has_note?: boolean | 0 | 1;
+};
+
+/** Search and paging accepted by the disabled-aware add-student picker. */
+export type EnrollmentStudentOptionsRequest = {
+  q?: string;
+  page?: number;
+  per_page?: number;
+  sort?: "id" | "full_name" | "grade_level";
+  direction?: "asc" | "desc";
+};
+
+/** Search and paging accepted by the transfer-destination picker. */
+export type TransferOptionsRequest = {
+  q?: string;
+  page?: number;
+  per_page?: number;
+  sort?: "id" | "code" | "name" | "max_students";
+  direction?: "asc" | "desc";
+};
+
+/** Search and paging accepted by the distinct student class-list endpoint. */
+export type StudentClassesRequest = {
+  q?: string;
+  page?: number;
+  per_page?: number;
+  sort?: "id" | "code" | "name" | "grade_level" | "created_at";
+  direction?: "asc" | "desc";
+};
+
+/** Query contract for one student's event and legacy history in a specific class. */
+export type StudentEnrollmentHistoryRequest = {
+  class_id: number;
+  page?: number;
+  per_page?: number;
+  sort?: "effective_on" | "created_at" | "id";
+  direction?: "asc" | "desc";
+};
+
+/** Query parameters accepted by the guardian list endpoint. */
+export type GuardianListRequest = {
+  q?: string;
+  page?: number;
+  per_page?: number;
+  sort?: "id" | "full_name" | "created_at";
+  direction?: "asc" | "desc";
+};
+
+/** Query parameters accepted by the guardian option endpoint. */
+export type GuardianOptionRequest = { q?: string; limit?: number };
+
+/** Query parameters accepted by the room list endpoint. */
+export type RoomListRequest = {
+  q?: string;
+  page?: number;
+  per_page?: number;
+  sort?: "id" | "name" | "capacity" | "created_at";
+  direction?: "asc" | "desc";
+  status?: RoomStatus;
+  facilities?: RoomFacility[];
+  capacity_min?: number;
+  capacity_max?: number;
+};
+
+/** Query parameters accepted by the room option endpoint. */
+export type RoomOptionRequest = { q?: string; limit?: number };

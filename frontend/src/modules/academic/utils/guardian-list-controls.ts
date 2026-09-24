@@ -1,4 +1,4 @@
-import type { GuardianListParams } from "../api/guardians-api";
+import type { GuardianListRequest } from "../types/academic-requests";
 import type { GuardianStudentRequest, GuardianRequest } from "../types/academic-requests";
 import type { Guardian, Student, StudentGuardianSummary } from "../types/academic";
 import type { UserRole } from "@/modules/auth";
@@ -32,7 +32,7 @@ export function buildGuardianListParams(controls: {
   page?: number;
   perPage?: number;
   sort?: GuardianListSort;
-}): GuardianListParams {
+}): GuardianListRequest {
   const sort = controls.sort ?? "newest";
   const ordering = {
     newest: { sort: "created_at", direction: "desc" },

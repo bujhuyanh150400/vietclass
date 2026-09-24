@@ -6,8 +6,10 @@ use App\Core\Data\ListQuery;
 use App\Core\Repositories\BaseRepository;
 use App\Modules\Academic\Models\Profile;
 use App\Modules\Academic\Models\StudentProfile;
+use App\Modules\Auth\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 final class StudentRepository extends BaseRepository
 {
@@ -41,7 +43,7 @@ final class StudentRepository extends BaseRepository
                 'profile.avatarFileLink.file',
                 'primaryGuardian.guardian',
                 'guardianLinks.guardian',
-                'activeEnrollments.schoolClass.subject',
+                'activeEnrollments.schoolClass.primarySubject',
             ])
             ->when(
                 $query->hasSearch(),
@@ -93,6 +95,29 @@ final class StudentRepository extends BaseRepository
     }
 
     /**
+     * Lock requested students and their login accounts in stable ID order for eligibility checks.
+     *
+     * @param  list<int>  $studentIds
+     * @return Collection<int, StudentProfile>
+     */
+    public function lockByIds(array $studentIds): Collection
+    {
+        $students = $this->modelQuery()
+            ->with('profile:id,user_id,full_name')
+            ->whereIn('profile_id', array_values(array_unique($studentIds)))
+            ->orderBy('profile_id')
+            ->lockForUpdate()
+            ->get();
+        $userIds = $students->pluck('profile.user_id')->filter()->unique()->sort()->values();
+
+        if ($userIds->isNotEmpty()) {
+            User::query()->whereIn('id', $userIds)->orderBy('id')->lockForUpdate()->get();
+        }
+
+        return $students->load('profile.user:id,is_active');
+    }
+
+    /**
      * Read the search term as a student id, or return null when it cannot be one.
      *
      * The list prints the profile id as the student's code, so someone reading a row
@@ -117,6 +142,12 @@ final class StudentRepository extends BaseRepository
         return $id > 0 ? $id : null;
     }
 
+    /** Check whether a student profile exists without loading its detail graph. */
+    public function existsById(int $studentId): bool
+    {
+        return $this->modelQuery()->whereKey($studentId)->exists();
+    }
+
     /**
      * Find one student with the shared profile, login account, every guardian, and the
      * classes they still attend. The identifier is the shared `profile_id`, which is
@@ -134,7 +165,7 @@ final class StudentRepository extends BaseRepository
                 'profile.avatarFileLink.file',
                 'primaryGuardian.guardian',
                 'guardianLinks.guardian',
-                'activeEnrollments.schoolClass.subject',
+                'activeEnrollments.schoolClass.primarySubject',
             ])
             ->find($studentId);
     }

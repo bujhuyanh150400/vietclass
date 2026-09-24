@@ -23,7 +23,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils/index";
 
-import type { Student } from "../types/academic";
+import type { Student, StudentClass } from "../types/academic";
+import type { PageMeta } from "@/lib/api/contracts";
+import { StudentClassesList } from "./student-class-history-view";
 import {
   GENDER_LABELS,
   GRADE_LEVEL_LABELS,
@@ -45,6 +47,15 @@ export type StudentDetailViewProps = {
   canToggleAccount: boolean;
   onChangePassword: () => void;
   onToggleAccount: () => void;
+  canViewHistory: boolean;
+  studentClasses: StudentClass[];
+  studentClassesMeta: PageMeta | null;
+  studentClassesLoading: boolean;
+  studentClassesError: boolean;
+  classPage: number;
+  onClassPageChange: (page: number) => void;
+  onRetryStudentClasses: () => void;
+  onOpenClassHistory: (schoolClass: StudentClass, trigger: HTMLButtonElement) => void;
 };
 
 /** Masks a phone number while keeping enough trailing digits for recognition. */
@@ -64,6 +75,15 @@ export function StudentDetailView({
   canToggleAccount,
   onChangePassword,
   onToggleAccount,
+  canViewHistory,
+  studentClasses,
+  studentClassesMeta,
+  studentClassesLoading,
+  studentClassesError,
+  classPage,
+  onClassPageChange,
+  onRetryStudentClasses,
+  onOpenClassHistory,
 }: StudentDetailViewProps) {
   const hasAccount = typeof student.user_id === "number" && student.user_id > 0;
   const accountIsActive = student.is_account_active !== false;
@@ -91,9 +111,9 @@ export function StudentDetailView({
           <span className="text-[10px] font-semibold tracking-[0.09em] text-muted-foreground uppercase">
             Hồ sơ học sinh
           </span>
-          <h1 className="mt-1 [overflow-wrap:anywhere] text-[26px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">
+          <h2 className="mt-1 [overflow-wrap:anywhere] text-[26px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">
             {student.full_name}
-          </h1>
+          </h2>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
             <span className="font-mono">Mã học sinh {student.profile_id || student.id}</span>
             <span>{GRADE_LEVEL_LABELS[student.grade_level]}</span>
@@ -175,9 +195,16 @@ export function StudentDetailView({
             <TabsTrigger value="profile" className="rounded-[4px] px-2 text-[11px] font-semibold sm:text-xs">
               Hồ sơ
             </TabsTrigger>
-            <TabsTrigger value="classes" className="gap-1 rounded-[4px] px-2 text-[11px] font-semibold sm:gap-1.5 sm:text-xs">
-              Lớp đang học
-              <Count value={student.active_enrollments.length} />
+            <TabsTrigger
+              value="classes"
+              className="gap-1 rounded-[4px] px-2 text-[11px] font-semibold sm:gap-1.5 sm:text-xs"
+            >
+              Lớp học
+              <Count
+                value={canViewHistory
+                  ? (studentClassesMeta?.total ?? student.active_enrollments.length)
+                  : student.active_enrollments.length}
+              />
             </TabsTrigger>
             <TabsTrigger value="rewards" className="gap-1 rounded-[4px] px-2 text-[11px] font-semibold sm:gap-1.5 sm:text-xs">
               Điểm thưởng
@@ -230,11 +257,40 @@ export function StudentDetailView({
 
         <TabsContent value="classes" className="mt-0 min-w-0 outline-none">
           <DetailCard
-            title="Lớp đang học"
-            description="Các lớp còn hiệu lực theo ghi danh hiện tại."
-            action={<Count value={student.active_enrollments.length} label="lớp" />}
+            title="Lớp học"
+            description={
+              canViewHistory
+                ? studentClassesMeta === null
+                  ? "Các lớp đang học và đã từng học, mỗi lớp hiển thị một lần."
+                  : `${student.active_enrollments.length} lớp đang học · ${Math.max(0, studentClassesMeta.total - student.active_enrollments.length)} lớp đã rời. Mỗi lớp hiển thị một lần.`
+                : "Các lớp còn hiệu lực theo ghi danh hiện tại."
+            }
+            action={
+              canViewHistory ? (
+                <span className="rounded-control border border-vc-control px-2 py-1 text-[10px] font-semibold text-muted-foreground">
+                  Lịch sử: chỉ quản trị viên
+                </span>
+              ) : (
+                <Count value={student.active_enrollments.length} label="lớp" />
+              )
+            }
           >
-            {student.active_enrollments.length === 0 ? <ClassesEmptyState /> : <ActiveClasses student={student} />}
+            {canViewHistory ? (
+              <StudentClassesList
+                classes={studentClasses}
+                meta={studentClassesMeta}
+                isLoading={studentClassesLoading}
+                isError={studentClassesError}
+                page={classPage}
+                onPageChange={onClassPageChange}
+                onRetry={onRetryStudentClasses}
+                onOpenHistory={onOpenClassHistory}
+              />
+            ) : student.active_enrollments.length === 0 ? (
+              <ClassesEmptyState />
+            ) : (
+              <ActiveClasses student={student} />
+            )}
           </DetailCard>
         </TabsContent>
 

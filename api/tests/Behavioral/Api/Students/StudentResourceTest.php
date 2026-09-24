@@ -32,7 +32,7 @@ it('reports the name and details for active enrollments only', function () {
         'profile.user',
         'primaryGuardian.guardian',
         'guardianLinks.guardian',
-        'activeEnrollments.schoolClass.subject',
+        'activeEnrollments.schoolClass.primarySubject',
     ]);
 
     expect((new StudentResource($student))->resolve(request()))

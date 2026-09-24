@@ -2,13 +2,14 @@
 
 namespace App\Modules\Academic\Models;
 
+use App\Modules\Academic\Enums\ClassStatus;
 use App\Modules\Academic\Enums\TeacherStatus;
 use Database\Factories\TeacherProfileFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 #[Fillable([
     'profile_id',
@@ -67,15 +68,42 @@ final class TeacherProfile extends Model
     }
 
     /**
-     * Return the classes this teacher currently leads.
+     * Return the classes this teacher leads through the normalized teaching team.
      *
-     * Ended classes are excluded by the teacher list repository because this
-     * relation represents current responsibility rather than teaching history.
-     *
-     * @return HasMany<SchoolClass, $this>
+     * @return BelongsToMany<SchoolClass, $this>
      */
-    public function classes(): HasMany
+    public function classes(): BelongsToMany
     {
-        return $this->hasMany(SchoolClass::class, 'teacher_id', 'profile_id');
+        return $this->belongsToMany(SchoolClass::class, 'class_teachers', 'teacher_id', 'class_id', 'profile_id', 'id')
+            ->wherePivot('is_primary', true)
+            ->withTimestamps();
+    }
+
+    /**
+     * Return the active classes this teacher assists without exposing ended assignments as current.
+     *
+     * @return BelongsToMany<SchoolClass, $this>
+     */
+    public function assistantClasses(): BelongsToMany
+    {
+        return $this->belongsToMany(SchoolClass::class, 'class_teachers', 'teacher_id', 'class_id', 'profile_id', 'id')
+            ->wherePivot('is_primary', false)
+            ->where('status', ClassStatus::Active)
+            ->withTimestamps();
+    }
+
+    /** Return ended classes where this teacher remains the historical lead. */
+    public function endedClasses(): BelongsToMany
+    {
+        return $this->classes()->where('status', ClassStatus::Ended);
+    }
+
+    /** Return ended classes where this teacher's assistant assignment remains in the historical team. */
+    public function endedAssistantClasses(): BelongsToMany
+    {
+        return $this->belongsToMany(SchoolClass::class, 'class_teachers', 'teacher_id', 'class_id', 'profile_id', 'id')
+            ->wherePivot('is_primary', false)
+            ->where('status', ClassStatus::Ended)
+            ->withTimestamps();
     }
 }

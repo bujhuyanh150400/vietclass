@@ -21,9 +21,22 @@ final class TeacherResource extends JsonResource
     {
         $profile = $this->profile;
         $classes = $this->relationLoaded('classes') ? $this->classes : collect();
+        $assistantClasses = $this->relationLoaded('assistantClasses') ? $this->assistantClasses : collect();
+        // Keep the class summary shape identical for lead and assistant assignments.
+        $classPayload = static function (SchoolClass $class): array {
+            $subject = $class->relationLoaded('primarySubject') ? $class->subject : null;
+
+            return [
+                'id' => $class->id,
+                'code' => $class->code,
+                'name' => $class->name,
+                'subject_id' => $subject?->id,
+                'subject_name' => $subject?->name,
+                'status' => $class->status->value,
+            ];
+        };
         $subjects = $classes
-            ->map(static fn (SchoolClass $class) => $class->relationLoaded('subject') ? $class->subject : null)
-            ->filter()
+            ->flatMap(static fn (SchoolClass $class) => $class->relationLoaded('subjects') ? $class->subjects : collect())
             ->unique('id')
             ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
             ->values()
@@ -51,18 +64,12 @@ final class TeacherResource extends JsonResource
                 ? AvatarResource::make($profile)->resolve($request)
                 : null,
             'subjects' => $subjects,
-            'classes' => $classes->map(static function (SchoolClass $class): array {
-                $subjectName = $class->relationLoaded('subject') ? $class->subject?->name : null;
-
-                return [
-                    'id' => $class->id,
-                    'code' => $class->code,
-                    'name' => $class->name,
-                    'subject_id' => $class->subject_id,
-                    'subject_name' => $subjectName,
-                    'status' => $class->status->value,
-                ];
-            })->values()->all(),
+            'classes' => $classes->map($classPayload)->values()->all(),
+            'assistant_classes' => $assistantClasses->map($classPayload)->values()->all(),
+            $this->mergeWhen($this->relationLoaded('endedClasses'), [
+                'ended_classes' => $this->relationLoaded('endedClasses') ? $this->endedClasses->map($classPayload)->values()->all() : [],
+                'ended_assistant_classes' => $this->relationLoaded('endedAssistantClasses') ? $this->endedAssistantClasses->map($classPayload)->values()->all() : [],
+            ]),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

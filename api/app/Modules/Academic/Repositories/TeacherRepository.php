@@ -11,7 +11,7 @@ use App\Modules\Academic\Models\TeacherProfile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 final class TeacherRepository extends BaseRepository
 {
@@ -68,9 +68,9 @@ final class TeacherRepository extends BaseRepository
                                     ->where(function (Builder $classSearch) use ($like): void {
                                         $this->whereAnyUnaccentedLike($classSearch, ['code', 'name'], $like);
                                         $classSearch->orWhereHas(
-                                            'subject',
-                                            fn (Builder $subject): Builder => $this->whereAnyUnaccentedLike(
-                                                $subject,
+                                            'subjects',
+                                            fn (Builder $subjects): Builder => $this->whereAnyUnaccentedLike(
+                                                $subjects,
                                                 ['name'],
                                                 $like,
                                             ),
@@ -98,7 +98,10 @@ final class TeacherRepository extends BaseRepository
                     'classes',
                     fn (Builder $classes): Builder => $classes
                         ->where('status', ClassStatus::Active)
-                        ->whereIn('subject_id', (array) $query->filter('subject_id')),
+                        ->whereHas(
+                            'subjects',
+                            fn (Builder $subjects): Builder => $subjects->whereIn('subjects.id', (array) $query->filter('subject_id')),
+                        ),
                 ),
             )
             ->when(
@@ -107,7 +110,7 @@ final class TeacherRepository extends BaseRepository
                     'classes',
                     fn (Builder $classes): Builder => $classes
                         ->where('status', ClassStatus::Active)
-                        ->whereIn('id', (array) $query->filter('class_id')),
+                        ->whereIn('classes.id', (array) $query->filter('class_id')),
                 ),
             )
             ->when(
@@ -137,10 +140,21 @@ final class TeacherRepository extends BaseRepository
             ->whereHas('profile.user', fn (Builder $user): Builder => $user->where('is_active', true))
             ->when(
                 $query->hasSearch(),
-                fn (Builder $builder): Builder => $builder->whereHas(
-                    'profile',
-                    fn (Builder $profile): Builder => $this->whereAnyUnaccentedLike($profile, ['full_name'], (string) $query->searchLike()),
-                ),
+                function (Builder $teachers) use ($query): Builder {
+                    return $teachers->where(function (Builder $matches) use ($query): void {
+                        $matches->whereHas(
+                            'profile',
+                            fn (Builder $profile): Builder => $this->whereAnyUnaccentedLike(
+                                $profile,
+                                ['full_name'],
+                                (string) $query->searchLike(),
+                            ),
+                        );
+                        if (ctype_digit((string) $query->search)) {
+                            $matches->orWhere('teacher_profiles.profile_id', (int) $query->search);
+                        }
+                    });
+                },
             )
             ->orderBy(
                 Profile::query()->select('full_name')->whereColumn('profiles.id', 'teacher_profiles.profile_id'),
@@ -151,12 +165,46 @@ final class TeacherRepository extends BaseRepository
 
     /**
      * Find one teacher with the shared profile and login account behind it. The
-     * identifier is the shared `profile_id`, which is also what `classes.teacher_id`
+     * identifier is the shared `profile_id`, which is also what `class_teachers.teacher_id`
      * stores.
      */
     public function findById(int $teacherId): ?TeacherProfile
     {
         return $this->withListRelations($this->modelQuery())->find($teacherId);
+    }
+
+    /** Load historical teaching roles only for the teacher detail response. */
+    public function findByIdWithEndedAssignments(int $teacherId): ?TeacherProfile
+    {
+        $teacher = $this->findById($teacherId);
+        $teacher?->load([
+            'endedClasses' => fn (BelongsToMany $classes): BelongsToMany => $classes
+                ->select(['classes.id', 'classes.code', 'classes.name', 'classes.status'])
+                ->with('primarySubject:id,name')
+                ->orderBy('classes.code'),
+            'endedAssistantClasses' => fn (BelongsToMany $classes): BelongsToMany => $classes
+                ->select(['classes.id', 'classes.code', 'classes.name', 'classes.status'])
+                ->with('primarySubject:id,name')
+                ->orderBy('classes.code'),
+        ]);
+
+        return $teacher;
+    }
+
+    /**
+     * Lock a stable, ordered set of teacher profiles while checking employment status.
+     *
+     * @param  list<int>  $teacherIds
+     * @return Collection<int, TeacherProfile>
+     */
+    public function lockByIds(array $teacherIds): Collection
+    {
+        return $this->modelQuery()
+            ->with('profile')
+            ->whereIn('profile_id', $teacherIds)
+            ->orderBy('profile_id')
+            ->lockForUpdate()
+            ->get();
     }
 
     /**
@@ -182,7 +230,7 @@ final class TeacherRepository extends BaseRepository
     }
 
     /**
-     * Attach every relation the teacher list and detail resource reports.
+     * Attach current lead and assistant assignments for every teacher list and detail row.
      *
      * @param  Builder<TeacherProfile>  $query
      * @return Builder<TeacherProfile>
@@ -192,11 +240,15 @@ final class TeacherRepository extends BaseRepository
         return $query->with([
             'profile.user:id,username,is_active',
             'profile.avatarFileLink.file',
-            'classes' => fn (HasMany $classes): HasMany => $classes
-                ->select(['id', 'code', 'name', 'subject_id', 'teacher_id', 'status'])
+            'classes' => fn (BelongsToMany $classes): BelongsToMany => $classes
+                ->select(['classes.id', 'classes.code', 'classes.name', 'classes.grade_level', 'classes.status'])
                 ->where('status', ClassStatus::Active)
-                ->with('subject:id,name')
+                ->with(['primarySubject:id,name', 'subjects:id,name'])
                 ->orderBy('code'),
+            'assistantClasses' => fn (BelongsToMany $classes): BelongsToMany => $classes
+                ->select(['classes.id', 'classes.code', 'classes.name', 'classes.grade_level', 'classes.status'])
+                ->with(['primarySubject:id,name', 'subjects:id,name'])
+                ->orderBy('classes.code'),
         ]);
     }
 

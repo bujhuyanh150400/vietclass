@@ -1,42 +1,23 @@
 import { browserRequest, browserRequestList } from "@/lib/api/browser-request";
 import type { Page } from "@/lib/api/contracts";
 
-import type { Option, Teacher, TeacherStatus } from "../types/academic";
+import type { Option, Teacher } from "../types/academic";
 import type {
   CreateProfileSubmission,
   CreateTeacherRequest,
+  TeacherListRequest,
+  TeacherOptionRequest,
   UpdateTeacherRequest,
 } from "../types/academic-requests";
 import { profileCreateBody } from "./profile-create-body";
 
-/** Query parameters accepted by the teacher list endpoint. */
-export type TeacherListParams = {
-  q?: string;
-  page?: number;
-  per_page?: number;
-  sort?: "id" | "full_name" | "joined_at" | "created_at";
-  direction?: "asc" | "desc";
-  is_active?: boolean | 0 | 1;
-  subject_id?: number | number[];
-  class_id?: number | number[];
-  joined_from?: string;
-  joined_to?: string;
-  [key: `status[${number}]`]: TeacherStatus;
-};
-
-/** Query parameters accepted by the teacher option endpoint. */
-export type TeacherOptionParams = {
-  q?: string;
-  limit?: number;
-};
-
 /** Fetches one page of teacher profiles. */
-export async function fetchTeachers(params: TeacherListParams): Promise<Page<Teacher>> {
+export async function fetchTeachers(params: TeacherListRequest): Promise<Page<Teacher>> {
   return browserRequestList<Teacher>("/api/v1/academic/teachers", { params });
 }
 
 /** Fetches the teachers a class may be assigned to. */
-export async function fetchTeacherOptions(params: TeacherOptionParams): Promise<Option[]> {
+export async function fetchTeacherOptions(params: TeacherOptionRequest): Promise<Option[]> {
   return browserRequest<Option[]>("/api/v1/academic/teachers/options", { params });
 }
 

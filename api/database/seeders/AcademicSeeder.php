@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Modules\Academic\Enums\GradeLevel;
 use App\Modules\Academic\Models\Subject;
 use Illuminate\Database\Seeder;
 
@@ -18,7 +19,10 @@ final class AcademicSeeder extends Seeder
         foreach ($subjects as $name) {
             Subject::query()->updateOrCreate(
                 ['name' => $name],
-                ['is_active' => true],
+                [
+                    'grade_levels' => GradeLevel::values(),
+                    'is_active' => true,
+                ],
             );
         }
     }

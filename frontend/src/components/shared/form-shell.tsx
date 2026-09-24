@@ -19,6 +19,9 @@ import { Card, CardContent } from "@/components/ui/card";
  * groups its own fields into several — the children sit directly in the form's
  * own gap, ahead of the same submit and cancel row every screen gets.
  *
+ * `hideActions` lets a sheet provide its own footer while still using this shell
+ * for submission errors and form semantics.
+ *
  * Presentational: it holds no form state of its own.
  */
 export function FormShell({
@@ -28,6 +31,7 @@ export function FormShell({
   submitLabel,
   cancelHref,
   bare = false,
+  hideActions = false,
   children,
 }: {
   onSubmit: (event?: BaseSyntheticEvent) => Promise<void>;
@@ -36,6 +40,7 @@ export function FormShell({
   submitLabel: string;
   cancelHref: string;
   bare?: boolean;
+  hideActions?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -54,14 +59,16 @@ export function FormShell({
         </Card>
       )}
 
-      <div className="flex items-center gap-3">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Đang lưu…" : submitLabel}
-        </Button>
-        <Button type="button" variant="ghost" asChild disabled={isSubmitting}>
-          <Link href={cancelHref}>Hủy</Link>
-        </Button>
-      </div>
+      {hideActions ? null : (
+        <div className="flex items-center gap-3">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Đang lưu…" : submitLabel}
+          </Button>
+          <Button type="button" variant="ghost" asChild disabled={isSubmitting}>
+            <Link href={cancelHref}>Hủy</Link>
+          </Button>
+        </div>
+      )}
     </form>
   );
 }

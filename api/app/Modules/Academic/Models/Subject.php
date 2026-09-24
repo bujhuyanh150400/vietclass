@@ -6,7 +6,7 @@ use Database\Factories\SubjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 #[Fillable(['name', 'description', 'grade_levels', 'is_active'])]
 final class Subject extends Model
@@ -42,13 +42,14 @@ final class Subject extends Model
     }
 
     /**
-     * Return the classes taught for this subject, which is what blocks a subject
-     * from being deactivated or removed.
+     * Return every class that teaches this subject, whether primary or additional.
      *
-     * @return HasMany<SchoolClass, $this>
+     * @return BelongsToMany<SchoolClass, $this>
      */
-    public function classes(): HasMany
+    public function classes(): BelongsToMany
     {
-        return $this->hasMany(SchoolClass::class);
+        return $this->belongsToMany(SchoolClass::class, 'class_subjects', 'subject_id', 'class_id')
+            ->withPivot('is_primary')
+            ->withTimestamps();
     }
 }

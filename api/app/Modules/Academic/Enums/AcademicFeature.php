@@ -101,7 +101,7 @@ enum AcademicFeature: string implements FeatureEnum
     /** Correct the join date, leave date, or note on one enrolment. */
     case ClassUpdateStudentEnrollment = 'class.update_student_enrollment';
 
-    /** Move a student from one class to another class of the same subject. */
+    /** Move a student to a class with the same grade and complete subject set. */
     case ClassTransferStudent = 'class.transfer_student';
 
     /** End a student's membership of a class. */

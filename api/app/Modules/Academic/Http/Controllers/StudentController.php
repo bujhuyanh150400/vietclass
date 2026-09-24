@@ -6,15 +6,23 @@ use App\Core\Http\BaseController;
 use App\Modules\Academic\Actions\ChangeStudentPasswordAction;
 use App\Modules\Academic\Actions\CreateStudentAction;
 use App\Modules\Academic\Actions\GetStudentAction;
+use App\Modules\Academic\Actions\ListEnrollmentHistoryAction;
+use App\Modules\Academic\Actions\ListStudentClassesAction;
 use App\Modules\Academic\Actions\ListStudentsAction;
 use App\Modules\Academic\Actions\ToggleStudentAccountAction;
 use App\Modules\Academic\Actions\UpdateStudentAction;
+use App\Modules\Academic\Data\EnrollmentHistoryEntry;
 use App\Modules\Academic\Http\Requests\ChangePasswordRequest;
+use App\Modules\Academic\Http\Requests\IndexEnrollmentHistoryRequest;
+use App\Modules\Academic\Http\Requests\IndexStudentClassesRequest;
 use App\Modules\Academic\Http\Requests\IndexStudentRequest;
 use App\Modules\Academic\Http\Requests\StoreStudentRequest;
-use App\Modules\Academic\Http\Requests\UpdateStudentRequest;
 use App\Modules\Academic\Http\Requests\ToggleAccountRequest;
+use App\Modules\Academic\Http\Requests\UpdateStudentRequest;
+use App\Modules\Academic\Http\Resources\EnrollmentHistoryEntryResource;
+use App\Modules\Academic\Http\Resources\StudentClassResource;
 use App\Modules\Academic\Http\Resources\StudentResource;
+use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\StudentProfile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
@@ -71,6 +79,44 @@ final class StudentController extends BaseController
         $found = $result->getData();
 
         return $this->success(data: StudentResource::make($found)->resolve($request));
+    }
+
+    /** Return one page of distinct active and historical classes for the student. */
+    public function classes(
+        IndexStudentClassesRequest $request,
+        ListStudentClassesAction $classes,
+        int $studentId,
+    ): JsonResponse {
+        $result = $classes->handle(studentId: $studentId, query: $request->toListQuery());
+        if (! $result->isSuccess()) {
+            return $this->actionFailure(result: $result);
+        }
+
+        /** @var LengthAwarePaginator<int, SchoolClass> $page */
+        $page = $result->getData();
+
+        return $this->paginated($request, $page, StudentClassResource::class);
+    }
+
+    /** Return the requested student's read-only history for one class. */
+    public function enrollmentHistory(
+        IndexEnrollmentHistoryRequest $request,
+        ListEnrollmentHistoryAction $history,
+        int $studentId,
+    ): JsonResponse {
+        $result = $history->handle(
+            studentId: $studentId,
+            classId: (int) $request->validated('class_id'),
+            query: $request->toListQuery(),
+        );
+        if (! $result->isSuccess()) {
+            return $this->actionFailure(result: $result);
+        }
+
+        /** @var LengthAwarePaginator<int, EnrollmentHistoryEntry> $page */
+        $page = $result->getData();
+
+        return $this->paginated($request, $page, EnrollmentHistoryEntryResource::class);
     }
 
     /**

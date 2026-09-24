@@ -25,7 +25,7 @@ final class GetTeacherAction
     public function handle(int $teacherId): ActionResult
     {
         try {
-            $teacher = $this->teachers->findById($teacherId);
+            $teacher = $this->teachers->findByIdWithEndedAssignments($teacherId);
 
             if (! $teacher instanceof TeacherProfile) {
                 throw new ActionError(

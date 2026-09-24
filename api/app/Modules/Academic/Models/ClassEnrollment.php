@@ -2,7 +2,6 @@
 
 namespace App\Modules\Academic\Models;
 
-use App\Modules\Academic\Models\StudentProfile;
 use Carbon\CarbonInterface;
 use Database\Factories\ClassEnrollmentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -11,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * One period of a student's membership in a class.
@@ -97,5 +97,15 @@ final class ClassEnrollment extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(StudentProfile::class, 'student_id', 'profile_id');
+    }
+
+    /**
+     * Return the immutable changes recorded for this period.
+     *
+     * @return HasMany<ClassEnrollmentEvent, $this>
+     */
+    public function events(): HasMany
+    {
+        return $this->hasMany(ClassEnrollmentEvent::class, 'class_enrollment_id');
     }
 }

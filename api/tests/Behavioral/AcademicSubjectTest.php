@@ -4,15 +4,31 @@ use App\Modules\Academic\Actions\DeleteSubjectAction;
 use App\Modules\Academic\Actions\GetSubjectAction;
 use App\Modules\Academic\Actions\ToggleSubjectActiveAction;
 use App\Modules\Academic\Enums\AcademicError;
+use App\Modules\Academic\Enums\GradeLevel;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\Subject;
-use App\Modules\Academic\Enums\GradeLevel;
 use App\Modules\Auth\Enums\UserRole;
 use App\Modules\Auth\Models\User;
+use Database\Seeders\AcademicSeeder;
 
 beforeEach(function (): void {
     $this->admin = User::factory()->create(['role' => UserRole::Admin]);
     $this->withToken($this->admin->createToken('test')->plainTextToken);
+});
+
+test('the academic seeder makes default subjects available to every grade', function () {
+    $subject = Subject::factory()->create([
+        'name' => 'Toán',
+        'grade_levels' => [],
+        'is_active' => false,
+    ]);
+
+    $this->seed(AcademicSeeder::class);
+    $this->seed(AcademicSeeder::class);
+
+    expect($subject->fresh()->grade_levels)->toBe(GradeLevel::values())
+        ->and($subject->fresh()->is_active)->toBeTrue()
+        ->and(Subject::query()->where('name', 'Toán')->count())->toBe(1);
 });
 
 test('the subject list is paginated with the shared meta envelope', function () {
@@ -165,6 +181,23 @@ test('editing a subject cannot remove a grade used by a running class', function
     expect($subject->fresh()->grade_levels)->toContain(GradeLevel::Grade9->value);
 });
 
+test('editing a subject cannot remove a grade used by a running class as an additional subject', function () {
+    $class = SchoolClass::factory()->create(['grade_level' => GradeLevel::Grade9]);
+    $subject = Subject::factory()->create(['grade_levels' => [GradeLevel::Grade9->value]]);
+    $class->subjects()->attach($subject->id);
+
+    $this->putJson("/api/v1/academic/subjects/{$subject->id}", [
+        'name' => $subject->name,
+        'description' => $subject->description,
+        'grade_levels' => [GradeLevel::Grade8->value, GradeLevel::Grade10->value],
+        'is_active' => true,
+    ])
+        ->assertStatus(409)
+        ->assertJsonPath('message', 'Môn học đang được dùng bởi 1 lớp đang hoạt động ở khối 9, không thể bỏ khối này.');
+
+    expect($subject->fresh()->grade_levels)->toContain(GradeLevel::Grade9->value);
+});
+
 test('editing a subject may remove a grade used only by ended classes', function () {
     $class = SchoolClass::factory()->ended()->create(['grade_level' => GradeLevel::Grade9]);
     $subject = $class->subject;
@@ -201,6 +234,18 @@ test('a subject taught by a running class cannot be locked', function () {
     expect($class->subject->fresh()->is_active)->toBeTrue();
 });
 
+test('an additional subject taught by a running class cannot be locked', function () {
+    $class = SchoolClass::factory()->create();
+    $additional = Subject::factory()->create();
+    $class->subjects()->attach($additional->id);
+
+    $this->patchJson("/api/v1/academic/subjects/{$additional->id}/active", ['is_active' => false])
+        ->assertStatus(409)
+        ->assertJsonPath('message', 'Môn học đang được dùng bởi 1 lớp đang hoạt động, không thể khóa.');
+
+    expect($additional->fresh()->is_active)->toBeTrue();
+});
+
 test('a subject whose classes have all finished can be locked', function () {
     $class = SchoolClass::factory()->ended()->create();
 
@@ -227,6 +272,20 @@ test('a subject referenced by a finished class still cannot be removed', functio
         ->and($result->getMessage())->toBe('Môn học đang được dùng bởi 1 lớp, không thể xóa.');
 
     $this->assertDatabaseHas('subjects', ['id' => $class->subject_id]);
+});
+
+test('an additional subject referenced by a finished class still cannot be removed', function () {
+    $class = SchoolClass::factory()->ended()->create();
+    $additional = Subject::factory()->create();
+    $class->subjects()->attach($additional->id);
+
+    $result = app(DeleteSubjectAction::class)->handle($additional->id);
+
+    expect($result->isSuccess())->toBeFalse()
+        ->and($result->getError())->toBe(AcademicError::SubjectInUse)
+        ->and($result->getMessage())->toBe('Môn học đang được dùng bởi 1 lớp, không thể xóa.');
+
+    $this->assertDatabaseHas('subjects', ['id' => $additional->id]);
 });
 
 test('a missing subject is reported as not found by every operation', function () {

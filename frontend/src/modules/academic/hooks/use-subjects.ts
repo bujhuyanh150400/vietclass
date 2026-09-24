@@ -14,11 +14,10 @@ import {
   fetchSubjects,
   setSubjectActive,
   updateSubject,
-  type SubjectListParams,
 } from "../api";
 import { academicQueryKeys } from "./academic-query-keys";
 import type { GradeLevel, Option, Subject } from "../types/academic";
-import type { SubjectRequest } from "../types/academic-requests";
+import type { SubjectListRequest, SubjectRequest } from "../types/academic-requests";
 import { GRADE_LEVELS } from "../utils/labels";
 import {
   SUBJECT_LIST_SORTS,
@@ -59,7 +58,7 @@ export function useSubjectList(): SubjectListViewModel {
     per_page: parseAsNumberLiteral(SUBJECT_TABLE_PAGE_SIZES).withDefault(10),
   }, { history: "replace", clearOnDefault: true });
   const filters: SubjectFilterState = { gradeLevel: controls.grade_level, isActive: controls.is_active };
-  const list = useResourceList<Subject, SubjectListParams>({
+  const list = useResourceList<Subject, SubjectListRequest>({
     queryKey: academicQueryKeys.subjects.list,
     fetcher: fetchSubjects,
     emptyMessage: "Chưa có môn học nào khớp với tìm kiếm.",
@@ -137,6 +136,23 @@ export function useSubjectOptions(search = "") {
   });
 }
 
+/** Load a searchable, paginated catalogue that includes locked subjects and grade ranges. */
+export function useSubjectPickerOptions(search: string, page: number) {
+  const params: SubjectListRequest = {
+    q: search.trim(),
+    page,
+    per_page: 10,
+    sort: "name",
+    direction: "asc",
+  };
+
+  return useQuery({
+    queryKey: academicQueryKeys.subjects.picker(search, page),
+    queryFn: () => fetchSubjects(params),
+    placeholderData: (previous) => previous,
+  });
+}
+
 /**
  * Creates a subject and refreshes every cached page of the list.
  */
@@ -154,9 +170,9 @@ export function useCreateSubject() {
 /**
  * Changes a subject and refreshes every cached page of the list.
  *
- * The class and student caches are refreshed too, because both name a class by its
- * subject: renaming one here would otherwise leave the old name printed on class
- * rows and on the classes listed against each student.
+ * The class and student-class/history caches are refreshed too, because each class
+ * projection names its subjects: renaming one here would otherwise leave the old
+ * name printed on class rows and in student enrollment history.
  */
 export function useUpdateSubject(id: number) {
   const queryClient = useQueryClient();
@@ -167,6 +183,8 @@ export function useUpdateSubject(id: number) {
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.subjects.root() });
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.classes.root() });
       void queryClient.invalidateQueries({ queryKey: academicQueryKeys.students.root() });
+      void queryClient.invalidateQueries({ queryKey: academicQueryKeys.students.classesRoot() });
+      void queryClient.invalidateQueries({ queryKey: academicQueryKeys.students.historyRoot() });
     },
   });
 }
