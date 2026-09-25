@@ -2,7 +2,7 @@
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
+import { InfoDialog } from "@/components/shared/info-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,5 +49,5 @@ export function FileActionDialogs({
     permanent: { title: "Xóa vĩnh viễn?", description: `${dialog.file.display_name} và nội dung của tệp sẽ không thể khôi phục.`, label: "Xóa vĩnh viễn", destructive: true },
   }[dialog.kind];
 
-  return <ConfirmActionDialog open={dialog !== null} onOpenChange={onOpenChange} title={text?.title ?? ""} description={text?.description ?? ""} confirmLabel={text?.label ?? ""} destructive={text?.destructive} errorMessage={errorMessage} isPending={isPending} onConfirm={onConfirm} />;
+  return <InfoDialog open={dialog !== null} onOpenChange={onOpenChange} title={text?.title ?? ""} description={text?.description ?? ""} confirmLabel={text?.label ?? ""} destructive={text?.destructive} errorMessage={errorMessage} isPending={isPending} onConfirm={onConfirm} />;
 }

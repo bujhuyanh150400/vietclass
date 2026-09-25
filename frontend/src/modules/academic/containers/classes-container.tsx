@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
+import { InfoDialog } from "@/components/shared/info-dialog";
 import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
@@ -86,7 +86,7 @@ export function ClassesContainer() {
         }}
       />
 
-      <ConfirmActionDialog
+      <InfoDialog
         open={target !== null}
         onOpenChange={(open) => (open ? undefined : setTarget(null))}
         title={ending ? "Kết thúc lớp học?" : "Mở lại lớp học?"}

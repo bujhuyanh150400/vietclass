@@ -1,24 +1,21 @@
 "use client";
 
-import Link from "next/link";
 import { Plus, RefreshCw } from "lucide-react";
 
 import {
   DataTablePagination,
   ListSheet,
+  ListSkeleton,
+  ListTable,
+  ResponsiveListView,
   StatePanel,
   type DataTableState,
+  type ListTableColumn,
 } from "@/components/shared/data-table";
+import { AppButton } from "@/components/shared/app-button";
+import { InlineBadge } from "@/components/shared/inline-badge";
+import { PageHeading } from "@/components/shared/page-heading";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import type { PageMeta } from "@/lib/api/contracts";
 
 import type { Student } from "../types/academic";
@@ -31,7 +28,6 @@ import {
 import { GradeToken, StudentIdentity, StudentRowMenu } from "./student-cells";
 import { ClassTags, GuardianTags } from "./student-entity-tags";
 import { StudentGrid } from "./student-grid";
-import { StudentListSkeleton } from "./student-list-skeleton";
 import {
   StudentConditionsBar,
   StudentListToolbar,
@@ -100,7 +96,21 @@ export function StudentsView({
 
   return (
     <div className="grid gap-6">
-      <StudentsHeading total={meta.total} />
+      <PageHeading
+        title="Học sinh"
+        badges={
+          <InlineBadge>
+            <strong className="text-xs text-foreground">{meta.total}</strong> hồ sơ
+          </InlineBadge>
+        }
+        description="Quản lý hồ sơ, liên hệ gia đình và lớp đang theo học."
+        action={
+          <AppButton href="/academic/students/new">
+            <Plus aria-hidden="true" className="size-[19px]" />
+            Thêm học sinh
+          </AppButton>
+        }
+      />
 
       <ListSheet
         toolbar={
@@ -119,18 +129,17 @@ export function StudentsView({
           />
         }
         conditions={
-          hasConditions ? (
-            <StudentConditionsBar
-              search={search}
-              filters={filters}
-              sort={sort}
-              onSearchChange={onSearchChange}
-              onToggleGradeLevel={onToggleGradeLevel}
-              onAccountActiveChange={onAccountActiveChange}
-              onSortChange={onSortChange}
-              onClearConditions={onClearConditions}
-            />
-          ) : undefined
+          <StudentConditionsBar
+            search={search}
+            filters={filters}
+            sort={sort}
+            hasConditions={hasConditions}
+            onSearchChange={onSearchChange}
+            onToggleGradeLevel={onToggleGradeLevel}
+            onAccountActiveChange={onAccountActiveChange}
+            onSortChange={onSortChange}
+            onClearConditions={onClearConditions}
+          />
         }
         pager={
           state.kind === "content" ? (
@@ -164,59 +173,6 @@ export function StudentsView({
 }
 
 /**
- * Renders the screen's title block: what this screen is, how many records it
- * holds, and the one action that adds another.
- *
- * The count sits beside the title rather than in the pager because it answers a
- * question about the whole collection, not about the page being read.
- */
-function StudentsHeading({ total }: { total: number }) {
-  return (
-    <div className="flex items-start justify-between gap-3 md:items-end">
-      <div>
-        <div className="flex flex-col md:flex-row md:items-end md:gap-4">
-          {/*
-            An `h2`, not an `h1`: the topbar already carries the page's `h1` on
-            every protected screen, and taking that away to promote this one left
-            the screens that have no title of their own with no heading at all.
-          */}
-          <h2 className="text-[28px] leading-tight font-semibold tracking-[-0.02em] md:text-4xl">
-            Học sinh
-          </h2>
-          <p className="mt-1 text-[13px] font-semibold text-muted-foreground md:mt-0 md:mb-1.5">
-            <strong className="font-mono text-[15px] text-foreground">{total}</strong> hồ sơ
-          </p>
-        </div>
-        <p className="mt-1.5 text-xs text-muted-foreground md:text-sm">
-          Quản lý hồ sơ, liên hệ gia đình và lớp đang theo học.
-        </p>
-      </div>
-
-      {/*
-        The screen's one primary action wears the design system's pressable
-        treatment: a wood edge and a solid 3px offset beneath it, so it reads as a
-        key that can be pressed rather than a painted rectangle. It matches the
-        toolbar controls' 44px height, since the two rows are read together.
-      */}
-      <Button
-        asChild
-        className="h-11 gap-2 rounded-control border border-vc-wood font-semibold shadow-vc-raised has-[>svg]:px-[15px] max-md:has-[>svg]:px-3"
-      >
-        <Link href="/academic/students/new">
-          {/*
-            The size sits on the icon rather than the button: the Button variant
-            sizes icons through `[&_svg:not([class*='size-'])]`, so a class on the
-            svg itself is what opts out of the 16px default.
-          */}
-          <Plus aria-hidden="true" className="size-[19px]" />
-          <span className="max-md:sr-only">Thêm học sinh</span>
-        </Link>
-      </Button>
-    </div>
-  );
-}
-
-/**
  * Renders whichever of the four list states currently applies.
  *
  * Every state stays inside the sheet, including "nothing here yet": the toolbar
@@ -243,7 +199,17 @@ function StudentResults({
   canToggleAccount: boolean;
 }) {
   if (state.kind === "loading") {
-    return <StudentListSkeleton />;
+    return (
+      <ListSkeleton
+        view={view}
+        label="Đang tải danh sách học sinh"
+        table={{
+          columnCount: 6,
+          columnTemplate: "21fr 5.5fr 32fr 26fr 10fr 5.5fr",
+          shortCycle: 5,
+        }}
+      />
+    );
   }
 
   if (state.kind === "error") {
@@ -256,10 +222,10 @@ function StudentResults({
         description={state.message}
         action={
           state.onRetry ? (
-            <Button type="button" variant="outline" size="sm" onClick={state.onRetry}>
+            <AppButton size="sm" variant="outline" onClick={state.onRetry}>
               <RefreshCw aria-hidden="true" />
               Thử lại
-            </Button>
+            </AppButton>
           ) : undefined
         }
       />
@@ -274,9 +240,9 @@ function StudentResults({
         title="Không tìm thấy kết quả"
         description="Thử bỏ bớt điều kiện, hoặc tìm bằng tên và số điện thoại."
         action={
-          <Button type="button" variant="outline" size="sm" onClick={onClearConditions}>
+          <AppButton size="sm" variant="outline" onClick={onClearConditions}>
             Xóa điều kiện
-          </Button>
+          </AppButton>
         }
       />
     ) : (
@@ -286,12 +252,10 @@ function StudentResults({
         title="Chưa có học sinh"
         description="Tạo hồ sơ đầu tiên để bắt đầu sắp xếp lớp học."
         action={
-          <Button asChild size="sm">
-            <Link href="/academic/students/new">
-              <Plus aria-hidden="true" />
-              Thêm học sinh
-            </Link>
-          </Button>
+          <AppButton href="/academic/students/new" size="sm">
+            <Plus aria-hidden="true" />
+            Thêm học sinh
+          </AppButton>
         }
       />
     );
@@ -302,21 +266,10 @@ function StudentResults({
   // with `display: none`, which keeps exactly one of them in the accessibility
   // tree without measuring the viewport in JavaScript — a measurement the server
   // cannot make, and so one that would hydrate to the wrong layout.
-  if (view === "grid") {
-    return (
-      <StudentGrid
-        state={state}
-        onToggleAccount={onToggleAccount}
-        onChangePassword={onChangePassword}
-        canUpdate={canUpdate}
-        canToggleAccount={canToggleAccount}
-      />
-    );
-  }
-
   return (
-    <>
-      <div className="hidden lg:block">
+    <ResponsiveListView
+      view={view}
+      table={
         <StudentTable
           rows={state.rows}
           onToggleAccount={onToggleAccount}
@@ -324,8 +277,8 @@ function StudentResults({
           canUpdate={canUpdate}
           canToggleAccount={canToggleAccount}
         />
-      </div>
-      <div className="lg:hidden">
+      }
+      grid={
         <StudentGrid
           state={state}
           onToggleAccount={onToggleAccount}
@@ -333,8 +286,8 @@ function StudentResults({
           canUpdate={canUpdate}
           canToggleAccount={canToggleAccount}
         />
-      </div>
-    </>
+      }
+    />
   );
 }
 
@@ -361,78 +314,63 @@ function StudentTable({
   canUpdate: boolean;
   canToggleAccount: boolean;
 }) {
-  // One min-width at every size the table is shown at. A narrower variant was
-  // tried for the 1024–1279 band and had to go: at 980px the guardian column
-  // cannot hold two full chips plus the overflow counter, so names lost their last
-  // word — the column exists to tell you who to call, and a surname is the part
-  // worth keeping. The band scrolls horizontally instead, which it already did,
-  // and below 1024px the cards take over entirely.
+  const columns: ListTableColumn<Student>[] = [
+    {
+      key: "student",
+      header: "Học sinh",
+      width: 21,
+      cell: (student) => <StudentIdentity student={student} />,
+    },
+    {
+      key: "grade",
+      header: "Khối",
+      width: 5.5,
+      cell: (student) => <GradeToken gradeLevel={student.grade_level} />,
+    },
+    {
+      key: "guardians",
+      header: "Phụ huynh",
+      width: 32,
+      cell: (student) => <GuardianTags student={student} />,
+    },
+    {
+      key: "classes",
+      header: "Lớp đang học",
+      width: 26,
+      cell: (student) => <ClassTags student={student} />,
+    },
+    {
+      key: "account",
+      header: "Tài khoản",
+      width: 10,
+      cell: (student) => (
+        <StatusBadge status={student.is_account_active !== false ? "active" : "inactive"} />
+      ),
+    },
+    {
+      key: "actions",
+      header: <span className="sr-only">Thao tác</span>,
+      width: 5.5,
+      cell: (student) => (
+        <StudentRowMenu
+          student={student}
+          onToggleAccount={onToggleAccount}
+          onChangePassword={onChangePassword}
+          canUpdate={canUpdate}
+          canToggleAccount={canToggleAccount}
+          className="opacity-35 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100"
+        />
+      ),
+    },
+  ];
+
   return (
-    <Table className="min-w-[1120px] table-fixed">
-      <colgroup>
-        <col className="w-[21%]" />
-        <col className="w-[5.5%]" />
-        <col className="w-[32%]" />
-        <col className="w-[26%]" />
-        <col className="w-[10%]" />
-        <col className="w-[5.5%]" />
-      </colgroup>
-      <TableHeader>
-        <TableRow className="hover:bg-transparent [&_th]:border-b [&_th]:border-vc-rule">
-          <TableHead className="px-3 text-[11px] tracking-[0.06em] text-muted-foreground uppercase">
-            Học sinh
-          </TableHead>
-          <TableHead className="px-3 text-[11px] tracking-[0.06em] text-muted-foreground uppercase">
-            Khối
-          </TableHead>
-          <TableHead className="px-3 text-[11px] tracking-[0.06em] text-muted-foreground uppercase">
-            Phụ huynh
-          </TableHead>
-          <TableHead className="px-3 text-[11px] tracking-[0.06em] text-muted-foreground uppercase">
-            Lớp đang học
-          </TableHead>
-          <TableHead className="px-3 text-[11px] tracking-[0.06em] text-muted-foreground uppercase">
-            Tài khoản
-          </TableHead>
-          <TableHead className="px-3">
-            <span className="sr-only">Thao tác</span>
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map((student) => (
-          <TableRow
-            key={student.id}
-            className="group border-vc-rule hover:bg-vc-tint focus-within:bg-vc-tint has-aria-expanded:bg-vc-tint [&_td]:h-[72px] [&_td]:px-3"
-          >
-            <TableCell>
-              <StudentIdentity student={student} />
-            </TableCell>
-            <TableCell>
-              <GradeToken gradeLevel={student.grade_level} />
-            </TableCell>
-            <TableCell>
-              <GuardianTags student={student} />
-            </TableCell>
-            <TableCell>
-              <ClassTags student={student} />
-            </TableCell>
-            <TableCell>
-              <StatusBadge status={student.is_account_active !== false ? "active" : "inactive"} />
-            </TableCell>
-            <TableCell>
-              <StudentRowMenu
-                student={student}
-                onToggleAccount={onToggleAccount}
-                onChangePassword={onChangePassword}
-                canUpdate={canUpdate}
-                canToggleAccount={canToggleAccount}
-                className="opacity-35 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100"
-              />
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <ListTable
+      ariaLabel="Danh sách học sinh"
+      columns={columns}
+      rows={rows}
+      rowKey={(student) => student.id}
+      minWidth={1120}
+    />
   );
 }

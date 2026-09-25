@@ -4,7 +4,7 @@ import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/shared/app-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,14 +71,14 @@ export function RowActionMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
+        <AppButton
+          variant="secondary"
           size="icon-sm"
           aria-label={triggerLabel}
           className={triggerClassName}
         >
           <MoreHorizontal aria-hidden="true" />
-        </Button>
+        </AppButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[220px] rounded-panel p-1.5 shadow-lg">
         {actions.map((action, index) =>

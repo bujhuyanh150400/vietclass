@@ -69,8 +69,8 @@ export function LoadingState({
   const [progress, setProgress] = useState(0);
   const [prompt, setPrompt] = useState(() => pickRandom(PROMPTS));
 
-  // Reveals the instant `open` turns true, mirroring the pattern DataTableToolbar
-  // uses for reacting to a prop change during render: it commits in the same pass,
+  // Reveals the instant `open` turns true, mirroring the shared search hook
+  // pattern for reacting to a prop change during render: it commits in the same pass,
   // without the extra render an effect would cost, leaving the effect below free to
   // handle only the delayed side of the transition — closing.
   if (open !== appliedOpen) {

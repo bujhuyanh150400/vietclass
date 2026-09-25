@@ -4,16 +4,17 @@ import Link from "next/link";
 import { DoorOpen, Pencil, Trash2 } from "lucide-react";
 
 import { RowActionMenu, type RowAction } from "@/components/shared/data-table";
+import { InlineBadge, type InlineBadgeType } from "@/components/shared/inline-badge";
 import { cn } from "@/lib/utils/index";
 
 import type { Room, RoomStatus } from "../types/academic";
 import { ROOM_STATUS_LABELS } from "../utils/labels";
 
-/** The border, ground, and text each availability state is drawn in. */
-const STATUS_TONE: Record<RoomStatus, string> = {
-  0: "border-vc-leaf/30 bg-vc-leaf/10 text-vc-leaf",
-  1: "border-destructive/25 bg-destructive/10 text-destructive",
-  2: "border-vc-control bg-background text-muted-foreground",
+/** Maps each availability state to the shared badge tone. */
+const STATUS_TYPE: Record<RoomStatus, InlineBadgeType> = {
+  0: "success",
+  1: "danger",
+  2: "muted",
 };
 
 /**
@@ -24,15 +25,13 @@ const STATUS_TONE: Record<RoomStatus, string> = {
  */
 export function RoomStatusBadge({ status }: { status: RoomStatus }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-control border px-2 py-1 text-[11px] font-bold whitespace-nowrap",
-        STATUS_TONE[status],
-      )}
+    <InlineBadge
+      type={STATUS_TYPE[status]}
+      className="font-sans text-[11px] font-bold whitespace-nowrap"
     >
       <span aria-hidden="true" className="size-[7px] rounded-full bg-current" />
       {ROOM_STATUS_LABELS[status]}
-    </span>
+    </InlineBadge>
   );
 }
 

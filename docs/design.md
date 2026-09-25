@@ -193,7 +193,7 @@ dựng hoàn toàn bằng utility của Tailwind, khác `login.css`.
 | Khung | Một `ListSheet` duy nhất: toolbar → conditions bar → vùng dữ liệu → pager, chung `rounded-sheet` + `border-vc-rule` + `shadow-vc-sheet`. Các vùng phân tách bằng đường kẻ, không bằng khoảng trống |
 | Không clip | Sheet cố ý không `overflow: hidden` để popover trong toolbar thoát ra được; bảng rộng tự bọc `overflow-x-auto` của riêng nó |
 | Page heading | `<h2>` `28px`, từ `md` lên `36px`, cạnh chip đếm `{total} hồ sơ` với số ở font mono; mô tả bên dưới; nút primary bên phải, co còn icon dưới `md`. Là `h2` vì topbar đã giữ `h1` |
-| Nút primary | Cao `44px` như các control của toolbar, `rounded-control`, viền `border-vc-wood` 1px, `shadow-vc-raised`, chữ `font-semibold`, icon `19px`, padding ngang `15px`. Đây là hình thức "phím bấm được" của design system, không phải nút phẳng |
+| Nút primary | Cao `44px` như các control của toolbar, `rounded-control`, viền `border-vc-wood` 1px, `shadow-vc-raised`, chữ `font-semibold`, icon `19px`, padding ngang `15px`. Khi giữ click, nút lún `2px` và shadow còn `1px` trong `100ms`; đây là hình thức "phím bấm được" của design system, không phải nút phẳng |
 | Toolbar | Ô tìm kiếm dùng `ListToolbar` với `size="control"`: cao `44px`, `rounded-control`, chữ `12px`, icon `17px` cách lề `12px`. Ở `size="sm"` mặc định nó là chip `32px` — cao `32px` cạnh các control `44px` sẽ đọc như bị lùn |
 | Bảng | 6 cột `table-fixed` theo tỉ lệ `21/5.5/32/26/10/5.5`, `min-width` `1120px` ở mọi bề rộng còn hiện bảng. Hàng cao `72px`, hover và `focus-within` đổi nền `bg-vc-tint` |
 | Grade token | Ô `rounded-control` viền `border-vc-control`, số font mono, `min-width` 36px; khối `0` hiện chữ `Tiền TH` thay vì số |
@@ -252,7 +252,7 @@ CSS không diễn tả được bằng utility (mục 6).
 | Hai cột | `lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]`. Cột trái là hai khối chỉ tồn tại lúc tạo (ảnh đại diện, tài khoản), cột phải là hồ sơ. Chế độ sửa bỏ cột trái và về một cột |
 | Cột giấy kẻ ô | `.vc-form-grid-paper` trong `modules/academic/styles/student-form.css`: lưới ô `22px` bằng hai `linear-gradient` trên `--vc-grid-minor`. Khác `.vc-paper` của màn đăng nhập (giấy ô ly 4 gradient, có dòng đậm mỗi ô thứ năm) — bên trong biểu mẫu thì dòng đậm quá ồn. Repo không có utility lưới nào, và `image-rendering`/`background-image` vẫn là hai thứ phải viết bằng CSS thật |
 | Tiêu đề khối | `NumberedSection`: chip mono `01`–`04` (`rounded-[4px]`, `border-vc-control`, `font-mono text-[10px]`) + `h2` `18px` + mô tả `11px`. Số là thứ làm một biểu mẫu dài đọc được; nó đặt trong chip viền nhỏ và dùng đúng face mono mà design system dành cho dữ liệu cố định độ rộng, nên đọc như dấu vị trí chứ không phải nội dung. Hai section liền nhau cách nhau bằng `border-t border-vc-rule`, không bằng khoảng trống |
-| Control trong sheet | Primitive dùng mặc định `36px`/`rounded-md`; các màn dùng style OpenDesign truyền `size="control"` để nhận `44px`/`rounded-control`, viền `border-vc-control` và chữ `13px`. `Input` còn có `size="compact"` cho search 32px; giá trị mặc định vẫn giữ nguyên để các màn chưa đổi giao diện không bị ảnh hưởng. `SelectField`, `DateField`, `AsyncSelectField` và `TimeField` chuyển tiếp cùng preset; `triggerClassName` vẫn tồn tại cho các trường hợp ghép đặc biệt. `form-control.ts` chỉ còn giữ layout/type constants (`SHEET_FIELD_GRID`, `SHEET_FIELD_TYPE`) |
+| Control trong sheet | Primitive dùng mặc định `36px`/`rounded-md`; các màn dùng style OpenDesign truyền `size="control"` để nhận `44px`/`rounded-control`, viền `border-vc-control` và chữ `13px`. `Input` còn có `size="compact"` cho search 32px; giá trị mặc định vẫn giữ nguyên để các màn chưa đổi giao diện không bị ảnh hưởng. `SelectField`, `DateField` và `AsyncSelectField` chuyển tiếp cùng preset; `triggerClassName` vẫn tồn tại cho các trường hợp ghép đặc biệt. `form-control.ts` chỉ còn giữ layout/type constants (`SHEET_FIELD_GRID`, `SHEET_FIELD_TYPE`) |
 | Preset control và specificity | `size="control"` được xử lý ngay trong primitive/wrapper nên không còn phải rải `h-11`, `rounded-control` và `md:text-[13px]` ở từng form. `SelectTrigger` đặt preset qua prop `size`, còn `Input`/`Textarea` gộp preset trước `className` để các trường hợp ghép như input + nút tạo tên đăng nhập vẫn ghi đè được. Các bẫy selector của `Button`, `TabsList` và component bên thứ ba vẫn áp dụng khi ghi đè bằng utility trơn; phải dùng đúng selector tương đương hoặc preset chuyên biệt |
 | Nút gắn liền input | Ô tên đăng nhập và nút tự tạo là một control liền mạch: input `rounded-r-none border-r-0`, nút `size-11 rounded-control rounded-l-none`. Nút hiện/ẩn mật khẩu thì `absolute` trong ô, `size-10`, input chừa `pr-12` |
 | Thẻ radio | Lựa chọn Bỏ qua / Chọn phụ huynh là `RadioGroup` với `RadioGroupItem` bọc trong `<label htmlFor>` nên bấm cả thẻ được. Thẻ `min-h-[76px] rounded-control border-vc-control`; đang chọn `border-foreground bg-vc-tint` |
@@ -368,12 +368,17 @@ shadcn/ui style `new-york` trên `radix-ui`, icon `lucide-react`, biến thể b
 
 ### 10.2 Thành phần dùng chung (`src/components/shared/`)
 
-Nhóm dữ liệu (`shared/data-table/`): `DataTable`, `DataTableToolbar`, `DataTablePagination`, `ListToolbar`, `FilterPopover` + `FilterSection`, `SortPopover`, `ViewPopover`, `ConditionTag` + `ConditionsBar`, `EmptyState`, `ListSheet`, `StatePanel`.
+Nhóm dữ liệu (`shared/data-table/`): `DataTableState`, `ListTable`, `DataTablePagination`, `ListToolbar`, `FilterPopover` + `FilterSection`, `SortPopover`, `ViewPopover`, `ConditionTag` + `ConditionsBar`, `EmptyState`, `ListSheet`, `ResponsiveListView`, `StatePanel`.
 
 `ListSheet` và `StatePanel` được chuẩn hóa từ màn danh sách học sinh (mục 7.2) và là
-contract dùng chung cho mọi màn danh sách được redesign tiếp theo. Học sinh là reference
-đầu tiên; domain screen chỉ thay đổi cột, nhãn và action, không tự tạo lại khung sheet,
-conditions bar, popup view, pager hoặc các data states.
+contract dùng chung cho mọi màn danh sách được redesign tiếp theo. `ListTable` là renderer
+layout-only bên trong `ListSheet`: nó sở hữu markup, typography, spacing, border, row
+interaction và table accessibility; domain screen chỉ khai báo columns/cells. Nó cũng nhận
+`DataTableState` khi một màn legacy cần dùng cùng renderer cho loading/error/empty. `ResponsiveListView`
+chỉ chuyển giữa table và card/grid, không sở hữu nội dung của hai view.
+
+Học sinh là reference đầu tiên; domain screen chỉ thay đổi cột, nhãn và action, không tự
+tạo lại khung sheet, conditions bar, popup view, pager, data states hoặc table layout.
 
 Các prop dưới đây được thêm **kiểu additive**: bỏ trống thì component hành xử y như
 trước, nên các màn danh sách chưa redesign không đổi gì.
@@ -381,22 +386,24 @@ trước, nên các màn danh sách chưa redesign không đổi gì.
 | Component | Prop tùy chọn | Default |
 | --- | --- | --- |
 | `DataTablePagination` | `numbered`, `unit`, `pageSize`, `pageSizeOptions`, `onPageSizeChange` | `numbered` `false`; khi đó giữ nguyên prev/next + `trang/tổng` và vẫn `return null` nếu chỉ có 1 trang. Bật `numbered` mới hiện dãy số trang, và hàng meta hiện cả khi chỉ có 1 trang |
+| `ListTable` | `columns`, `rows`, `state`, `rowKey`, `ariaLabel`, `minWidth` | `minWidth` `960px`; column `width` là phần trăm tùy chọn, `ariaSort` là metadata tùy chọn; không fetch, filter, paginate hoặc render mobile card |
+| `ResponsiveListView` | `view`, `table`, `grid`, `mobile`, breakpoint class | `mobile` dùng lại `grid`; table hiện từ `lg`, grid/mobile hiện dưới `lg` |
 | `ConditionTag` | tone `neutral`, `caption` | Ba tone màu `keyword`/`filter`/`sort` giữ nguyên hình thức |
 | `ConditionsBar` | `heading`, `align` | `align` `end` — chip xuống dòng và canh phải như cũ. `start` là dải cuộn ngang trong sheet |
-| `ListToolbar` | `align`, `size`, `searchClassName` | `align` `end`, `size` `sm` (ô tìm kiếm cao `32px`), ô tìm kiếm `w-full sm:w-64` |
+| `ListToolbar` | `align`, `size`, `searchClassName`, `searchLabel`, `filters`, `action` | `align` `end`, `size` `sm` (ô tìm kiếm cao `32px`), ô tìm kiếm `w-full sm:w-64`; `filters` và `action` giữ các toolbar cũ trong cùng renderer |
 | `FilterPopover`, `SortPopover`, `ViewPopover` | `compact` | Tắt — nhãn nút luôn hiện |
 
 `ConditionTag` cap giá trị ở `16rem` và ellipsis, kèm `title` mang giá trị đầy đủ: từ
 khóa là free text người dùng dán vào bao nhiêu cũng được, và một chip không cap sẽ
 đẩy phần còn lại của dải — kể cả đường thoát ra — khỏi khung.
 
-Nhóm form: `Field` + `fieldAria`, `FormShell`, `SelectField`, `AsyncSelectField`, `DateField`, `TimeField`. Các control form nhận preset `size="default"`/`size="control"`; `Input` nhận thêm `size="compact"` và vẫn chấp nhận số native cho thuộc tính HTML `size`.
+Nhóm form: `Field` + `fieldAria`, `FormError`, `FormShell`, `SelectField`, `AsyncSelectField`, `DateField`. Các control form nhận preset `size="default"`/`size="control"`; `Input` nhận thêm `size="compact"` và vẫn chấp nhận số native cho thuộc tính HTML `size`.
 
-Nhóm trạng thái màn hình: `LoadingState`, `RouteLoadingState`, `NotFoundState`, `RouteErrorState`, `AppShellSkeleton`, `AuthServiceUnavailable`, `ResourceLoader`.
+Nhóm trạng thái màn hình: `LoadingState`, `RouteLoadingState`, `FullPageState`, `NotFoundState`, `RouteErrorState`, `AppShellSkeleton`, `AuthServiceUnavailable`, `ResourceLoader`.
 
-Khác: `BrandMark` / `BrandIcon`, `BackLink`, `ConfirmActionDialog`, `ToastProvider`, `AppProviders`.
+Khác: `BrandMark` / `BrandIcon`, `BackLink`, `InfoDialog`, `ToastProvider`, `AppProviders`.
 
-Ranh giới: `EmptyState` dành cho ô bảng hoặc lưới, không phải toàn trang — bản toàn trang là `NotFoundState` và `RouteErrorState`. `StatePanel` nằm giữa hai mức đó: nó chiếm cả vùng dữ liệu của một `ListSheet` nhưng vẫn để toolbar và pager của màn ở lại.
+Ranh giới: `EmptyState` dành cho ô bảng hoặc lưới, không phải toàn trang — bản toàn trang là `NotFoundState` và `RouteErrorState`, dùng chung layout `FullPageState`. `StatePanel` nằm giữa hai mức đó: nó chiếm cả vùng dữ liệu của một `ListSheet` nhưng vẫn để toolbar và pager của màn ở lại.
 
 ## 11. Thương hiệu và hình ảnh
 
@@ -436,7 +443,7 @@ Ranh giới: `EmptyState` dành cho ô bảng hoặc lưới, không phải toà
 - Không có chế độ tối, và variant `dark` bất hoạt theo thiết kế.
 - Khối chú thích đầu `frontend/src/modules/auth/styles/login.css` nói rằng nó vào bundle qua `@import` trong `src/styles.css`. Điều đó không còn đúng: `styles.css` không import nó, và nó được `login-view.tsx` import. Chú thích cần sửa; mục 6 mô tả hành vi hiện tại đã xác minh.
 - Lớp học, Giáo viên, sổ lớp và các màn biểu mẫu chưa redesign không có tiêu đề riêng — `<h1>` của chúng là nhãn ở topbar (mục 8). Điều đó đúng về khả năng tiếp cận nhưng có nghĩa là tiêu đề của những màn này chỉ cao `15px` ở topbar, không có mô tả và không có chỗ đặt hành động chính. Màn nào được redesign tiếp thì nhận page heading riêng ở `<h2>` theo mẫu mục 7.2. Chỉ nên hạ topbar xuống `<span>` để mỗi màn tự sở hữu `<h1>` khi **mọi** màn đã có tiêu đề riêng; làm nửa vời một lần rồi đã phải hoàn nguyên.
-- Danh sách học sinh, Môn học và Phòng học dùng bộ hình học ở mục 2.5: heading cấp trang, `ListSheet`, toolbar điều khiển và pager đánh số. Các màn Lớp học, Giáo viên và sổ lớp vẫn dùng `DataTable` + `DataTableToolbar`, còn Tệp dùng toolbar riêng của module files — vì vậy hai ngôn ngữ thị giác vẫn cùng tồn tại ở những màn chưa redesign.
+- Danh sách học sinh, Môn học, Phòng học, Phụ huynh và sổ lớp dùng cùng renderer `ListTable`/`ListToolbar` cho bảng và trạng thái. Tệp cũng dùng `ListTable`, còn toolbar upload/filter vẫn thuộc module files.
 
 ## 15. Tham chiếu
 

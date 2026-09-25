@@ -1,15 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { MoreHorizontal } from "lucide-react";
+import { Eye, KeyRound, Lock, LockOpen, Pencil } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { RowActionMenu, type RowAction } from "@/components/shared/data-table";
 import { cn } from "@/lib/utils/index";
 import { UserAvatar } from "./user-avatar";
 
@@ -120,39 +114,54 @@ export function StudentRowMenu({
   className?: string;
 }) {
   const hasAccount = typeof student.user_id === "number" && student.user_id > 0;
+  const actions: RowAction[] = [
+    {
+      key: "view",
+      label: "Xem hồ sơ",
+      icon: <Eye aria-hidden="true" className="text-foreground" />,
+      href: `/academic/students/${student.id}`,
+    },
+    ...(canUpdate
+      ? [
+          {
+            key: "edit",
+            label: "Sửa hồ sơ",
+            icon: <Pencil aria-hidden="true" className="text-foreground" />,
+            href: `/academic/students/${student.id}/edit`,
+          } satisfies RowAction,
+        ]
+      : []),
+    ...(hasAccount && canUpdate
+      ? [
+          {
+            key: "password",
+            label: "Đổi mật khẩu",
+            icon: <KeyRound aria-hidden="true" className="text-foreground" />,
+            onSelect: () => onChangePassword(student),
+          } satisfies RowAction,
+        ]
+      : []),
+    ...(hasAccount && canToggleAccount
+      ? [
+          {
+            key: "account",
+            label: student.is_account_active === false ? "Mở tài khoản" : "Khóa tài khoản",
+            icon: student.is_account_active === false ? (
+              <LockOpen aria-hidden="true" className="text-foreground" />
+            ) : (
+              <Lock aria-hidden="true" className="text-foreground" />
+            ),
+            onSelect: () => onToggleAccount(student),
+          } satisfies RowAction,
+        ]
+      : []),
+  ];
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className={className}
-          aria-label={`Thao tác với ${student.full_name}`}
-        >
-          <MoreHorizontal aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link href={`/academic/students/${student.id}`}>Xem hồ sơ</Link>
-        </DropdownMenuItem>
-        {canUpdate ? (
-          <DropdownMenuItem asChild>
-            <Link href={`/academic/students/${student.id}/edit`}>Sửa hồ sơ</Link>
-          </DropdownMenuItem>
-        ) : null}
-        {hasAccount && canUpdate ? (
-          <DropdownMenuItem onSelect={() => onChangePassword(student)}>
-            Đổi mật khẩu
-          </DropdownMenuItem>
-        ) : null}
-        {hasAccount && canToggleAccount ? (
-          <DropdownMenuItem onSelect={() => onToggleAccount(student)}>
-            {student.is_account_active === false ? "Mở tài khoản" : "Khóa tài khoản"}
-          </DropdownMenuItem>
-        ) : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <RowActionMenu
+      actions={actions}
+      triggerLabel={`Thao tác với ${student.full_name}`}
+      triggerClassName={className}
+    />
   );
 }

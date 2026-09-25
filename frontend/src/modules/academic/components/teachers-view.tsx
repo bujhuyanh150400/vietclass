@@ -1,23 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { ArrowUpDown, Plus, RefreshCw } from "lucide-react";
 
 import {
   DataTablePagination,
   ListSheet,
+  ListSkeleton,
+  ListTable,
+  ResponsiveListView,
   StatePanel,
   type DataTableState,
+  type ListTableColumn,
 } from "@/components/shared/data-table";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { AppButton } from "@/components/shared/app-button";
+import { InlineBadge } from "@/components/shared/inline-badge";
+import { PageHeading } from "@/components/shared/page-heading";
 import type { PageMeta } from "@/lib/api/contracts";
 
 import type { Option, Teacher } from "../types/academic";
@@ -41,7 +38,6 @@ import {
   TeacherConditionsBar,
   TeacherListToolbar,
 } from "./teacher-list-toolbar";
-import { TeacherListSkeleton } from "./teacher-list-skeleton";
 
 /** What the teacher directory screen renders and reports back. */
 export type TeachersViewProps = {
@@ -104,7 +100,21 @@ export function TeachersView({
 
   return (
     <div className="grid gap-6">
-      <TeachersHeading total={meta.total} />
+      <PageHeading
+        title="Giáo viên"
+        badges={
+          <InlineBadge>
+            <strong className="text-xs text-foreground">{meta.total}</strong> hồ sơ
+          </InlineBadge>
+        }
+        description="Quản lý hồ sơ, tài khoản và các lớp giáo viên đang phụ trách."
+        action={
+          <AppButton href="/academic/teachers/new">
+            <Plus aria-hidden="true" className="size-[19px]" />
+            Thêm giáo viên
+          </AppButton>
+        }
+      />
 
       <ListSheet
         toolbar={
@@ -128,23 +138,22 @@ export function TeachersView({
           />
         }
         conditions={
-          conditions ? (
-            <TeacherConditionsBar
-              search={search}
-              filters={filters}
-              sort={sort}
-              subjectOptions={subjectOptions}
-              classOptions={classOptions}
-              onSearchChange={onSearchChange}
-              onSubjectChange={onSubjectChange}
-              onClassChange={onClassChange}
-              onAccountActiveChange={onAccountActiveChange}
-              onJoinedFromChange={onJoinedFromChange}
-              onJoinedToChange={onJoinedToChange}
-              onSortChange={onSortChange}
-              onClearConditions={onClearConditions}
-            />
-          ) : undefined
+          <TeacherConditionsBar
+            search={search}
+            filters={filters}
+            sort={sort}
+            hasConditions={conditions}
+            subjectOptions={subjectOptions}
+            classOptions={classOptions}
+            onSearchChange={onSearchChange}
+            onSubjectChange={onSubjectChange}
+            onClassChange={onClassChange}
+            onAccountActiveChange={onAccountActiveChange}
+            onJoinedFromChange={onJoinedFromChange}
+            onJoinedToChange={onJoinedToChange}
+            onSortChange={onSortChange}
+            onClearConditions={onClearConditions}
+          />
         }
         pager={
           state.kind === "content" ? (
@@ -178,36 +187,6 @@ export function TeachersView({
   );
 }
 
-function TeachersHeading({ total }: { total: number }) {
-  return (
-    <div className="flex items-start justify-between gap-3 md:items-end">
-      <div>
-        <div className="flex flex-col md:flex-row md:items-end md:gap-4">
-          <h2 className="text-[28px] leading-tight font-semibold tracking-[-0.02em] md:text-4xl">
-            Giáo viên
-          </h2>
-          <p className="mt-1 text-[13px] font-semibold text-muted-foreground md:mt-0 md:mb-1.5">
-            <strong className="font-mono text-[15px] text-foreground">{total}</strong> hồ sơ
-          </p>
-        </div>
-        <p className="mt-1.5 text-xs text-muted-foreground md:text-sm">
-          Quản lý hồ sơ, tài khoản và các lớp giáo viên đang phụ trách.
-        </p>
-      </div>
-
-      <Button
-        asChild
-        className="h-11 gap-2 rounded-control border border-vc-wood font-semibold shadow-vc-raised has-[>svg]:px-[15px] max-md:has-[>svg]:px-3"
-      >
-        <Link href="/academic/teachers/new">
-          <Plus aria-hidden="true" className="size-[19px]" />
-          <span className="max-md:sr-only">Thêm giáo viên</span>
-        </Link>
-      </Button>
-    </div>
-  );
-}
-
 function TeacherResults({
   state,
   view,
@@ -230,7 +209,16 @@ function TeacherResults({
   onChangePassword: (teacher: Teacher) => void;
 }) {
   if (state.kind === "loading") {
-    return <TeacherListSkeleton />;
+    return (
+      <ListSkeleton
+        view={view}
+        label="Đang tải danh sách giáo viên"
+        table={{
+          columnCount: 7,
+          columnTemplate: "22fr 16fr 16fr 18fr 14fr 10fr 4fr",
+        }}
+      />
+    );
   }
 
   if (state.kind === "error") {
@@ -243,10 +231,10 @@ function TeacherResults({
         description={state.message}
         action={
           state.onRetry ? (
-            <Button type="button" variant="outline" size="sm" onClick={state.onRetry}>
+            <AppButton size="sm" variant="outline" onClick={state.onRetry}>
               <RefreshCw aria-hidden="true" />
               Thử lại
-            </Button>
+            </AppButton>
           ) : undefined
         }
       />
@@ -261,9 +249,9 @@ function TeacherResults({
         title="Không tìm thấy giáo viên phù hợp"
         description="Thử đổi từ khóa hoặc xóa bớt điều kiện lọc."
         action={
-          <Button type="button" variant="outline" size="sm" onClick={onClearConditions}>
+          <AppButton size="sm" variant="outline" onClick={onClearConditions}>
             Xóa điều kiện
-          </Button>
+          </AppButton>
         }
       />
     ) : (
@@ -273,31 +261,19 @@ function TeacherResults({
         title="Chưa có giáo viên"
         description="Thêm giáo viên đầu tiên để bắt đầu phân công lớp."
         action={
-          <Button asChild size="sm">
-            <Link href="/academic/teachers/new">
-              <Plus aria-hidden="true" />
-              Thêm giáo viên
-            </Link>
-          </Button>
+          <AppButton href="/academic/teachers/new" size="sm">
+            <Plus aria-hidden="true" />
+            Thêm giáo viên
+          </AppButton>
         }
       />
     );
   }
 
-  if (view === "grid") {
-    return (
-      <TeacherGrid
-        state={state}
-        onView={onViewTeacher}
-        onToggleAccount={onToggleAccount}
-        onChangePassword={onChangePassword}
-      />
-    );
-  }
-
   return (
-    <>
-      <div className="hidden lg:block">
+    <ResponsiveListView
+      view={view}
+      table={
         <TeacherTable
           rows={state.rows}
           sort={sort}
@@ -306,16 +282,16 @@ function TeacherResults({
           onToggleAccount={onToggleAccount}
           onChangePassword={onChangePassword}
         />
-      </div>
-      <div className="lg:hidden">
+      }
+      grid={
         <TeacherGrid
           state={state}
           onView={onViewTeacher}
           onToggleAccount={onToggleAccount}
           onChangePassword={onChangePassword}
         />
-      </div>
-    </>
+      }
+    />
   );
 }
 
@@ -334,84 +310,84 @@ function TeacherTable({
   onToggleAccount: (teacher: Teacher) => void;
   onChangePassword: (teacher: Teacher) => void;
 }) {
+  const columns: ListTableColumn<Teacher>[] = [
+    {
+      key: "teacher",
+      header: (
+        <SortableTeacherHead
+          label="Giáo viên"
+          active={sort.startsWith("name-")}
+          onClick={() => onSortChange(nextNameSort(sort))}
+        />
+      ),
+      width: 22,
+      ariaSort: teacherSortDirection(sort, "name"),
+      cell: (teacher) => <TeacherIdentity teacher={teacher} onView={onView} />,
+    },
+    {
+      key: "contact",
+      header: "Liên hệ",
+      width: 16,
+      cell: (teacher) => <TeacherContact teacher={teacher} />,
+    },
+    {
+      key: "subjects",
+      header: "Bộ môn",
+      width: 16,
+      cell: (teacher) => <TeacherSubjects teacher={teacher} />,
+    },
+    {
+      key: "classes",
+      header: "Lớp phụ trách",
+      width: 18,
+      cell: (teacher) => <TeacherClasses teacher={teacher} />,
+    },
+    {
+      key: "account",
+      header: "Tài khoản",
+      width: 14,
+      cell: (teacher) => <TeacherAccountBadge teacher={teacher} />,
+    },
+    {
+      key: "joined",
+      header: (
+        <SortableTeacherHead
+          label="Ngày tham gia"
+          active={sort === "newest" || sort === "date-asc"}
+          onClick={() => onSortChange(nextDateSort(sort))}
+        />
+      ),
+      width: 10,
+      ariaSort: teacherSortDirection(sort, "date"),
+      cell: (teacher) => <TeacherJoinedDate teacher={teacher} />,
+    },
+    {
+      key: "actions",
+      header: <span className="sr-only">Thao tác</span>,
+      width: 4,
+      cell: (teacher) => (
+        <TeacherRowMenu
+          teacher={teacher}
+          onView={onView}
+          onToggleAccount={onToggleAccount}
+          onChangePassword={onChangePassword}
+          className="opacity-35 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100"
+        />
+      ),
+    },
+  ];
+
   return (
-    <Table
-      aria-label="Danh sách giáo viên"
-      className="min-w-[1120px] table-fixed"
-    >
-      <colgroup>
-        <col className="w-[22%]" />
-        <col className="w-[16%]" />
-        <col className="w-[16%]" />
-        <col className="w-[18%]" />
-        <col className="w-[14%]" />
-        <col className="w-[10%]" />
-        <col className="w-[4%]" />
-      </colgroup>
-      <TableHeader>
-        <TableRow className="hover:bg-transparent [&_th]:border-b [&_th]:border-vc-rule [&_th]:px-3 [&_th]:text-[11px] [&_th]:tracking-[0.06em] [&_th]:text-muted-foreground [&_th]:uppercase">
-          <TableHead aria-sort={teacherSortDirection(sort, "name")}>
-            <SortableTeacherHead
-              label="Giáo viên"
-              active={sort.startsWith("name-")}
-              onClick={() => onSortChange(nextNameSort(sort))}
-            />
-          </TableHead>
-          <TableHead>Liên hệ</TableHead>
-          <TableHead>Bộ môn</TableHead>
-          <TableHead>Lớp phụ trách</TableHead>
-          <TableHead>Tài khoản</TableHead>
-          <TableHead aria-sort={teacherSortDirection(sort, "date")}>
-            <SortableTeacherHead
-              label="Ngày tham gia"
-              active={sort === "newest" || sort === "date-asc"}
-              onClick={() => onSortChange(nextDateSort(sort))}
-            />
-          </TableHead>
-          <TableHead>
-            <span className="sr-only">Thao tác</span>
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map((teacher) => (
-          <TableRow
-            key={teacher.id}
-            className="group border-vc-rule whitespace-normal hover:bg-vc-tint focus-within:bg-vc-tint has-aria-expanded:bg-vc-tint [&_td]:h-[76px] [&_td]:px-3"
-          >
-            <TableCell>
-              <TeacherIdentity teacher={teacher} onView={onView} />
-            </TableCell>
-            <TableCell>
-              <TeacherContact teacher={teacher} />
-            </TableCell>
-            <TableCell>
-              <TeacherSubjects teacher={teacher} />
-            </TableCell>
-            <TableCell>
-              <TeacherClasses teacher={teacher} />
-            </TableCell>
-            <TableCell>
-              <TeacherAccountBadge teacher={teacher} />
-            </TableCell>
-            <TableCell>
-              <TeacherJoinedDate teacher={teacher} />
-            </TableCell>
-            <TableCell>
-              <TeacherRowMenu
-                teacher={teacher}
-                onView={onView}
-                onToggleAccount={onToggleAccount}
-                onChangePassword={onChangePassword}
-                className="opacity-35 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100"
-              />
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <ListTable
+      ariaLabel="Danh sách giáo viên"
+      columns={columns}
+      rows={rows}
+      rowKey={(teacher) => teacher.id}
+      minWidth={1120}
+    />
   );
 }
+
 
 function SortableTeacherHead({
   label,

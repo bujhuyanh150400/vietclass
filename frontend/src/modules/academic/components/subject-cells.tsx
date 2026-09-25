@@ -3,6 +3,7 @@
 import { BookOpen, LockKeyhole, Pencil, RefreshCw, Trash2 } from "lucide-react";
 
 import { RowActionMenu, type RowAction } from "@/components/shared/data-table";
+import { InlineBadge } from "@/components/shared/inline-badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,13 +69,13 @@ export function SubjectGradeLevels({ subject, limit = 3 }: { subject: Subject; l
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-1.5">
       {shown.map((gradeLevel) => (
-        <span
+        <InlineBadge
           key={gradeLevel}
           title={GRADE_LEVEL_LABELS[gradeLevel]}
-          className="inline-grid min-h-7 min-w-[54px] place-items-center rounded-control border border-vc-rule bg-card px-2 py-1 text-[10px] font-semibold whitespace-nowrap"
+          className="min-h-7 min-w-[54px] justify-center bg-card py-1 font-sans text-[10px] font-semibold whitespace-nowrap"
         >
           {formatGradeLevel(gradeLevel)}
-        </span>
+        </InlineBadge>
       ))}
       {extraCount > 0 ? (
         <Dialog>
@@ -98,12 +99,14 @@ export function SubjectGradeLevels({ subject, limit = 3 }: { subject: Subject; l
             </DialogHeader>
             <div className="flex flex-wrap gap-2">
               {subject.grade_levels.map((gradeLevel) => (
-                <span
+                <InlineBadge
                   key={gradeLevel}
-                  className="inline-flex min-h-8 items-center rounded-control border border-vc-control bg-background px-3 py-1.5 text-xs font-semibold"
+                  type="muted"
+                  size="md"
+                  className="min-h-8 px-3 py-1.5 font-sans text-xs font-semibold"
                 >
                   {formatGradeLevel(gradeLevel)}
-                </span>
+                </InlineBadge>
               ))}
             </div>
           </DialogContent>

@@ -95,6 +95,8 @@ export function ConditionsBar({
   heading,
   align = "end",
   showClearAll = true,
+  hasConditions = true,
+  emptyMessage = "Chưa áp dụng điều kiện lọc.",
   children,
 }: {
   onClearAll: () => void;
@@ -102,11 +104,18 @@ export function ConditionsBar({
   heading?: string;
   align?: "start" | "end";
   showClearAll?: boolean;
+  hasConditions?: boolean;
+  emptyMessage?: ReactNode;
   children: ReactNode;
 }) {
   const inline = align === "start";
+  const content = hasConditions ? (
+    children
+  ) : (
+    <span className="shrink-0 text-[11px] text-muted-foreground">{emptyMessage}</span>
+  );
 
-  const clearAll = showClearAll ? (
+  const clearAll = showClearAll && hasConditions ? (
     <Button
       type="button"
       variant="ghost"
@@ -129,7 +138,7 @@ export function ConditionsBar({
         aria-label="Điều kiện đang áp dụng"
       >
         {headingLabel}
-        {children}
+        {content}
         {clearAll}
       </div>
     );
@@ -139,7 +148,7 @@ export function ConditionsBar({
     <div className="flex min-h-8 items-center gap-[7px]" aria-label="Điều kiện đang áp dụng">
       <div className="flex min-w-0 grow items-center gap-[7px] overflow-x-auto">
         {headingLabel}
-        {children}
+        {content}
       </div>
       {clearAll}
     </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { InfoDialog, InfoDialogCloseAction } from "@/components/shared/info-dialog";
+import { InlineBadge } from "@/components/shared/inline-badge";
 import { cn } from "@/lib/utils/index";
 
 import type { Room, RoomFacility } from "../types/academic";
@@ -22,9 +23,11 @@ export type FacilityLayout = keyof typeof VISIBLE_FACILITIES;
 /** Renders one facility as a compact chip. */
 function FacilityChip({ facility }: { facility: RoomFacility }) {
   return (
-    <span className="inline-flex h-7 min-w-0 shrink items-center rounded-control border border-vc-rule bg-card px-2 text-[10px] font-semibold whitespace-nowrap">
+    <InlineBadge
+      className="h-7 min-w-0 shrink bg-card px-2 font-sans text-[10px] font-semibold whitespace-nowrap"
+    >
       {ROOM_FACILITY_LABELS[facility]}
-    </span>
+    </InlineBadge>
   );
 }
 
@@ -36,14 +39,14 @@ function FacilityChip({ facility }: { facility: RoomFacility }) {
  */
 export function EmptyFacilities({ layout = "table" }: { layout?: FacilityLayout }) {
   return (
-    <span
+    <InlineBadge
       className={cn(
-        "inline-flex min-h-7 items-center rounded-control border border-dashed border-vc-rule px-2.5 text-[10px] font-semibold text-muted-foreground",
+        "min-h-7 border-dashed px-2.5 font-sans text-[10px] font-semibold",
         layout === "card" && "w-full justify-center",
       )}
     >
       Chưa cập nhật
-    </span>
+    </InlineBadge>
   );
 }
 
@@ -103,12 +106,13 @@ export function RoomFacilityTags({
         </p>
         <div className="flex flex-wrap gap-2">
           {facilities.map((facility) => (
-            <span
+            <InlineBadge
               key={facility}
-              className="inline-flex h-9 items-center rounded-control border border-vc-rule bg-card px-3 text-xs font-semibold"
+              size="xl"
+              className="h-9 bg-card px-3 font-sans text-xs font-semibold"
             >
               {ROOM_FACILITY_LABELS[facility]}
-            </span>
+            </InlineBadge>
           ))}
         </div>
       </InfoDialog>

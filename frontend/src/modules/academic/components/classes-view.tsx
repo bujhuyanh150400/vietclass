@@ -6,7 +6,9 @@ import {
   ArrowDownAZ,
   ArrowDownZA,
   ArrowUpDown,
-  MoreHorizontal,
+  Eye,
+  LockKeyhole,
+  Pencil,
   Plus,
   RefreshCw,
 } from "lucide-react";
@@ -18,32 +20,22 @@ import {
   FilterPopover,
   FilterSection,
   ListSheet,
+  ListSkeleton,
+  ListTable,
   ListToolbar,
+  ResponsiveListView,
+  RowActionMenu,
   SortPopover,
   StatePanel,
   ViewPopover,
   type DataTableState,
+  type ListTableColumn,
+  type RowAction,
   type SortOption,
 } from "@/components/shared/data-table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import type { PageMeta } from "@/lib/api/contracts";
 
 import type { ClassStatus, GradeLevel, SchoolClass } from "../types/academic";
@@ -58,6 +50,9 @@ import {
   type ClassListSort,
   type ClassListView,
 } from "../utils/class-list-controls";
+import { AppButton } from "@/components/shared/app-button";
+import { InlineBadge } from "@/components/shared/inline-badge";
+import { PageHeading } from "@/components/shared/page-heading";
 import { StatusBadge } from "@/components/shared/status-badge";
 
 /** Visible sort choices shared by the toolbar and the removable conditions row. */
@@ -126,7 +121,21 @@ export function ClassesView({
 
   return (
     <div className="grid min-w-0 gap-6">
-      <ClassesHeading total={meta.total} />
+      <PageHeading
+        title="Lớp học"
+        badges={
+          <InlineBadge>
+            <strong className="text-xs text-foreground">{meta.total}</strong> lớp
+          </InlineBadge>
+        }
+        description="Quản lý lớp, môn học, đội ngũ giảng dạy và sĩ số học sinh trong cùng một danh sách."
+        action={
+          <AppButton href="/academic/classes/new">
+            <Plus aria-hidden="true" className="size-[19px]" />
+            Tạo lớp học
+          </AppButton>
+        }
+      />
 
       <ListSheet
         toolbar={
@@ -187,37 +196,6 @@ export function ClassesView({
   );
 }
 
-/** Pairs the collection title with its total and the one create action. */
-function ClassesHeading({ total }: { total: number }) {
-  return (
-    <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-end md:justify-between">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-baseline gap-2.5">
-          <h2 className="text-[29px] leading-tight font-semibold tracking-[-0.02em] md:text-[34px]">
-            Lớp học
-          </h2>
-          <p className="inline-flex min-h-[25px] items-center gap-1.5 rounded-control border border-vc-rule bg-background px-2 py-0.5 font-mono text-[10px] leading-none text-muted-foreground">
-            <strong className="text-xs text-foreground">{total}</strong> lớp
-          </p>
-        </div>
-        <p className="mt-2 max-w-[62ch] text-xs text-muted-foreground md:text-sm">
-          Quản lý lớp, môn học, đội ngũ giảng dạy và sĩ số học sinh trong cùng một danh sách.
-        </p>
-      </div>
-
-      <Button
-        asChild
-        className="h-11 w-full gap-2 rounded-control border border-vc-wood font-semibold shadow-vc-raised has-[>svg]:px-[15px] md:w-auto"
-      >
-        <Link href="/academic/classes/new">
-          <Plus aria-hidden="true" className="size-[19px]" />
-          Tạo lớp học
-        </Link>
-      </Button>
-    </div>
-  );
-}
-
 /** Renders shared search/filter/sort/view controls for the class collection. */
 function ClassListToolbar({
   search,
@@ -252,6 +230,7 @@ function ClassListToolbar({
       onSearchChange={onSearchChange}
       searchPlaceholder="Tìm tên, mã hoặc ID lớp…"
       searchAriaLabel="Tìm kiếm lớp học"
+      searchHelpText="Tìm theo tên, mã hoặc ID lớp. Bỏ dấu tiếng Việt vẫn tìm được."
       align="start"
       size="control"
     >
@@ -349,7 +328,7 @@ function ClassConditionsBar({
       heading="Điều kiện"
       align="start"
       onClearAll={onClearConditions}
-      showClearAll={hasConditions}
+      hasConditions={hasConditions}
     >
       {search ? (
         <ConditionTag
@@ -383,11 +362,6 @@ function ClassConditionsBar({
           onRemove={() => onSortChange("created-desc")}
         />
       ) : null}
-      {!hasConditions ? (
-        <span className="shrink-0 text-[11px] text-muted-foreground">
-          Chưa áp dụng điều kiện lọc.
-        </span>
-      ) : null}
     </ConditionsBar>
   );
 }
@@ -407,7 +381,20 @@ function ClassResults({
   onChangeStatus: (schoolClass: SchoolClass) => void;
 }) {
   if (state.kind === "loading") {
-    return <ClassListSkeleton view={view} />;
+    return (
+      <ListSkeleton
+        view={view}
+        label="Đang tải danh sách lớp"
+        table={{
+          columnCount: 8,
+          columnTemplate: "19fr 15fr 7fr 19fr 12fr 12fr 12fr 4fr",
+          rowCount: 5,
+          shortCycle: 7,
+        }}
+        cardCount={4}
+        cardGridClassName="grid gap-3 p-3 sm:grid-cols-2"
+      />
+    );
   }
 
   if (state.kind === "error") {
@@ -420,10 +407,10 @@ function ClassResults({
         description={state.message}
         action={
           state.onRetry ? (
-            <Button type="button" variant="outline" size="sm" onClick={state.onRetry}>
+            <AppButton size="sm" variant="outline" onClick={state.onRetry}>
               <RefreshCw aria-hidden="true" />
               Thử lại
-            </Button>
+            </AppButton>
           ) : undefined
         }
       />
@@ -438,9 +425,9 @@ function ClassResults({
         title="Không tìm thấy lớp học"
         description="Thử đổi từ khóa hoặc xóa bớt điều kiện đang áp dụng."
         action={
-          <Button type="button" variant="outline" size="sm" onClick={onClearConditions}>
+          <AppButton size="sm" variant="outline" onClick={onClearConditions}>
             Xóa điều kiện
-          </Button>
+          </AppButton>
         }
       />
     ) : (
@@ -450,32 +437,29 @@ function ClassResults({
         title="Chưa có lớp học"
         description="Tạo lớp đầu tiên để bắt đầu quản lý môn học, đội ngũ giảng dạy và sĩ số."
         action={
-          <Button asChild size="sm">
-            <Link href="/academic/classes/new">
-              <Plus aria-hidden="true" />
-              Tạo lớp học
-            </Link>
-          </Button>
+          <AppButton href="/academic/classes/new" size="sm">
+            <Plus aria-hidden="true" />
+            Tạo lớp học
+          </AppButton>
         }
       />
     );
   }
 
-  if (view === "grid") {
-    return <ClassGrid rows={state.rows} onChangeStatus={onChangeStatus} />;
-  }
-
   return (
-    <>
-      <div className="hidden min-w-0 lg:block">
-        <ClassTable rows={state.rows} onChangeStatus={onChangeStatus} />
-      </div>
-      <div className="grid gap-3 p-3 md:grid-cols-2 lg:hidden">
-        {state.rows.map((schoolClass) => (
-          <ClassCard key={schoolClass.id} schoolClass={schoolClass} onChangeStatus={onChangeStatus} />
-        ))}
-      </div>
-    </>
+    <ResponsiveListView
+      view={view}
+      tableClassName="hidden min-w-0 lg:block"
+      table={<ClassTable rows={state.rows} onChangeStatus={onChangeStatus} />}
+      grid={<ClassGrid rows={state.rows} onChangeStatus={onChangeStatus} />}
+      mobile={
+        <div className="grid gap-3 p-3 md:grid-cols-2">
+          {state.rows.map((schoolClass) => (
+            <ClassCard key={schoolClass.id} schoolClass={schoolClass} onChangeStatus={onChangeStatus} />
+          ))}
+        </div>
+      }
+    />
   );
 }
 
@@ -487,77 +471,97 @@ function ClassTable({
   rows: SchoolClass[];
   onChangeStatus: (schoolClass: SchoolClass) => void;
 }) {
+  const columns: ListTableColumn<SchoolClass>[] = [
+    {
+      key: "class",
+      header: "Lớp học",
+      width: 19,
+      cell: (schoolClass) => (
+        <div className="grid min-w-0 gap-1.5">
+          <Link
+            href={`/academic/classes/${schoolClass.id}`}
+            className="w-fit max-w-full [overflow-wrap:anywhere] text-xs font-semibold hover:underline"
+          >
+            {schoolClass.name}
+          </Link>
+          <ClassIdentity code={schoolClass.code} id={schoolClass.id} />
+        </div>
+      ),
+    },
+    {
+      key: "subjects",
+      header: "Môn học",
+      width: 15,
+      cell: (schoolClass) => <ClassSubjectTags subjects={schoolClass.subjects} compact />,
+    },
+    {
+      key: "grade",
+      header: "Khối",
+      width: 7,
+      cell: (schoolClass) => (
+        <InlineBadge
+          type="muted"
+          className="min-h-7 max-w-full bg-background px-2 font-sans text-[10px] font-semibold [overflow-wrap:anywhere]"
+        >
+          {GRADE_LEVEL_LABELS[schoolClass.grade_level]}
+        </InlineBadge>
+      ),
+    },
+    {
+      key: "team",
+      header: "Đội ngũ giảng dạy",
+      width: 19,
+      cell: (schoolClass) => <ClassTeamCell schoolClass={schoolClass} />,
+    },
+    {
+      key: "capacity",
+      header: "Sĩ số",
+      width: 12,
+      cell: (schoolClass) => <ClassCapacity schoolClass={schoolClass} />,
+    },
+    {
+      key: "period",
+      header: "Thời gian học",
+      width: 12,
+      cell: (schoolClass) => (
+        <div className="grid gap-1 font-mono text-[10px] leading-[1.4]">
+          <time dateTime={schoolClass.start_at ?? undefined}>{formatDate(schoolClass.start_at)}</time>
+          <span className="font-sans text-[9px] text-muted-foreground">đến</span>
+          <time dateTime={schoolClass.end_at ?? undefined}>{formatDate(schoolClass.end_at)}</time>
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      header: "Trạng thái",
+      width: 12,
+      cell: (schoolClass) => (
+        <StatusBadge
+          status={schoolClass.status === 0 ? "active" : "inactive"}
+          label={classListStatusLabel(schoolClass.status)}
+        />
+      ),
+    },
+    {
+      key: "actions",
+      header: <span className="sr-only">Thao tác</span>,
+      width: 4,
+      cell: (schoolClass) => (
+        <div className="text-right">
+          <ClassActions schoolClass={schoolClass} onChangeStatus={onChangeStatus} />
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <div className="w-full overflow-x-auto">
-      <Table className="min-w-[1120px] w-full table-fixed">
-        <colgroup>
-          <col className="w-[19%]" />
-          <col className="w-[15%]" />
-          <col className="w-[7%]" />
-          <col className="w-[19%]" />
-          <col className="w-[12%]" />
-          <col className="w-[12%]" />
-          <col className="w-[12%]" />
-          <col className="w-[4%]" />
-        </colgroup>
-        <TableHeader>
-          <TableRow className="bg-background hover:bg-background [&>th]:h-[46px] [&>th]:border-b [&>th]:border-vc-rule [&>th]:px-3 [&>th]:py-2.5 [&>th]:text-[10px] [&>th]:font-medium [&>th]:text-muted-foreground">
-            <TableHead>Lớp học</TableHead>
-            <TableHead>Môn học</TableHead>
-            <TableHead>Khối</TableHead>
-            <TableHead>Đội ngũ giảng dạy</TableHead>
-            <TableHead>Sĩ số</TableHead>
-            <TableHead>Thời gian học</TableHead>
-            <TableHead>Trạng thái</TableHead>
-            <TableHead><span className="sr-only">Thao tác</span></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((schoolClass) => (
-            <TableRow
-              key={schoolClass.id}
-              className="transition-colors hover:bg-vc-tint focus-within:bg-vc-tint [&>td]:border-b [&>td]:border-vc-rule [&>td]:px-3 [&>td]:py-3 [&>td]:align-middle last:[&>td]:border-b-0"
-            >
-              <TableCell>
-                <div className="grid min-w-0 gap-1.5">
-                  <Link
-                    href={`/academic/classes/${schoolClass.id}`}
-                    className="w-fit max-w-full [overflow-wrap:anywhere] text-xs font-semibold hover:underline"
-                  >
-                    {schoolClass.name}
-                  </Link>
-                  <ClassIdentity code={schoolClass.code} id={schoolClass.id} />
-                </div>
-              </TableCell>
-              <TableCell><ClassSubjectTags subjects={schoolClass.subjects} compact /></TableCell>
-              <TableCell>
-                <span className="inline-flex min-h-7 max-w-full items-center rounded-control border border-vc-control bg-background px-2 text-[10px] font-semibold [overflow-wrap:anywhere]">
-                  {GRADE_LEVEL_LABELS[schoolClass.grade_level]}
-                </span>
-              </TableCell>
-              <TableCell><ClassTeamCell schoolClass={schoolClass} /></TableCell>
-              <TableCell><ClassCapacity schoolClass={schoolClass} /></TableCell>
-              <TableCell>
-                <div className="grid gap-1 font-mono text-[10px] leading-[1.4]">
-                  <time dateTime={schoolClass.start_at ?? undefined}>{formatDate(schoolClass.start_at)}</time>
-                  <span className="font-sans text-[9px] text-muted-foreground">đến</span>
-                  <time dateTime={schoolClass.end_at ?? undefined}>{formatDate(schoolClass.end_at)}</time>
-                </div>
-              </TableCell>
-              <TableCell>
-                <StatusBadge
-                  status={schoolClass.status === 0 ? "active" : "inactive"}
-                  label={classListStatusLabel(schoolClass.status)}
-                />
-              </TableCell>
-              <TableCell className="text-right">
-                <ClassActions schoolClass={schoolClass} onChangeStatus={onChangeStatus} />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <ListTable
+      ariaLabel="Danh sách lớp học"
+      columns={columns}
+      rows={rows}
+      rowKey={(schoolClass) => schoolClass.id}
+      minWidth={1120}
+    />
   );
 }
 
@@ -606,9 +610,11 @@ function ClassCard({
           status={schoolClass.status === 0 ? "active" : "inactive"}
           label={classListStatusLabel(schoolClass.status)}
         />
-        <span className="inline-flex min-h-7 items-center rounded-control border border-vc-rule bg-background px-2 text-[10px] font-semibold">
+        <InlineBadge
+          className="min-h-7 bg-background px-2 font-sans text-[10px] font-semibold"
+        >
           {GRADE_LEVEL_LABELS[schoolClass.grade_level]}
-        </span>
+        </InlineBadge>
       </div>
 
       <div className="grid min-w-0 gap-2 border-b border-vc-rule pb-3">
@@ -637,9 +643,12 @@ function ClassCard({
         </div>
         <div className="col-span-2 flex items-center justify-between gap-3 border-t border-vc-rule pt-3">
           <span className="text-[10px] font-semibold text-muted-foreground">Khối</span>
-          <span className="inline-flex min-h-7 items-center rounded-control border border-vc-control bg-background px-2 text-[10px] font-semibold">
+          <InlineBadge
+            type="muted"
+            className="min-h-7 bg-background px-2 font-sans text-[10px] font-semibold"
+          >
             {GRADE_LEVEL_LABELS[schoolClass.grade_level]}
-          </span>
+          </InlineBadge>
         </div>
       </dl>
     </article>
@@ -660,21 +669,22 @@ function ClassSubjectTags({
   return (
     <div className="flex min-w-0 flex-wrap gap-1">
       {visible.map((subject) => (
-        <span
+        <InlineBadge
           key={subject.id}
-          className="inline-flex min-h-7 max-w-full items-center rounded-control border border-vc-rule bg-card px-2 py-1 text-[10px] font-medium leading-tight [overflow-wrap:anywhere]"
+          className="min-h-7 max-w-full bg-card py-1 font-sans text-[10px] font-medium leading-tight [overflow-wrap:anywhere]"
         >
           {subject.name}{subject.is_primary ? " · Chính" : ""}
-        </span>
+        </InlineBadge>
       ))}
       {remaining > 0 ? (
-        <span
-          className="inline-flex min-h-6 items-center rounded-control border border-vc-control bg-background px-2 py-1 font-mono text-[10px] font-semibold"
+        <InlineBadge
+          type="muted"
+          className="min-h-6 bg-background py-1 text-[10px] font-semibold"
           aria-label={`${remaining} môn học khác: ${subjects.slice(2).map((subject) => subject.name).join(", ")}`}
           title={subjects.slice(2).map((subject) => subject.name).join(", ")}
         >
           +{remaining}
-        </span>
+        </InlineBadge>
       ) : null}
     </div>
   );
@@ -777,9 +787,12 @@ function ClassTeamCell({ schoolClass }: { schoolClass: SchoolClass }) {
                     </span>
                     <span className="truncate">{teacher.name ?? `Giáo viên #${teacher.id}`}</span>
                   </span>
-                  <Badge variant={teacher.status === 0 ? "secondary" : "outline"}>
+                  <InlineBadge
+                    type={teacher.status === 0 ? "neutral" : "muted"}
+                    className="font-sans"
+                  >
                     {teacher.status === 0 ? "Đang làm việc" : "Đã nghỉ"}
-                  </Badge>
+                  </InlineBadge>
                 </li>
               ))}
             </ul>
@@ -798,67 +811,39 @@ function ClassActions({
   schoolClass: SchoolClass;
   onChangeStatus: (schoolClass: SchoolClass) => void;
 }) {
+  const actions: RowAction[] = [
+    {
+      key: "view",
+      label: "Xem lớp và học sinh",
+      icon: <Eye aria-hidden="true" className="text-foreground" />,
+      href: `/academic/classes/${schoolClass.id}`,
+    },
+    {
+      key: "edit",
+      label: "Sửa lớp",
+      icon: <Pencil aria-hidden="true" className="text-foreground" />,
+      href: `/academic/classes/${schoolClass.id}/edit`,
+    },
+    {
+      key: "status",
+      label: schoolClass.status === 0 ? "Kết thúc lớp" : "Mở lại lớp",
+      icon: schoolClass.status === 0 ? (
+        <LockKeyhole aria-hidden="true" className="text-foreground" />
+      ) : (
+        <RefreshCw aria-hidden="true" className="text-foreground" />
+      ),
+      onSelect: () => onChangeStatus(schoolClass),
+    },
+  ];
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label={`Thao tác với lớp ${schoolClass.name}`}>
-          <MoreHorizontal aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link href={`/academic/classes/${schoolClass.id}`}>Xem lớp và học sinh</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href={`/academic/classes/${schoolClass.id}/edit`}>Sửa lớp</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onChangeStatus(schoolClass)}>
-          {schoolClass.status === 0 ? "Kết thúc lớp" : "Mở lại lớp"}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <RowActionMenu
+      actions={actions}
+      triggerLabel={`Thao tác với ${schoolClass.name}`}
+    />
   );
 }
 
-/** Mirrors the table row heights while the first list request is loading. */
-function ClassListSkeleton({ view }: { view: ClassListView }) {
-  const cards = (
-    <div className="grid gap-3 p-3 sm:grid-cols-2" aria-hidden="true">
-      {Array.from({ length: 4 }, (_, row) => (
-        <div key={row} className="grid gap-4 rounded-panel border border-vc-rule bg-card p-4">
-          <Skeleton className="h-5 w-2/3" />
-          <Skeleton className="h-3 w-1/3" />
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-14 w-full" />
-        </div>
-      ))}
-    </div>
-  );
-
-  if (view === "grid") {
-    return <div role="status" aria-label="Đang tải danh sách lớp">{cards}</div>;
-  }
-
-  return (
-    <div role="status" aria-label="Đang tải danh sách lớp">
-      <div className="hidden px-4 lg:block" aria-hidden="true">
-        <div className="grid min-h-[46px] grid-cols-[19fr_15fr_7fr_19fr_12fr_12fr_12fr_4fr] items-center gap-3 border-b border-vc-rule">
-          {Array.from({ length: 8 }, (_, column) => (
-            <Skeleton key={column} className="h-2.5 w-3/4" />
-          ))}
-        </div>
-        {Array.from({ length: 5 }, (_, row) => (
-          <div key={row} className="grid min-h-[72px] grid-cols-[19fr_15fr_7fr_19fr_12fr_12fr_12fr_4fr] items-center gap-3 border-b border-vc-rule last:border-b-0">
-            {Array.from({ length: 8 }, (_, column) => (
-              <Skeleton key={column} className={`h-3 ${column === row % 7 ? "w-1/2" : "w-4/5"}`} />
-            ))}
-          </div>
-        ))}
-      </div>
-      <div className="lg:hidden">{cards}</div>
-    </div>
-  );
-}
 
 function classListStatusLabel(status: ClassStatus): string {
   return status === 0 ? "Đang hoạt động" : "Đã kết thúc";

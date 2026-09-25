@@ -2,8 +2,9 @@
 
 import type { BaseSyntheticEvent, ReactNode } from "react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils/index";
+
+import { FormError } from "./form-error";
 
 /**
  * Renders a form as one sheet, the way `ListSheet` renders a list as one.
@@ -36,11 +37,7 @@ export function FormSheet({
 }) {
   return (
     <form onSubmit={onSubmit} noValidate className={cn("grid gap-6", className)}>
-      {alertMessage === null ? null : (
-        <Alert variant="destructive" aria-live="polite">
-          <AlertDescription>{alertMessage}</AlertDescription>
-        </Alert>
-      )}
+      {alertMessage === null ? null : <FormError message={alertMessage} />}
 
       {/* Deliberately not clipped, for the same two reasons `ListSheet` is not: a
           popover opened inside has to escape it, and `overflow: hidden` would make

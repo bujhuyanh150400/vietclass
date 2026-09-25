@@ -1,24 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { MoreHorizontal, UserPlus } from "lucide-react";
+import { Pencil, UserPlus } from "lucide-react";
 
+import { AppButton } from "@/components/shared/app-button";
 import {
-  DataTable,
   DataTablePagination,
-  DataTableToolbar,
-  type DataTableColumn,
+  EmptyState,
+  ListSkeleton,
+  ListTable,
+  ListToolbar,
+  ResponsiveListView,
+  RowActionMenu,
   type DataTableState,
+  type ListTableColumn,
+  type RowAction,
 } from "@/components/shared/data-table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { InlineBadge } from "@/components/shared/inline-badge";
 import { SelectField } from "@/components/shared/select-field";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type { PageMeta } from "@/lib/api/contracts";
 
 import type { Enrollment } from "../types/academic";
@@ -75,7 +74,7 @@ export function RosterView({
   onTransfer,
   onLeave,
 }: RosterViewProps) {
-  const columns: DataTableColumn<Enrollment>[] = [
+  const columns: ListTableColumn<Enrollment>[] = [
     {
       key: "student",
       header: "Học sinh",
@@ -94,17 +93,20 @@ export function RosterView({
     {
       key: "status",
       header: "Trạng thái",
-      className: "w-32",
+      width: 16,
       cell: (enrollment) => (
-        <Badge variant={enrollment.is_active ? "default" : "secondary"}>
+        <InlineBadge
+          type={enrollment.is_active ? "primary" : "neutral"}
+          className="font-sans"
+        >
           {enrollment.is_active ? "Đang học" : "Đã nghỉ"}
-        </Badge>
+        </InlineBadge>
       ),
     },
     {
       key: "note",
       header: "Ghi chú",
-      hideOnMobile: true,
+      width: 24,
       cell: (enrollment) => (
         <span className="whitespace-pre-line text-muted-foreground">
           {enrollment.note ?? "—"}
@@ -114,7 +116,7 @@ export function RosterView({
     {
       key: "actions",
       header: <span className="sr-only">Thao tác</span>,
-      className: "w-12",
+      width: 8,
       cell: (enrollment) => (
         <EnrollmentActions
           enrollment={enrollment}
@@ -129,11 +131,14 @@ export function RosterView({
 
   return (
     <div className="grid gap-4">
-      <DataTableToolbar
+      <ListToolbar
         search={search}
         onSearchChange={onSearchChange}
         searchLabel="Tìm theo tên hoặc mã hồ sơ"
+        searchAriaLabel="Tìm theo tên hoặc mã hồ sơ"
         searchPlaceholder="Tên hoặc mã hồ sơ học sinh"
+        align="start"
+        size="control"
         filters={
           <div className="flex flex-wrap items-end gap-3">
             <SelectField
@@ -147,47 +152,116 @@ export function RosterView({
               onChange={(value) => onHasNoteChange(value === 1)}
               size="control"
             />
-            <span className={`inline-flex min-h-10 items-center gap-1.5 rounded-control border px-3 text-xs ${!isEnded && enrolled >= capacity ? "border-vc-control bg-vc-tint" : "border-vc-rule bg-card"}`} aria-live="polite">
+            <InlineBadge
+              type={!isEnded && enrolled >= capacity ? "muted" : "neutral"}
+              className="min-h-10 px-3 font-sans text-xs"
+              aria-live="polite"
+            >
               <strong className="tabular-nums">{enrolled}/{capacity}</strong>
               <span className="text-muted-foreground">{isEnded ? "đã đóng" : enrolled >= capacity ? "đủ sĩ số" : `còn ${Math.max(0, capacity - enrolled)} chỗ`}</span>
-            </span>
+            </InlineBadge>
           </div>
         }
         action={
           canModify ? (
-            <Button onClick={onAdd} disabled={!canAdd} title={canAdd ? undefined : "Lớp đã đủ sĩ số."}>
+            <AppButton onClick={onAdd} disabled={!canAdd} title={canAdd ? undefined : "Lớp đã đủ sĩ số."}>
               <UserPlus aria-hidden="true" />
               {canAdd ? "Thêm học sinh" : "Đã đủ sĩ số"}
-            </Button>
+            </AppButton>
           ) : null
         }
       />
 
       {state.kind === "content" ? (
-        <>
-          <div className="hidden min-[1025px]:!block">
-            <DataTable columns={columns} state={state} rowKey={(enrollment) => enrollment.id} />
-          </div>
-          <div className="grid gap-3 min-[1025px]:!hidden">
-            {state.rows.map((enrollment) => (
-              <EnrollmentCard
-                key={enrollment.id}
-                enrollment={enrollment}
-                rosterTab={rosterTab}
-                canModify={canModify}
-                onEdit={onEdit}
-                onTransfer={onTransfer}
-                onLeave={onLeave}
-              />
-            ))}
-          </div>
-        </>
+        <ResponsiveListView
+          view="table"
+          table={
+            <ListTable
+              ariaLabel="Danh sách học sinh trong lớp"
+              columns={columns}
+              rows={state.rows}
+              rowKey={(enrollment) => enrollment.id}
+              minWidth={960}
+            />
+          }
+          grid={
+            <div className="grid gap-3">
+              {state.rows.map((enrollment) => (
+                <EnrollmentCard
+                  key={enrollment.id}
+                  enrollment={enrollment}
+                  rosterTab={rosterTab}
+                  canModify={canModify}
+                  onEdit={onEdit}
+                  onTransfer={onTransfer}
+                  onLeave={onLeave}
+                />
+              ))}
+            </div>
+          }
+          mobile={
+            <div className="grid gap-3">
+              {state.rows.map((enrollment) => (
+                <EnrollmentCard
+                  key={enrollment.id}
+                  enrollment={enrollment}
+                  rosterTab={rosterTab}
+                  canModify={canModify}
+                  onEdit={onEdit}
+                  onTransfer={onTransfer}
+                  onLeave={onLeave}
+                />
+              ))}
+            </div>
+          }
+          tableClassName="hidden min-[1025px]:!block"
+          mobileClassName="min-[1025px]:!hidden"
+        />
       ) : (
-        <DataTable columns={columns} state={state} rowKey={(enrollment) => enrollment.id} />
+        <RosterState state={state} />
       )}
 
       <DataTablePagination meta={meta} onPageChange={onPageChange} />
     </div>
+  );
+}
+
+/** Keeps non-content states in the same shared list-state language as redesigned lists. */
+function RosterState({
+  state,
+}: {
+  state: Exclude<DataTableState<Enrollment>, { kind: "content" }>;
+}) {
+  if (state.kind === "loading") {
+    return (
+      <ListSkeleton
+        view="table"
+        label="Đang tải danh sách học sinh"
+        table={{
+          columnTemplate: "minmax(0,1.5fr) minmax(150px,.8fr) minmax(110px,.55fr) minmax(180px,1fr) 48px",
+          columnCount: 5,
+          rowCount: 5,
+        }}
+        cardCount={3}
+      />
+    );
+  }
+
+  return (
+    <EmptyState
+      title={state.message}
+      description={state.kind === "empty" ? state.description : undefined}
+      action={
+        state.kind === "error" && state.onRetry ? (
+          <AppButton type="button" variant="outline" onClick={state.onRetry}>
+            Thử lại
+          </AppButton>
+        ) : (
+          state.kind === "empty" ? state.action : undefined
+        )
+      }
+      className="py-16"
+    />
   );
 }
 
@@ -214,9 +288,12 @@ function EnrollmentCard({
       <header className="flex min-w-0 items-start justify-between gap-2">
         <StudentIdentity enrollment={enrollment} />
         <span className="flex shrink-0 items-center gap-1.5">
-          <Badge variant={enrollment.is_active ? "default" : "secondary"}>
+          <InlineBadge
+            type={enrollment.is_active ? "primary" : "neutral"}
+            className="font-sans"
+          >
             {enrollment.is_active ? "Đang học" : "Đã rời"}
-          </Badge>
+          </InlineBadge>
           <EnrollmentActions
             enrollment={enrollment}
             canModify={canModify}
@@ -259,29 +336,35 @@ function EnrollmentActions({
 }) {
   if (!canModify) return null;
 
+  const actions: RowAction[] = [
+    {
+      key: "edit",
+      label: "Sửa kỳ ghi danh",
+      icon: <Pencil aria-hidden="true" className="text-foreground" />,
+      onSelect: () => onEdit(enrollment),
+    },
+    ...(enrollment.is_active
+      ? [
+          {
+            key: "transfer",
+            label: "Chuyển lớp",
+            onSelect: () => onTransfer(enrollment),
+          } satisfies RowAction,
+          {
+            key: "leave",
+            label: "Cho nghỉ lớp",
+            variant: "destructive" as const,
+            onSelect: () => onLeave(enrollment),
+          } satisfies RowAction,
+        ]
+      : []),
+  ];
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={`Thao tác với ${enrollment.student_name ?? "học sinh"}`}
-        >
-          <MoreHorizontal aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={() => onEdit(enrollment)}>Sửa kỳ ghi danh</DropdownMenuItem>
-        {enrollment.is_active ? (
-          <>
-            <DropdownMenuItem onSelect={() => onTransfer(enrollment)}>Chuyển lớp</DropdownMenuItem>
-            <DropdownMenuItem variant="destructive" onSelect={() => onLeave(enrollment)}>
-              Cho nghỉ lớp
-            </DropdownMenuItem>
-          </>
-        ) : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <RowActionMenu
+      actions={actions}
+      triggerLabel={`Thao tác với ${enrollment.student_name ?? "học sinh"}`}
+    />
   );
 }
 

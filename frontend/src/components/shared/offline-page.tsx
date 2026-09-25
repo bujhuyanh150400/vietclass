@@ -4,7 +4,8 @@ import Image from "next/image";
 import { RefreshCw, WifiOff } from "lucide-react";
 
 import { BrandMark } from "@/components/shared/brand-mark";
-import { Button } from "@/components/ui/button";
+import { InlineBadge } from "@/components/shared/inline-badge";
+import { AppButton } from "@/components/shared/app-button";
 
 /** Reloads the current document after the visitor asks to retry the connection. */
 function handleRetry(): void {
@@ -34,10 +35,12 @@ export function OfflinePage() {
             className="my-5 size-36 object-contain [image-rendering:pixelated] sm:size-40"
           />
 
-          <div className="inline-flex items-center gap-1.5 rounded-control border border-vc-rule bg-vc-tint px-2 py-1 font-mono text-[10px] font-semibold tracking-[0.02em] text-vc-text-muted">
+          <InlineBadge
+            className="bg-vc-tint px-2 py-1 text-[10px] font-semibold tracking-[0.02em] text-vc-text-muted"
+          >
             <WifiOff aria-hidden="true" className="size-3.5" />
             MẠNG NGOẠI TUYẾN
-          </div>
+          </InlineBadge>
 
           <h1 className="mt-3 text-[clamp(24px,3vw,30px)] font-semibold leading-[1.3] tracking-[-0.025em]">
             Không có kết nối Internet
@@ -46,14 +49,10 @@ export function OfflinePage() {
             Dữ liệu và các thao tác tạm thời chưa khả dụng. Kiểm tra kết nối mạng rồi thử lại.
           </p>
 
-          <Button
-            type="button"
-            onClick={handleRetry}
-            className="mt-6 h-11 rounded-control border border-vc-wood font-semibold shadow-vc-raised has-[>svg]:px-[15px]"
-          >
+          <AppButton onClick={handleRetry} className="mt-6 w-auto">
             <RefreshCw aria-hidden="true" className="size-[18px]" />
             Thử lại
-          </Button>
+          </AppButton>
 
           <p className="mt-6 border-t border-vc-rule pt-4 text-[11px] leading-[1.65] text-vc-text-muted">
             Trạng thái này chỉ xuất hiện sau khi ứng dụng đã tải. Làm mới trang khi đang ngoại tuyến chưa được hỗ trợ.

@@ -237,6 +237,7 @@ export function RoomConditionsBar({
   onCapacityMaxChange,
   onSortChange,
   onClearConditions,
+  hasConditions,
 }: Pick<
   RoomListControls,
   | "search"
@@ -249,9 +250,14 @@ export function RoomConditionsBar({
   | "onCapacityMaxChange"
   | "onSortChange"
   | "onClearConditions"
->) {
+> & { hasConditions: boolean }) {
   return (
-    <ConditionsBar heading="Đang áp dụng" align="start" onClearAll={onClearConditions}>
+    <ConditionsBar
+      heading="Đang áp dụng"
+      align="start"
+      onClearAll={onClearConditions}
+      hasConditions={hasConditions}
+    >
       {search ? (
         <ConditionTag
           tone="neutral"

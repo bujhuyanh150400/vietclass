@@ -384,7 +384,7 @@ Các file chính có thể cần đổi sau khi bản thiết kế được duy�
 - Hook/query state cho filter, sort, page và `active_only` nếu cần.
 
 Ưu tiên tái sử dụng `ListSheet`, `FormSheet`, `StatePanel`, `ConditionsBar`,
-`DataTablePagination`, `AsyncSelectField`, `ConfirmActionDialog` và các token hiện có.
+`DataTablePagination`, `AsyncSelectField`, `InfoDialog` và các token hiện có.
 Không tạo component abstraction mới nếu component dùng chung hiện tại đã đáp ứng.
 
 ## 10. Kiểm tra sau khi triển khai

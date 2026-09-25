@@ -34,7 +34,7 @@ export function RouteLoadingState() {
 
   // The navigation has actually landed once the location being watched changes,
   // mirroring the render-time "adjust state when a prop changes" pattern used
-  // elsewhere (DataTableToolbar, LoadingState itself) instead of an extra effect
+  // elsewhere (the shared debounced search and LoadingState itself) instead of an extra effect
   // and the render it would cost.
   if (currentLocation !== appliedLocation) {
     setAppliedLocation(currentLocation);

@@ -346,6 +346,7 @@ export function TeacherConditionsBar({
   onJoinedToChange,
   onSortChange,
   onClearConditions,
+  hasConditions,
 }: {
   search: string;
   filters: TeacherFilterState;
@@ -360,12 +361,18 @@ export function TeacherConditionsBar({
   onJoinedToChange: (value: string) => void;
   onSortChange: (sort: TeacherListSort) => void;
   onClearConditions: () => void;
+  hasConditions: boolean;
 }) {
   const subjectLabel = subjectOptions.find((option) => option.id === filters.subjectId)?.label;
   const classLabel = classOptions.find((option) => option.id === filters.classId)?.label;
 
   return (
-    <ConditionsBar heading="Đang áp dụng" align="start" onClearAll={onClearConditions}>
+    <ConditionsBar
+      heading="Đang áp dụng"
+      align="start"
+      onClearAll={onClearConditions}
+      hasConditions={hasConditions}
+    >
       {search ? (
         <ConditionTag
           tone="neutral"

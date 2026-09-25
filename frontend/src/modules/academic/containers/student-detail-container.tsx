@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 
 import { EmptyState } from "@/components/shared/data-table/empty-state";
 import { useCurrentUser, useHasFeature } from "@/modules/auth";
-import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
+import { InfoDialog } from "@/components/shared/info-dialog";
 import { useToast } from "@/components/shared/toast-provider";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -281,7 +281,7 @@ function LoadedStudentDetail({
       />
 
       {hasAccount && canToggleAccount ? (
-        <ConfirmActionDialog
+        <InfoDialog
           open={confirmingAccount}
           onOpenChange={(open) => (open ? undefined : setConfirmingAccount(false))}
           title={accountIsActive ? "Khóa tài khoản học sinh?" : "Mở lại tài khoản học sinh?"}

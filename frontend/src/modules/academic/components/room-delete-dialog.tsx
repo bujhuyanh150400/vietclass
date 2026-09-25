@@ -3,9 +3,8 @@
 import { DoorOpen, X } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { DialogClose } from "@/components/ui/dialog";
+import { AppButton } from "@/components/shared/app-button";
 import { InfoDialog, InfoDialogCloseAction } from "@/components/shared/info-dialog";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/index";
 
 import type { Room } from "../types/academic";
@@ -100,16 +99,8 @@ export function RoomDeleteDialog({
           <InfoDialogCloseAction label="Đã hiểu" />
         ) : (
           <>
-            <DialogClose asChild>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-11 rounded-control border-vc-rule bg-transparent px-4 hover:border-foreground hover:bg-vc-tint hover:text-foreground"
-              >
-                Hủy
-              </Button>
-            </DialogClose>
-            <Button
+            <InfoDialogCloseAction label="Hủy" />
+            <AppButton
               type="button"
               variant="destructive"
               className="h-11 gap-2 rounded-control px-4"
@@ -118,7 +109,7 @@ export function RoomDeleteDialog({
             >
               <X aria-hidden="true" className="size-4" />
               {isPending ? "Đang xóa…" : "Xóa phòng học"}
-            </Button>
+            </AppButton>
           </>
         )
       }

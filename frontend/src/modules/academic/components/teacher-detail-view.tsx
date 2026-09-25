@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, KeyRound, Lock, LockOpen, Pencil, School } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { InlineBadge } from "@/components/shared/inline-badge";
+import { AppButton } from "@/components/shared/app-button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,40 +60,34 @@ export function TeacherDetailView({
             Mã hồ sơ #{teacher.id}
           </p>
           <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Trạng thái hồ sơ">
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-control border px-2 py-1 text-[11px] font-bold whitespace-nowrap",
-                teacher.status === 0
-                  ? "border-vc-leaf/30 bg-vc-leaf/10 text-vc-leaf"
-                  : "border-vc-control bg-vc-tint text-muted-foreground",
-              )}
+            <InlineBadge
+              type={teacher.status === 0 ? "success" : "muted"}
+              className="font-sans text-[11px] font-bold whitespace-nowrap"
             >
               <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
               {TEACHER_STATUS_LABELS[teacher.status]}
-            </span>
+            </InlineBadge>
             {hasAccount ? (
               <StatusBadge
                 status={accountIsActive ? "active" : "inactive"}
                 label={accountIsActive ? "Đang mở" : "Đã khóa"}
               />
             ) : (
-              <span className="inline-flex items-center rounded-control border border-dashed border-vc-control px-2 py-1 text-[11px] font-semibold text-muted-foreground">
+              <InlineBadge
+                type="muted"
+                className="border-dashed font-sans text-[11px] font-semibold"
+              >
                 Chưa có tài khoản
-              </span>
+              </InlineBadge>
             )}
           </div>
         </div>
 
         <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
-          <Button
-            asChild
-            className="h-11 gap-2 rounded-control border border-vc-wood font-semibold shadow-vc-raised max-sm:w-full"
-          >
-            <Link href={`/academic/teachers/${teacher.id}/edit`}>
-              <Pencil aria-hidden="true" className="size-[17px]" />
-              Sửa hồ sơ
-            </Link>
-          </Button>
+          <AppButton href={`/academic/teachers/${teacher.id}/edit`} className="w-auto max-sm:w-full">
+            <Pencil aria-hidden="true" className="size-[17px]" />
+            Sửa hồ sơ
+          </AppButton>
           {hasAccount ? (
             <Button
               type="button"
@@ -141,9 +137,12 @@ export function TeacherDetailView({
             className="min-w-0 gap-1 rounded-[4px] px-2 text-[11px] leading-tight font-semibold text-center text-muted-foreground sm:gap-1.5 sm:px-3 sm:text-xs data-[state=active]:border-vc-ink data-[state=active]:bg-vc-ink data-[state=active]:text-vc-paper"
           >
             <span className="min-w-0">Lớp phân công</span>
-            <span className="shrink-0 rounded-[3px] border border-current px-1.5 py-0.5 text-[10px] leading-none">
+            <InlineBadge
+              type="neutral"
+              className="min-h-0 shrink-0 gap-1 rounded-[3px] border-current bg-transparent px-1.5 py-0 font-sans text-[10px] leading-none text-current"
+            >
               {assignedClasses}
-            </span>
+            </InlineBadge>
           </TabsTrigger>
         </TabsList>
 
@@ -226,7 +225,11 @@ export function TeacherDetailView({
           <DetailCard
             title="Lớp phân công"
             description="Vai trò trong từng lớp và trạng thái lớp. Thay đổi phân công trong biểu mẫu sửa lớp."
-            action={<span className="rounded-control border border-vc-rule px-2 py-1 text-[11px] font-semibold">{assignedClasses} lớp đang hoạt động</span>}
+            action={
+              <InlineBadge type="neutral" className="font-sans text-[11px] font-semibold">
+                {assignedClasses} lớp đang hoạt động
+              </InlineBadge>
+            }
           >
             {assignedClasses === 0 && !hasEndedClasses ? <ClassesEmptyState /> : (
               <div className="grid gap-6">
@@ -332,17 +335,15 @@ function TeacherClassCard({ schoolClass, role }: { schoolClass: TeacherClass; ro
         <span className="truncate">{schoolClass.subject_name ?? "Môn học chưa cập nhật"}</span>
       </div>
       <div className="flex flex-wrap gap-2">
-        <span className="rounded-control border border-vc-rule bg-card px-2 py-1 text-[10px] font-semibold">{role}</span>
-        <span
-          className={cn(
-            "w-fit rounded-control border px-2 py-1 text-[10px] font-semibold",
-          schoolClass.status === 0
-            ? "border-vc-leaf/30 bg-vc-leaf/10 text-vc-leaf"
-            : "border-vc-control bg-vc-tint text-muted-foreground",
-        )}
+        <InlineBadge type="neutral" className="font-sans text-[10px] font-semibold">
+          {role}
+        </InlineBadge>
+        <InlineBadge
+          type={schoolClass.status === 0 ? "success" : "muted"}
+          className="font-sans text-[10px] font-semibold"
         >
           {CLASS_STATUS_LABELS[schoolClass.status]}
-        </span>
+        </InlineBadge>
       </div>
       <span className="sr-only">Mở chi tiết lớp</span>
     </Link>

@@ -12,7 +12,8 @@ import {
 import type { ReactNode } from "react";
 
 import { EmptyState } from "@/components/shared/data-table/empty-state";
-import { Badge } from "@/components/ui/badge";
+import { InlineBadge } from "@/components/shared/inline-badge";
+import { AppButton } from "@/components/shared/app-button";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -134,28 +135,25 @@ export function StudentDetailView({
 
           <div className="flex flex-wrap justify-start gap-2 max-[767px]:grid max-[767px]:grid-cols-2 min-[1181px]:justify-end">
             {canUpdate ? (
-              <Button
-                asChild
-                className="h-11 gap-2 rounded-control border border-vc-wood font-semibold shadow-vc-raised max-[767px]:col-span-2 max-[767px]:w-full"
+              <AppButton
+                href={`/academic/students/${student.id}/edit`}
+                className="max-[767px]:col-span-2 max-[767px]:w-full"
               >
-                <Link href={`/academic/students/${student.id}/edit`}>
-                  <Pencil aria-hidden="true" className="size-[17px]" />
-                  Sửa hồ sơ
-                </Link>
-              </Button>
+                <Pencil aria-hidden="true" className="size-[17px]" />
+                Sửa hồ sơ
+              </AppButton>
             ) : null}
             {hasAccountActions ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
+                  <AppButton
                     variant="outline"
                     size="icon"
                     className="size-11 rounded-control border-vc-control max-[767px]:justify-self-start"
                     aria-label="Tác vụ tài khoản khác"
                   >
                     <MoreHorizontal aria-hidden="true" />
-                  </Button>
+                  </AppButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {canUpdate ? (
@@ -267,9 +265,9 @@ export function StudentDetailView({
             }
             action={
               canViewHistory ? (
-                <span className="rounded-control border border-vc-control px-2 py-1 text-[10px] font-semibold text-muted-foreground">
+                <InlineBadge type="muted" className="font-sans text-[10px] font-semibold">
                   Lịch sử: chỉ quản trị viên
-                </span>
+                </InlineBadge>
               ) : (
                 <Count value={student.active_enrollments.length} label="lớp" />
               )
@@ -320,12 +318,19 @@ function StatusBlock({ label, value, active, muted = false }: { label: string; v
 
 /** Renders a count token shared by tabs and card headers. */
 function Count({ value, label }: { value: number; label?: string }) {
-  return <span className="w-fit rounded-[3px] border border-current px-1.5 py-0.5 text-[10px] leading-none">{value}{label ? ` ${label}` : ""}</span>;
+  return (
+    <InlineBadge
+      type="neutral"
+      className="w-fit min-h-0 gap-1 rounded-[3px] border-current bg-transparent px-1.5 py-0 font-sans text-[10px] leading-none text-current"
+    >
+      {value}{label ? ` ${label}` : ""}
+    </InlineBadge>
+  );
 }
 
 /** Marks modules that are visible in the information architecture but not shipped. */
 function SoonBadge() {
-  return <Badge variant="outline" className="rounded-[3px] px-1.5 py-0.5 text-[9px] font-semibold">Sắp có</Badge>;
+  return <InlineBadge type="neutral" className="min-h-0 gap-1 rounded-[3px] px-1.5 py-0.5 font-sans text-[9px] font-semibold">Sắp có</InlineBadge>;
 }
 
 /** Renders one labelled profile fact in the approved two-column grid. */
@@ -335,7 +340,14 @@ function Fact({ label, value, mono = false, masked = false, wide = false }: { la
       <dt className="mb-1 text-[11px] font-semibold text-muted-foreground">{label}</dt>
       <dd className={cn("flex min-w-0 flex-wrap items-center gap-1.5 [overflow-wrap:anywhere] text-[13px] font-semibold", mono && "font-mono text-xs")}>
         {value}
-        {masked ? <span className="rounded-[3px] border border-vc-control px-1 py-0.5 text-[9px] font-sans font-semibold text-muted-foreground">Đã che</span> : null}
+        {masked ? (
+          <InlineBadge
+            type="muted"
+            className="min-h-0 rounded-[3px] px-1 py-0.5 font-sans text-[9px] font-semibold"
+          >
+            Đã che
+          </InlineBadge>
+        ) : null}
       </dd>
     </div>
   );
@@ -372,13 +384,27 @@ function GuardiansCard({ student }: { student: Student }) {
               <div className="min-w-0">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
                   <strong className="[overflow-wrap:anywhere] text-sm">{guardian.full_name}</strong>
-                  {guardian.is_primary ? <span className="rounded-[3px] border border-vc-orange/30 bg-vc-orange/10 px-1.5 py-0.5 text-[9px] font-semibold text-vc-orange-deep">Liên hệ chính</span> : null}
+                  {guardian.is_primary ? (
+                    <InlineBadge
+                      type="neutral"
+                      className="min-h-0 rounded-[3px] border-vc-orange/30 bg-vc-orange/10 px-1.5 py-0.5 font-sans text-[9px] font-semibold text-vc-orange-deep"
+                    >
+                      Liên hệ chính
+                    </InlineBadge>
+                  ) : null}
                 </div>
                 <span className="mt-1 block text-[11px] text-muted-foreground">{GUARDIAN_RELATIONSHIP_LABELS[guardian.relationship]}</span>
               </div>
               <span className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
                 {maskPhone(guardian.phone)}
-                {guardian.phone !== null && guardian.phone.trim() !== "" ? <span className="rounded-[3px] border border-vc-control px-1 py-0.5 font-sans text-[9px] font-semibold">Đã che</span> : null}
+                {guardian.phone !== null && guardian.phone.trim() !== "" ? (
+                  <InlineBadge
+                    type="muted"
+                    className="min-h-0 rounded-[3px] px-1 py-0.5 font-sans text-[9px] font-semibold"
+                  >
+                    Đã che
+                  </InlineBadge>
+                ) : null}
               </span>
             </div>
           ))}

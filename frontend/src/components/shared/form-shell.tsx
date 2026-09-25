@@ -3,9 +3,10 @@
 import Link from "next/link";
 import type { BaseSyntheticEvent, ReactNode } from "react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+
+import { FormError } from "./form-error";
 
 /**
  * Renders the frame every create and edit screen shares: the fields, a
@@ -45,11 +46,7 @@ export function FormShell({
 }) {
   return (
     <form onSubmit={onSubmit} noValidate className="grid gap-6">
-      {alertMessage === null ? null : (
-        <Alert variant="destructive" aria-live="polite">
-          <AlertDescription>{alertMessage}</AlertDescription>
-        </Alert>
-      )}
+      {alertMessage === null ? null : <FormError message={alertMessage} />}
 
       {bare ? (
         children

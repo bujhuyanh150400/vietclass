@@ -3,7 +3,7 @@
 import { School } from "lucide-react";
 import { useState, type ComponentProps, type ReactNode } from "react";
 
-import { Badge } from "@/components/ui/badge";
+import { InlineBadge } from "@/components/shared/inline-badge";
 import {
   Dialog,
   DialogContent,
@@ -204,14 +204,14 @@ export function EmptyInline({
   layout?: TagLayout;
 }) {
   return (
-    <span
+    <InlineBadge
       className={cn(
-        "inline-flex min-h-8 items-center rounded-control border border-dashed border-vc-rule px-2.5 text-[11px] font-semibold text-muted-foreground",
+        "min-h-8 border-dashed px-2.5 font-sans text-[11px] font-semibold text-muted-foreground",
         layout === "card" && "w-full justify-center",
       )}
     >
       {children}
-    </span>
+    </InlineBadge>
   );
 }
 
@@ -315,9 +315,9 @@ export function GuardianTags({
             }
             trailing={
               guardian.is_primary ? (
-                <Badge variant="outline" className="whitespace-nowrap">
+                <InlineBadge type="neutral" className="font-sans whitespace-nowrap">
                   Liên hệ chính
-                </Badge>
+                </InlineBadge>
               ) : undefined
             }
           />
@@ -389,9 +389,9 @@ export function ClassTags({
             title={enrollment.code}
             detail={enrollment.subject_name ?? "Chưa rõ môn"}
             trailing={
-              <Badge variant="outline" className="whitespace-nowrap">
+              <InlineBadge type="neutral" className="font-sans whitespace-nowrap">
                 Đang học
-              </Badge>
+              </InlineBadge>
             }
           />
         ))}

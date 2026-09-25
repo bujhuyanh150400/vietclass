@@ -8,6 +8,7 @@ import { Controller } from "react-hook-form";
 import { useState } from "react";
 
 import { BackLink } from "@/components/shared/back-link";
+import { InlineBadge } from "@/components/shared/inline-badge";
 import { DateField } from "@/components/shared/date-field";
 import { Field, fieldAria } from "@/components/shared/field";
 import { FormSheet } from "@/components/shared/form-sheet";
@@ -541,10 +542,13 @@ export function StudentFormContainer({ student }: { student?: Student }) {
                 `student_profiles` has no code column and a prefix invented here would
                 put a second identifier in front of readers that nothing answers to. */}
             {isEditing ? (
-              <span className="inline-flex min-h-[26px] items-center gap-1.5 rounded-control border border-vc-control bg-card px-2 py-1 font-mono text-[10px] font-medium tracking-[0.04em]">
+              <InlineBadge
+                type="muted"
+                className="min-h-[26px] bg-card py-1 text-[10px] font-medium tracking-[0.04em]"
+              >
                 <span className="text-muted-foreground">Mã HS</span>
                 {student.id}
-              </span>
+              </InlineBadge>
             ) : null}
           </div>
           <h2 className="text-[28px] leading-[1.3] font-semibold tracking-[-0.02em] md:text-[34px]">

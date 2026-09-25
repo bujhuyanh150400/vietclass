@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
+import { InfoDialog } from "@/components/shared/info-dialog";
 import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
@@ -104,7 +104,7 @@ export function TeachersContainer() {
         onChangePassword={setPasswordTarget}
       />
 
-      <ConfirmActionDialog
+      <InfoDialog
         open={lockTarget !== null}
         onOpenChange={(open) => (open ? undefined : setLockTarget(null))}
         title={locking ? "Khóa tài khoản giáo viên?" : "Mở lại tài khoản giáo viên?"}

@@ -12,6 +12,7 @@ import {
   RowActionMenu,
   type RowAction,
 } from "@/components/shared/data-table";
+import { InlineBadge } from "@/components/shared/inline-badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -87,12 +88,12 @@ export function TeacherSubjects({ teacher, limit = 2 }: { teacher: Teacher; limi
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-1.5">
       {shown.map((subject) => (
-        <span
+        <InlineBadge
           key={subject.id}
-          className="inline-flex min-h-7 items-center rounded-control border border-vc-rule bg-card px-2 py-1 text-[10px] font-semibold whitespace-nowrap"
+          className="min-h-7 bg-card py-1 font-sans text-[10px] font-semibold whitespace-nowrap"
         >
           {subject.name}
-        </span>
+        </InlineBadge>
       ))}
       {extraCount > 0 ? (
         <Dialog>
@@ -116,12 +117,14 @@ export function TeacherSubjects({ teacher, limit = 2 }: { teacher: Teacher; limi
             </DialogHeader>
             <div className="flex flex-wrap gap-2">
               {teacher.subjects.map((subject) => (
-                <span
+                <InlineBadge
                   key={subject.id}
-                  className="inline-flex min-h-8 items-center rounded-control border border-vc-control bg-background px-3 py-1.5 text-xs font-semibold"
+                  type="muted"
+                  size="md"
+                  className="min-h-8 px-3 py-1.5 font-sans text-xs font-semibold"
                 >
                   {subject.name}
-                </span>
+                </InlineBadge>
               ))}
             </div>
           </DialogContent>
@@ -143,13 +146,13 @@ export function TeacherClasses({ teacher, limit = 2 }: { teacher: Teacher; limit
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-1.5">
       {shown.map((schoolClass) => (
-        <span
+        <InlineBadge
           key={schoolClass.id}
           title={schoolClass.name}
-          className="inline-flex min-h-7 items-center rounded-control border border-vc-rule bg-card px-2 py-1 font-mono text-[10px] font-semibold whitespace-nowrap"
+          className="min-h-7 bg-card py-1 text-[10px] font-semibold whitespace-nowrap"
         >
           {schoolClass.code}
-        </span>
+        </InlineBadge>
       ))}
       {extraCount > 0 ? (
         <Dialog>

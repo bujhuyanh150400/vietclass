@@ -6,9 +6,9 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { BackLink } from "@/components/shared/back-link";
-import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
+import { InfoDialog } from "@/components/shared/info-dialog";
 import { ResourceLoader } from "@/components/shared/resource-loader";
-import { Badge } from "@/components/ui/badge";
+import { InlineBadge } from "@/components/shared/inline-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -115,15 +115,22 @@ function ClassDetail({ schoolClass }: { schoolClass: SchoolClass }) {
             <span aria-hidden="true">·</span>
             <span>{GRADE_LEVEL_LABELS[schoolClass.grade_level]}</span>
             <span aria-hidden="true">·</span>
-            <Badge variant={canModify ? "default" : "secondary"}>
+            <InlineBadge
+              type={canModify ? "primary" : "neutral"}
+              className="font-sans"
+            >
               {canModify ? "Đang hoạt động" : "Đã kết thúc"}
-            </Badge>
+            </InlineBadge>
           </p>
           <div className="flex flex-wrap gap-1.5">
             {schoolClass.subjects.map((subject) => (
-              <Badge key={subject.id} variant={subject.is_primary ? "default" : "secondary"}>
+              <InlineBadge
+                key={subject.id}
+                type={subject.is_primary ? "primary" : "neutral"}
+                className="font-sans"
+              >
                 {subject.name}{subject.is_primary ? " · Chính" : ""}
-              </Badge>
+              </InlineBadge>
             ))}
           </div>
         </div>
@@ -153,15 +160,18 @@ function ClassDetail({ schoolClass }: { schoolClass: SchoolClass }) {
           <TabsTrigger value="overview" className="!h-11 min-h-11 min-w-max flex-[0_0_auto] whitespace-nowrap px-3 text-xs font-semibold data-[state=active]:border-foreground data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-[0_2px_0_var(--vc-wood)] sm:!flex-1">Tổng quan</TabsTrigger>
           <TabsTrigger value="students" className="!h-11 min-h-11 min-w-max flex-[0_0_auto] whitespace-nowrap px-3 text-xs font-semibold data-[state=active]:border-foreground data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-[0_2px_0_var(--vc-wood)] sm:!flex-1">
             <span>Học sinh</span>
-            <span className="ml-1 rounded border border-current px-1.5 py-0.5 text-[10px] leading-none">
+            <InlineBadge
+              type="neutral"
+              className="ml-1 min-h-0 gap-1 rounded border-current bg-transparent px-1.5 py-0 font-sans text-[10px] leading-none text-current"
+            >
               {enrolled}/{schoolClass.max_students}
-            </span>
+            </InlineBadge>
           </TabsTrigger>
           <TabsTrigger value="schedule" className="!h-11 min-h-11 min-w-max flex-[0_0_auto] whitespace-nowrap px-3 text-xs font-semibold data-[state=active]:border-foreground data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-[0_2px_0_var(--vc-wood)] sm:!flex-1">
-            Lịch cố định <Badge variant="outline" className="ml-1 px-1.5 py-0 text-[9px]">Sắp có</Badge>
+            Lịch cố định <InlineBadge type="neutral" className="ml-1 min-h-0 gap-1 px-1.5 py-0 font-sans text-[9px]">Sắp có</InlineBadge>
           </TabsTrigger>
           <TabsTrigger value="sessions" className="!h-11 min-h-11 min-w-max flex-[0_0_auto] whitespace-nowrap px-3 text-xs font-semibold data-[state=active]:border-foreground data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-[0_2px_0_var(--vc-wood)] sm:!flex-1">
-            Lịch sử buổi học <Badge variant="outline" className="ml-1 px-1.5 py-0 text-[9px]">Sắp có</Badge>
+            Lịch sử buổi học <InlineBadge type="neutral" className="ml-1 min-h-0 gap-1 px-1.5 py-0 font-sans text-[9px]">Sắp có</InlineBadge>
           </TabsTrigger>
         </TabsList>
 
@@ -253,7 +263,7 @@ function ClassDetail({ schoolClass }: { schoolClass: SchoolClass }) {
         />
       ) : null}
 
-      <ConfirmActionDialog
+      <InfoDialog
         open={confirmStatus}
         onOpenChange={(open) => {
           setConfirmStatus(open);
@@ -289,7 +299,7 @@ function ClassPhasePlaceholder({ kind }: { kind: "schedule" | "sessions" }) {
             <h3 className="text-lg font-semibold">
               {schedule ? "Lịch cố định chưa có trong giai đoạn này" : "Lịch sử buổi học chưa có trong giai đoạn này"}
             </h3>
-            <Badge variant="secondary">Sắp có</Badge>
+            <InlineBadge type="neutral" className="font-sans">Sắp có</InlineBadge>
           </div>
           <p className="text-sm leading-relaxed text-muted-foreground">
             {schedule

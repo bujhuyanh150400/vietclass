@@ -3,7 +3,7 @@
 import { KeyRound, Lock, LockOpen } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
+import { InfoDialog } from "@/components/shared/info-dialog";
 import { Field } from "@/components/shared/field";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { useToast } from "@/components/shared/toast-provider";
@@ -167,7 +167,7 @@ export function StudentAccountSection({ student }: { student: Student }) {
         Hai thao tác trên áp dụng ngay khi xác nhận, không chờ nút Lưu thay đổi.
       </p>
 
-      <ConfirmActionDialog
+      <InfoDialog
         open={confirmingLock}
         onOpenChange={(open) => (open ? undefined : setConfirmingLock(false))}
         title={isActive ? "Khóa tài khoản học sinh?" : "Mở lại tài khoản học sinh?"}

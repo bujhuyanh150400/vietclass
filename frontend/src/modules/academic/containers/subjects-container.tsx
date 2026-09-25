@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
+import { InfoDialog } from "@/components/shared/info-dialog";
 import { useToast } from "@/components/shared/toast-provider";
 import { isApiClientError } from "@/lib/api/api-client-error";
 
@@ -107,7 +107,7 @@ export function SubjectsContainer() {
 
       <SubjectDetailDialog subject={viewing} onClose={() => setViewing(null)} />
 
-      <ConfirmActionDialog
+      <InfoDialog
         open={pending.kind !== "none"}
         onOpenChange={(next) => (next ? undefined : close())}
         title={confirmTitle(pending, locking)}
