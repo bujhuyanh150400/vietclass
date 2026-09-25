@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { EmptyState } from "@/components/shared/data-table";
+import { InlineBadge } from "@/components/shared/inline-badge";
 import { useToast } from "@/components/shared/toast-provider";
 import { SelectField } from "@/components/shared/select-field";
 import { Button } from "@/components/ui/button";
@@ -97,9 +98,12 @@ function GuardianRow({
           {/* Said plainly, because a row that will create a profile, one that links an
               existing person, and one already stored all look identical otherwise. */}
           {tag === null ? null : (
-            <span className="rounded-[3px] border border-vc-control px-1.5 py-0.5 text-[9px] text-muted-foreground">
+            <InlineBadge
+              type="muted"
+              className="min-h-0 rounded-[3px] px-1.5 py-0.5 font-sans text-[9px] text-muted-foreground"
+            >
               {tag}
-            </span>
+            </InlineBadge>
           )}
         </small>
       </div>

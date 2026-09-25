@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
 
 import { EmptyState } from "@/components/shared/data-table/empty-state";
+import { InlineBadge } from "@/components/shared/inline-badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -121,12 +122,12 @@ export function StudentClassesList({
               </p>
               <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                 {schoolClass.subjects.map((subject) => (
-                  <span
+                  <InlineBadge
                     key={subject.id}
-                    className="max-w-full truncate rounded-control border border-vc-control bg-card px-2 py-1 text-[10px] font-medium text-muted-foreground"
+                    className="max-w-full truncate border-vc-control bg-card px-2 py-1 font-sans text-[10px] font-medium text-muted-foreground"
                   >
                     {subject.name}
-                  </span>
+                  </InlineBadge>
                 ))}
               </div>
             </div>
@@ -134,15 +135,12 @@ export function StudentClassesList({
             <span className="text-[11px] font-medium sm:row-start-2 min-[861px]:row-auto">
               {schoolClass.enrollment_periods_count} kỳ ghi danh
             </span>
-            <span
-              className={
-                schoolClass.is_current
-                  ? "w-fit rounded-control border border-vc-leaf/30 bg-vc-leaf/10 px-2 py-1 text-[10px] font-semibold text-vc-leaf sm:row-start-2 min-[861px]:row-auto"
-                  : "w-fit rounded-control border border-vc-control bg-vc-tint px-2 py-1 text-[10px] font-semibold text-muted-foreground sm:row-start-2 min-[861px]:row-auto"
-              }
+            <InlineBadge
+              type={schoolClass.is_current ? "success" : "muted"}
+              className="w-fit font-sans text-[10px] font-semibold sm:row-start-2 min-[861px]:row-auto"
             >
               {studentClassStatusLabel(schoolClass.is_current)}
-            </span>
+            </InlineBadge>
 
             <div className="flex flex-wrap items-center gap-2 sm:col-span-2 sm:col-start-1 sm:row-start-3 sm:justify-end min-[861px]:col-span-1 min-[861px]:col-start-auto min-[861px]:row-start-auto">
               <Button
@@ -253,16 +251,16 @@ export function StudentEnrollmentHistoryDialog({
                 </DialogDescription>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-control border border-vc-control bg-vc-tint px-2 py-1 text-[10px] font-semibold">
+                <InlineBadge type="muted" className="font-sans text-[10px] font-semibold">
                   {studentClassStatusLabel(schoolClass.is_current)}
-                </span>
+                </InlineBadge>
                 {schoolClass.subjects.map((subject) => (
-                  <span
+                  <InlineBadge
                     key={subject.id}
-                    className="rounded-control border border-vc-control bg-card px-2 py-1 text-[10px] text-muted-foreground"
+                    className="border-vc-control bg-card px-2 py-1 font-sans text-[10px] text-muted-foreground"
                   >
                     {subject.name}
-                  </span>
+                  </InlineBadge>
                 ))}
                 <span className="text-[10px] text-muted-foreground">
                   {schoolClass.enrollment_periods_count} kỳ ghi danh
@@ -387,15 +385,16 @@ function EnrollmentHistoryCard({ entry }: { entry: EnrollmentHistoryEntry }) {
 
       <article className="min-w-0 rounded-control border border-vc-rule bg-card p-3 sm:p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span
+          <InlineBadge
+            type="neutral"
             className={
               terminalEvent
-                ? "rounded-control border border-vc-orange/40 bg-vc-orange/10 px-2 py-1 text-[10px] font-semibold text-vc-orange-deep"
-                : "rounded-control border border-vc-control bg-background px-2 py-1 text-[10px] font-semibold"
+                ? "border-vc-orange/40 bg-vc-orange/10 font-sans text-[10px] font-semibold text-vc-orange-deep"
+                : "border-vc-control bg-background font-sans text-[10px] font-semibold"
             }
           >
             {isLegacy ? "Kỳ ghi danh cũ — không có log chi tiết" : enrollmentEventLabel(entry.event_type)}
-          </span>
+          </InlineBadge>
           <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">Ngày hiệu lực</span>
         </div>
 

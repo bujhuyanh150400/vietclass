@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { AlertCircle, BookOpen, Users } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import { InlineBadge } from "@/components/shared/inline-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -49,9 +49,12 @@ export function ClassSummary({
               <Fact
                 label="Trạng thái lớp"
                 value={(
-                  <Badge variant={ended ? "secondary" : "default"}>
+                  <InlineBadge
+                    type={ended ? "neutral" : "primary"}
+                    className="font-sans"
+                  >
                     {CLASS_STATUS_LABELS[schoolClass.status]}
-                  </Badge>
+                  </InlineBadge>
                 )}
               />
               <Fact label="Ngày tạo" value={formatDate(schoolClass.created_at?.slice(0, 10))} />
@@ -66,7 +69,9 @@ export function ClassSummary({
                 <h3 className="font-semibold">Môn học của lớp</h3>
                 <p className="text-xs text-muted-foreground">Học sinh ghi danh theo toàn lớp và học tất cả môn dưới đây.</p>
               </div>
-              <Badge variant="secondary">{schoolClass.subjects.length} môn</Badge>
+              <InlineBadge type="neutral" className="font-sans">
+                {schoolClass.subjects.length} môn
+              </InlineBadge>
             </header>
             {schoolClass.subjects.length === 0 ? (
               <p className="text-sm text-muted-foreground">Lớp chưa được gán môn học.</p>
@@ -83,9 +88,12 @@ export function ClassSummary({
                         Áp dụng {subject.grade_levels.map((grade) => GRADE_LEVEL_LABELS[grade]).join(", ")}
                       </span>
                     </span>
-                    <Badge variant={subject.is_active ? "secondary" : "outline"}>
+                    <InlineBadge
+                      type={subject.is_active ? "neutral" : "muted"}
+                      className="font-sans"
+                    >
                       {subject.is_active ? "Đang mở" : "Đã khóa"}
-                    </Badge>
+                    </InlineBadge>
                   </li>
                 ))}
               </ul>
@@ -202,11 +210,16 @@ function TeacherRow({
         {name}
       </Link>
       <span className="flex flex-wrap items-center gap-1.5">
-        <Badge variant="outline">{role}</Badge>
+        <InlineBadge type="neutral" className="font-sans">
+          {role}
+        </InlineBadge>
         {status === null ? null : (
-          <Badge variant={status === 0 ? "secondary" : "outline"}>
+          <InlineBadge
+            type={status === 0 ? "neutral" : "muted"}
+            className="font-sans"
+          >
             {TEACHER_STATUS_LABELS[status]}
-          </Badge>
+          </InlineBadge>
         )}
       </span>
     </li>

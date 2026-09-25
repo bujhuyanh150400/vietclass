@@ -181,6 +181,7 @@ export function StudentConditionsBar({
   onAccountActiveChange,
   onSortChange,
   onClearConditions,
+  hasConditions,
 }: Pick<
   StudentListControls,
   | "search"
@@ -191,9 +192,14 @@ export function StudentConditionsBar({
   | "onAccountActiveChange"
   | "onSortChange"
   | "onClearConditions"
->) {
+> & { hasConditions: boolean }) {
   return (
-    <ConditionsBar heading="Đang áp dụng" align="start" onClearAll={onClearConditions}>
+    <ConditionsBar
+      heading="Đang áp dụng"
+      align="start"
+      onClearAll={onClearConditions}
+      hasConditions={hasConditions}
+    >
       {search ? (
         <ConditionTag
           tone="neutral"

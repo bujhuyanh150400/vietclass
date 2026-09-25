@@ -1,6 +1,7 @@
 "use client";
 
 import { InfoDialog, InfoDialogCloseAction } from "@/components/shared/info-dialog";
+import { InlineBadge } from "@/components/shared/inline-badge";
 
 import type { Room } from "../types/academic";
 import { ROOM_FACILITY_LABELS } from "../utils/labels";
@@ -51,12 +52,12 @@ export function RoomDetailDialog({
                 </span>
               ) : (
                 room.facilities.map((facility) => (
-                  <span
+                  <InlineBadge
                     key={facility}
-                    className="inline-flex h-7 items-center rounded-control border border-vc-rule bg-card px-2 text-[10px] font-semibold"
+                    className="h-7 bg-card px-2 font-sans text-[10px] font-semibold"
                   >
                     {ROOM_FACILITY_LABELS[facility]}
-                  </span>
+                  </InlineBadge>
                 ))
               )}
             </div>

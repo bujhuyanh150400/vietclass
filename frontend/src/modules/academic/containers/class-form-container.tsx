@@ -11,7 +11,7 @@ import { ClassSubjectsField } from "../components/class-subjects-field";
 import { ClassTeachingTeamField } from "../components/class-teaching-team-field";
 import { NumberedSection } from "../components/numbered-section";
 import { BackLink } from "@/components/shared/back-link";
-import { ConfirmActionDialog } from "@/components/shared/confirm-action-dialog";
+import { InfoDialog } from "@/components/shared/info-dialog";
 import { DateField } from "@/components/shared/date-field";
 import { Field, fieldAria } from "@/components/shared/field";
 import { FormShell } from "@/components/shared/form-shell";
@@ -356,7 +356,7 @@ export function ClassFormContainer({ schoolClass }: { schoolClass?: SchoolClass 
           </div>
         </div>
       </FormShell>
-      <ConfirmActionDialog
+      <InfoDialog
         open={confirmSubjects}
         onOpenChange={setConfirmSubjects}
         title="Đổi môn học của lớp đang có học sinh?"

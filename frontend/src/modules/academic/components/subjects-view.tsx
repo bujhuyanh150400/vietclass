@@ -1,23 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { ArrowUpDown, Plus, RefreshCw } from "lucide-react";
 
 import {
   DataTablePagination,
   ListSheet,
+  ListSkeleton,
+  ListTable,
+  ResponsiveListView,
   StatePanel,
   type DataTableState,
+  type ListTableColumn,
 } from "@/components/shared/data-table";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { AppButton } from "@/components/shared/app-button";
+import { InlineBadge } from "@/components/shared/inline-badge";
+import { PageHeading } from "@/components/shared/page-heading";
 import type { PageMeta } from "@/lib/api/contracts";
 
 import type { GradeLevel, Subject } from "../types/academic";
@@ -35,7 +32,6 @@ import {
   SubjectStatusBadge,
 } from "./subject-cells";
 import { SubjectGrid } from "./subject-grid";
-import { SubjectListSkeleton } from "./subject-list-skeleton";
 import {
   hasSubjectConditions,
   SubjectConditionsBar,
@@ -93,7 +89,21 @@ export function SubjectsView({
 
   return (
     <div className="grid gap-6">
-      <SubjectsHeading total={meta.total} />
+      <PageHeading
+        title="Môn học"
+        badges={
+          <InlineBadge>
+            <strong className="text-xs text-foreground">{meta.total}</strong> môn
+          </InlineBadge>
+        }
+        description="Quản lý môn học, khối áp dụng và các lớp đang sử dụng."
+        action={
+          <AppButton href="/academic/subjects/new">
+            <Plus aria-hidden="true" className="size-[19px]" />
+            Thêm môn học
+          </AppButton>
+        }
+      />
 
       <ListSheet
         toolbar={
@@ -112,18 +122,17 @@ export function SubjectsView({
           />
         }
         conditions={
-          conditions ? (
-            <SubjectConditionsBar
-              search={search}
-              filters={filters}
-              sort={sort}
-              onSearchChange={onSearchChange}
-              onGradeLevelChange={onGradeLevelChange}
-              onActiveChange={onActiveChange}
-              onSortChange={onSortChange}
-              onClearConditions={onClearConditions}
-            />
-          ) : undefined
+          <SubjectConditionsBar
+            search={search}
+            filters={filters}
+            sort={sort}
+            hasConditions={conditions}
+            onSearchChange={onSearchChange}
+            onGradeLevelChange={onGradeLevelChange}
+            onActiveChange={onActiveChange}
+            onSortChange={onSortChange}
+            onClearConditions={onClearConditions}
+          />
         }
         pager={
           state.kind === "content" ? (
@@ -157,36 +166,6 @@ export function SubjectsView({
   );
 }
 
-function SubjectsHeading({ total }: { total: number }) {
-  return (
-    <div className="flex items-start justify-between gap-3 md:items-end">
-      <div>
-        <div className="flex flex-col md:flex-row md:items-end md:gap-4">
-          <h2 className="text-[28px] leading-tight font-semibold tracking-[-0.02em] md:text-4xl">
-            Môn học
-          </h2>
-          <p className="mt-1 text-[13px] font-semibold text-muted-foreground md:mt-0 md:mb-1.5">
-            <strong className="font-mono text-[15px] text-foreground">{total}</strong> môn
-          </p>
-        </div>
-        <p className="mt-1.5 text-xs text-muted-foreground md:text-sm">
-          Quản lý môn học, khối áp dụng và các lớp đang sử dụng.
-        </p>
-      </div>
-
-      <Button
-        asChild
-        className="h-11 gap-2 rounded-control border border-vc-wood font-semibold shadow-vc-raised has-[>svg]:px-[15px] max-md:has-[>svg]:px-3"
-      >
-        <Link href="/academic/subjects/new">
-          <Plus aria-hidden="true" className="size-[19px]" />
-          <span className="max-md:sr-only">Thêm môn học</span>
-        </Link>
-      </Button>
-    </div>
-  );
-}
-
 function SubjectResults({
   state,
   view,
@@ -209,7 +188,17 @@ function SubjectResults({
   onSortChange: (sort: SubjectListSort) => void;
 }) {
   if (state.kind === "loading") {
-    return <SubjectListSkeleton />;
+    return (
+      <ListSkeleton
+        view={view}
+        label="Đang tải danh sách môn học"
+        table={{
+          columnCount: 5,
+          columnTemplate: "35fr 31fr 15fr 16fr 3fr",
+          shortCycle: 4,
+        }}
+      />
+    );
   }
 
   if (state.kind === "error") {
@@ -222,10 +211,10 @@ function SubjectResults({
         description={state.message}
         action={
           state.onRetry ? (
-            <Button type="button" variant="outline" size="sm" onClick={state.onRetry}>
+            <AppButton size="sm" variant="outline" onClick={state.onRetry}>
               <RefreshCw aria-hidden="true" />
               Thử lại
-            </Button>
+            </AppButton>
           ) : undefined
         }
       />
@@ -240,9 +229,9 @@ function SubjectResults({
         title="Không tìm thấy môn học phù hợp"
         description="Thử đổi tên môn học hoặc xóa bớt điều kiện lọc."
         action={
-          <Button type="button" variant="outline" size="sm" onClick={onClearConditions}>
+          <AppButton size="sm" variant="outline" onClick={onClearConditions}>
             Xóa điều kiện
-          </Button>
+          </AppButton>
         }
       />
     ) : (
@@ -252,31 +241,19 @@ function SubjectResults({
         title="Chưa có môn học"
         description="Thêm môn học đầu tiên để bắt đầu mở lớp."
         action={
-          <Button asChild size="sm">
-            <Link href="/academic/subjects/new">
-              <Plus aria-hidden="true" />
-              Thêm môn học
-            </Link>
-          </Button>
+          <AppButton href="/academic/subjects/new" size="sm">
+            <Plus aria-hidden="true" />
+            Thêm môn học
+          </AppButton>
         }
       />
     );
   }
 
-  if (view === "grid") {
-    return (
-      <SubjectGrid
-        state={state}
-        onView={onView}
-        onToggleActive={onToggleActive}
-        onDelete={onDelete}
-      />
-    );
-  }
-
   return (
-    <>
-      <div className="hidden lg:block">
+    <ResponsiveListView
+      view={view}
+      table={
         <SubjectTable
           rows={state.rows}
           sort={sort}
@@ -285,16 +262,16 @@ function SubjectResults({
           onToggleActive={onToggleActive}
           onDelete={onDelete}
         />
-      </div>
-      <div className="lg:hidden">
+      }
+      grid={
         <SubjectGrid
           state={state}
           onView={onView}
           onToggleActive={onToggleActive}
           onDelete={onDelete}
         />
-      </div>
-    </>
+      }
+    />
   );
 }
 
@@ -313,69 +290,69 @@ function SubjectTable({
   onToggleActive: (subject: Subject) => void;
   onDelete: (subject: Subject) => void;
 }) {
+  const columns: ListTableColumn<Subject>[] = [
+    {
+      key: "subject",
+      header: (
+        <SortableSubjectHead
+          label="Môn học"
+          active={sort.startsWith("name-")}
+          onClick={() => onSortChange(nextNameSort(sort))}
+        />
+      ),
+      width: 35,
+      ariaSort: subjectSortDirection(sort, "name"),
+      cell: (subject) => <SubjectIdentity subject={subject} onView={onView} />,
+    },
+    {
+      key: "grades",
+      header: "Khối áp dụng",
+      width: 31,
+      cell: (subject) => <SubjectGradeLevels subject={subject} />,
+    },
+    {
+      key: "classes",
+      header: (
+        <SortableSubjectHead
+          label="Lớp học"
+          active={sort.startsWith("classes-")}
+          onClick={() => onSortChange(nextClassesSort(sort))}
+        />
+      ),
+      width: 15,
+      ariaSort: subjectSortDirection(sort, "classes"),
+      cell: (subject) => <SubjectClassCount subject={subject} />,
+    },
+    {
+      key: "status",
+      header: "Trạng thái",
+      width: 16,
+      cell: (subject) => <SubjectStatusBadge subject={subject} />,
+    },
+    {
+      key: "actions",
+      header: <span className="sr-only">Thao tác</span>,
+      width: 3,
+      cell: (subject) => (
+        <SubjectRowMenu
+          subject={subject}
+          onView={onView}
+          onToggleActive={onToggleActive}
+          onDelete={onDelete}
+          className="opacity-35 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100"
+        />
+      ),
+    },
+  ];
+
   return (
-    <Table aria-label="Danh sách môn học" className="min-w-[820px] table-fixed">
-      <colgroup>
-        <col className="w-[35%]" />
-        <col className="w-[31%]" />
-        <col className="w-[15%]" />
-        <col className="w-[16%]" />
-        <col className="w-[3%]" />
-      </colgroup>
-      <TableHeader>
-        <TableRow className="hover:bg-transparent [&_th]:border-b [&_th]:border-vc-rule [&_th]:px-3 [&_th]:text-[11px] [&_th]:tracking-[0.06em] [&_th]:text-muted-foreground [&_th]:uppercase">
-          <TableHead aria-sort={subjectSortDirection(sort, "name")}>
-            <SortableSubjectHead
-              label="Môn học"
-              active={sort.startsWith("name-")}
-              onClick={() => onSortChange(nextNameSort(sort))}
-            />
-          </TableHead>
-          <TableHead>Khối áp dụng</TableHead>
-          <TableHead aria-sort={subjectSortDirection(sort, "classes")}>
-            <SortableSubjectHead
-              label="Lớp học"
-              active={sort.startsWith("classes-")}
-              onClick={() => onSortChange(nextClassesSort(sort))}
-            />
-          </TableHead>
-          <TableHead>Trạng thái</TableHead>
-          <TableHead>
-            <span className="sr-only">Thao tác</span>
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map((subject) => (
-          <TableRow
-            key={subject.id}
-            className="group border-vc-rule hover:bg-vc-tint focus-within:bg-vc-tint has-aria-expanded:bg-vc-tint [&_td]:h-[68px] [&_td]:px-3"
-          >
-            <TableCell>
-              <SubjectIdentity subject={subject} onView={onView} />
-            </TableCell>
-            <TableCell>
-              <SubjectGradeLevels subject={subject} />
-            </TableCell>
-            <TableCell>
-              <SubjectClassCount subject={subject} />
-            </TableCell>
-            <TableCell>
-              <SubjectStatusBadge subject={subject} />
-            </TableCell>
-            <TableCell>
-              <SubjectRowMenu
-                subject={subject}
-                onView={onView}
-                onToggleActive={onToggleActive}
-                onDelete={onDelete}
-                className="opacity-35 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100"
-              />
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <ListTable
+      ariaLabel="Danh sách môn học"
+      columns={columns}
+      rows={rows}
+      rowKey={(subject) => subject.id}
+      minWidth={820}
+    />
   );
 }
 

@@ -8,6 +8,7 @@ import { Controller } from "react-hook-form";
 import { useState } from "react";
 
 import { BackLink } from "@/components/shared/back-link";
+import { InlineBadge } from "@/components/shared/inline-badge";
 import { DateField } from "@/components/shared/date-field";
 import { Field, fieldAria } from "@/components/shared/field";
 import { FormSheet } from "@/components/shared/form-sheet";
@@ -425,9 +426,12 @@ export function TeacherFormContainer({ teacher }: { teacher?: Teacher }) {
               {isEditing ? "Hồ sơ giáo viên" : "Hồ sơ mới"}
             </span>
             {isEditing ? (
-              <span className="inline-flex min-h-[26px] items-center gap-1.5 rounded-control border border-vc-control bg-card px-2 py-1 font-mono text-[10px] font-medium tracking-[0.04em]">
+              <InlineBadge
+                type="muted"
+                className="min-h-[26px] bg-card py-1 text-[10px] font-medium tracking-[0.04em]"
+              >
                 <span className="text-muted-foreground">Mã hồ sơ</span>#{teacher.id}
-              </span>
+              </InlineBadge>
             ) : null}
           </div>
           <h2 className="text-[28px] leading-[1.3] font-semibold tracking-[-0.02em] md:text-[34px]">

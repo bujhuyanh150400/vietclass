@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { DateField } from "@/components/shared/date-field";
+import { InlineBadge } from "@/components/shared/inline-badge";
 import { Field } from "@/components/shared/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -221,9 +222,12 @@ export function AddStudentsDialog({
                           Bỏ chọn
                         </Button>
                       ) : (
-                        <span className={`shrink-0 rounded-control border px-2 py-1 text-[10px] font-semibold ${disabled ? "border-vc-control text-muted-foreground" : "border-vc-leaf/30 bg-vc-leaf/10 text-vc-leaf"}`}>
+                        <InlineBadge
+                          type={disabled ? "muted" : "success"}
+                          className="shrink-0 font-sans text-[10px] font-semibold"
+                        >
                           {disabled ? "Không thể chọn" : "Có thể thêm"}
-                        </span>
+                        </InlineBadge>
                       )}
                     </li>
                   );

@@ -7,6 +7,7 @@ import { ArrowLeft, CircleAlert, Pencil, Plus, Search } from "lucide-react";
 import { useState } from "react";
 
 import { Field } from "@/components/shared/field";
+import { InlineBadge } from "@/components/shared/inline-badge";
 import { SelectField } from "@/components/shared/select-field";
 import {
   Dialog,
@@ -365,9 +366,12 @@ export function GuardianPickerDialog({
                           </small>
                         </span>
                         {linked ? (
-                          <span className="shrink-0 rounded-[3px] border border-vc-control px-1.5 py-0.5 text-[9px] text-muted-foreground">
+                          <InlineBadge
+                            type="muted"
+                            className="min-h-0 shrink-0 rounded-[3px] px-1.5 py-0.5 font-sans text-[9px] text-muted-foreground"
+                          >
                             Đã liên kết
-                          </span>
+                          </InlineBadge>
                         ) : null}
                       </button>
                     );

@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { Field } from "@/components/shared/field";
+import { InlineBadge } from "@/components/shared/inline-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -142,9 +143,12 @@ function TransferTargetRow({
           </span>
         )}
       </label>
-      <span className={`w-fit rounded-control border px-2 py-1 text-[10px] font-semibold ${schoolClass.is_eligible ? "border-vc-leaf/30 bg-vc-leaf/10 text-vc-leaf" : "border-vc-control bg-vc-tint text-muted-foreground"}`}>
+      <InlineBadge
+        type={schoolClass.is_eligible ? "success" : "muted"}
+        className="w-fit font-sans text-[10px] font-semibold"
+      >
         {schoolClass.is_eligible ? "Có thể chuyển" : "Không thể chọn"}
-      </span>
+      </InlineBadge>
     </li>
   );
 }

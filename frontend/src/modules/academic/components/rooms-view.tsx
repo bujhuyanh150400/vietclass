@@ -1,23 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { Plus, RefreshCw } from "lucide-react";
 
 import {
   DataTablePagination,
   ListSheet,
+  ListSkeleton,
+  ListTable,
+  ResponsiveListView,
   StatePanel,
   type DataTableState,
+  type ListTableColumn,
 } from "@/components/shared/data-table";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { AppButton } from "@/components/shared/app-button";
+import { InlineBadge } from "@/components/shared/inline-badge";
+import { PageHeading } from "@/components/shared/page-heading";
 import type { PageMeta } from "@/lib/api/contracts";
 
 import type { Room, RoomFacility, RoomStatus } from "../types/academic";
@@ -36,7 +33,6 @@ import {
 } from "./room-cells";
 import { RoomFacilityTags } from "./room-facility-tags";
 import { RoomGrid } from "./room-grid";
-import { RoomListSkeleton } from "./room-list-skeleton";
 import {
   RoomConditionsBar,
   RoomListToolbar,
@@ -105,7 +101,21 @@ export function RoomsView({
 
   return (
     <div className="grid gap-6">
-      <RoomsHeading total={meta.total} />
+      <PageHeading
+        title="Phòng học"
+        badges={
+          <InlineBadge>
+            <strong className="text-xs text-foreground">{meta.total}</strong> phòng
+          </InlineBadge>
+        }
+        description="Quản lý vị trí, sức chứa, tiện ích và tình trạng sử dụng."
+        action={
+          <AppButton href="/academic/rooms/new">
+            <Plus aria-hidden="true" className="size-[19px]" />
+            Thêm phòng học
+          </AppButton>
+        }
+      />
 
       <ListSheet
         toolbar={
@@ -126,20 +136,19 @@ export function RoomsView({
           />
         }
         conditions={
-          hasConditions ? (
-            <RoomConditionsBar
-              search={search}
-              filters={filters}
-              sort={sort}
-              onSearchChange={onSearchChange}
-              onStatusChange={onStatusChange}
-              onToggleFacility={onToggleFacility}
-              onCapacityMinChange={onCapacityMinChange}
-              onCapacityMaxChange={onCapacityMaxChange}
-              onSortChange={onSortChange}
-              onClearConditions={onClearConditions}
-            />
-          ) : undefined
+          <RoomConditionsBar
+            search={search}
+            filters={filters}
+            sort={sort}
+            hasConditions={hasConditions}
+            onSearchChange={onSearchChange}
+            onStatusChange={onStatusChange}
+            onToggleFacility={onToggleFacility}
+            onCapacityMinChange={onCapacityMinChange}
+            onCapacityMaxChange={onCapacityMaxChange}
+            onSortChange={onSortChange}
+            onClearConditions={onClearConditions}
+          />
         }
         pager={
           state.kind === "content" ? (
@@ -171,53 +180,6 @@ export function RoomsView({
 }
 
 /**
- * Renders the screen's title block: what this screen is, how many records it
- * holds, and the one action that adds another.
- *
- * The count sits beside the title rather than in the pager because it answers a
- * question about the whole collection, not about the page being read.
- */
-function RoomsHeading({ total }: { total: number }) {
-  return (
-    <div className="flex items-start justify-between gap-3 md:items-end">
-      <div>
-        <div className="flex flex-col md:flex-row md:items-end md:gap-4">
-          {/*
-            An `h2`, not an `h1`: the topbar already carries the page's `h1` on
-            every protected screen.
-          */}
-          <h2 className="text-[28px] leading-tight font-semibold tracking-[-0.02em] md:text-4xl">
-            Phòng học
-          </h2>
-          <p className="mt-1 text-[13px] font-semibold text-muted-foreground md:mt-0 md:mb-1.5">
-            <strong className="font-mono text-[15px] text-foreground">{total}</strong> phòng
-          </p>
-        </div>
-        <p className="mt-1.5 text-xs text-muted-foreground md:text-sm">
-          Quản lý vị trí, sức chứa, tiện ích và tình trạng sử dụng.
-        </p>
-      </div>
-
-      {/*
-        The screen's one primary action wears the design system's pressable
-        treatment: a wood edge and a solid 3px offset beneath it. The size sits on
-        the icon rather than the button, since the Button variant sizes icons
-        through `[&_svg:not([class*='size-'])]`.
-      */}
-      <Button
-        asChild
-        className="h-11 gap-2 rounded-control border border-vc-wood font-semibold shadow-vc-raised has-[>svg]:px-[15px] max-md:has-[>svg]:px-3"
-      >
-        <Link href="/academic/rooms/new">
-          <Plus aria-hidden="true" className="size-[19px]" />
-          <span className="max-md:sr-only">Thêm phòng học</span>
-        </Link>
-      </Button>
-    </div>
-  );
-}
-
-/**
  * Renders whichever of the four list states currently applies.
  *
  * Every state stays inside the sheet, including "nothing here yet": the toolbar
@@ -240,7 +202,17 @@ function RoomResults({
   onDelete: (room: Room) => void;
 }) {
   if (state.kind === "loading") {
-    return <RoomListSkeleton />;
+    return (
+      <ListSkeleton
+        view={view}
+        label="Đang tải danh sách phòng học"
+        table={{
+          columnCount: 6,
+          columnTemplate: "22fr 23fr 10fr 28fr 13fr 4fr",
+          shortCycle: 5,
+        }}
+      />
+    );
   }
 
   if (state.kind === "error") {
@@ -253,10 +225,10 @@ function RoomResults({
         description={state.message}
         action={
           state.onRetry ? (
-            <Button type="button" variant="outline" size="sm" onClick={state.onRetry}>
+            <AppButton size="sm" variant="outline" onClick={state.onRetry}>
               <RefreshCw aria-hidden="true" />
               Thử lại
-            </Button>
+            </AppButton>
           ) : undefined
         }
       />
@@ -271,9 +243,9 @@ function RoomResults({
         title="Không tìm thấy phòng phù hợp"
         description="Thử đổi từ khóa, khoảng sức chứa hoặc bỏ bớt tiện ích đang chọn."
         action={
-          <Button type="button" variant="outline" size="sm" onClick={onClearConditions}>
+          <AppButton size="sm" variant="outline" onClick={onClearConditions}>
             Xóa điều kiện
-          </Button>
+          </AppButton>
         }
       />
     ) : (
@@ -283,12 +255,10 @@ function RoomResults({
         title="Chưa có phòng học"
         description="Thêm phòng đầu tiên để bắt đầu sắp xếp không gian học tập."
         action={
-          <Button asChild size="sm">
-            <Link href="/academic/rooms/new">
-              <Plus aria-hidden="true" />
-              Thêm phòng học
-            </Link>
-          </Button>
+          <AppButton href="/academic/rooms/new" size="sm">
+            <Plus aria-hidden="true" />
+            Thêm phòng học
+          </AppButton>
         }
       />
     );
@@ -299,21 +269,12 @@ function RoomResults({
   // `display: none`, which keeps exactly one of them in the accessibility tree
   // without measuring the viewport in JavaScript — a measurement the server cannot
   // make, and so one that would hydrate to the wrong layout.
-  if (view === "grid") {
-    return (
-      <RoomGrid state={state} onView={onView} onDelete={onDelete} />
-    );
-  }
-
   return (
-    <>
-      <div className="hidden lg:block">
-        <RoomTable rows={state.rows} onView={onView} onDelete={onDelete} />
-      </div>
-      <div className="lg:hidden">
-        <RoomGrid state={state} onView={onView} onDelete={onDelete} />
-      </div>
-    </>
+    <ResponsiveListView
+      view={view}
+      table={<RoomTable rows={state.rows} onView={onView} onDelete={onDelete} />}
+      grid={<RoomGrid state={state} onView={onView} onDelete={onDelete} />}
+    />
   );
 }
 
@@ -333,60 +294,59 @@ function RoomTable({
   onView: (room: Room) => void;
   onDelete: (room: Room) => void;
 }) {
+  const columns: ListTableColumn<Room>[] = [
+    {
+      key: "room",
+      header: "Phòng học",
+      width: 22,
+      cell: (room) => <RoomIdentity room={room} />,
+    },
+    {
+      key: "location",
+      header: "Vị trí",
+      width: 23,
+      cell: (room) => <RoomLocation location={room.location} />,
+    },
+    {
+      key: "capacity",
+      header: "Sức chứa",
+      width: 10,
+      cell: (room) => <RoomCapacity capacity={room.capacity} />,
+    },
+    {
+      key: "facilities",
+      header: "Tiện ích",
+      width: 28,
+      cell: (room) => <RoomFacilityTags room={room} />,
+    },
+    {
+      key: "status",
+      header: "Trạng thái",
+      width: 13,
+      cell: (room) => <RoomStatusBadge status={room.status} />,
+    },
+    {
+      key: "actions",
+      header: <span className="sr-only">Thao tác</span>,
+      width: 4,
+      cell: (room) => (
+        <RoomRowMenu
+          room={room}
+          onView={onView}
+          onDelete={onDelete}
+          className="opacity-35 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100"
+        />
+      ),
+    },
+  ];
+
   return (
-    <Table className="min-w-[1040px] table-fixed">
-      <colgroup>
-        <col className="w-[22%]" />
-        <col className="w-[23%]" />
-        <col className="w-[10%]" />
-        <col className="w-[28%]" />
-        <col className="w-[13%]" />
-        <col className="w-[4%]" />
-      </colgroup>
-      <TableHeader>
-        <TableRow className="hover:bg-transparent [&_th]:border-b [&_th]:border-vc-rule [&_th]:px-3 [&_th]:text-[11px] [&_th]:tracking-[0.06em] [&_th]:text-muted-foreground [&_th]:uppercase">
-          <TableHead>Phòng học</TableHead>
-          <TableHead>Vị trí</TableHead>
-          <TableHead>Sức chứa</TableHead>
-          <TableHead>Tiện ích</TableHead>
-          <TableHead>Trạng thái</TableHead>
-          <TableHead>
-            <span className="sr-only">Thao tác</span>
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map((room) => (
-          <TableRow
-            key={room.id}
-            className="group border-vc-rule hover:bg-vc-tint focus-within:bg-vc-tint has-aria-expanded:bg-vc-tint [&_td]:h-[68px] [&_td]:px-3"
-          >
-            <TableCell>
-              <RoomIdentity room={room} />
-            </TableCell>
-            <TableCell>
-              <RoomLocation location={room.location} />
-            </TableCell>
-            <TableCell>
-              <RoomCapacity capacity={room.capacity} />
-            </TableCell>
-            <TableCell>
-              <RoomFacilityTags room={room} />
-            </TableCell>
-            <TableCell>
-              <RoomStatusBadge status={room.status} />
-            </TableCell>
-            <TableCell>
-              <RoomRowMenu
-                room={room}
-                onView={onView}
-                onDelete={onDelete}
-                className="opacity-35 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100"
-              />
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <ListTable
+      ariaLabel="Danh sách phòng học"
+      columns={columns}
+      rows={rows}
+      rowKey={(room) => room.id}
+      minWidth={1040}
+    />
   );
 }
